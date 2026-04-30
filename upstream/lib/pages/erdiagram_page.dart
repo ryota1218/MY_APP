@@ -7,7 +7,12 @@ class _ERAttribute {
   final String type;
   final bool pk;
   final bool fk;
-  const _ERAttribute({required this.name, required this.type, this.pk = false, this.fk = false});
+  const _ERAttribute({
+    required this.name,
+    required this.type,
+    this.pk = false,
+    this.fk = false,
+  });
 }
 
 class _EREntity {
@@ -27,7 +32,11 @@ class _ERRelation {
   final String fromId;
   final String toId;
   final String label;
-  const _ERRelation({required this.fromId, required this.toId, required this.label});
+  const _ERRelation({
+    required this.fromId,
+    required this.toId,
+    required this.label,
+  });
 }
 
 class ERDiagramPage extends StatefulWidget {
@@ -111,7 +120,9 @@ class _ERDiagramPageState extends State<ERDiagramPage> {
             child: TextField(
               controller: attrsController,
               maxLines: 5,
-              decoration: const InputDecoration(hintText: 'id,INT\nname,VARCHAR\nemail,VARCHAR'),
+              decoration: const InputDecoration(
+                hintText: 'id,INT\nname,VARCHAR\nemail,VARCHAR',
+              ),
               style: const TextStyle(color: AppColors.text),
             ),
           ),
@@ -127,21 +138,24 @@ class _ERDiagramPageState extends State<ERDiagramPage> {
             .asMap()
             .entries
             .map((e) {
-          final parts = e.value.split(',').map((s) => s.trim()).toList();
-          return _ERAttribute(
-            name: parts.isNotEmpty ? parts[0] : 'col',
-            type: parts.length > 1 ? parts[1] : 'VARCHAR',
-            pk: e.key == 0,
-          );
-        }).toList();
+              final parts = e.value.split(',').map((s) => s.trim()).toList();
+              return _ERAttribute(
+                name: parts.isNotEmpty ? parts[0] : 'col',
+                type: parts.length > 1 ? parts[1] : 'VARCHAR',
+                pk: e.key == 0,
+              );
+            })
+            .toList();
         final offset = _entities.length * 40.0;
         setState(() {
-          _entities.add(_EREntity(
-            id: 'er_entity_${_entityIdCounter++}',
-            name: name,
-            attrs: attrs,
-            position: Offset(100 + offset, 100 + offset),
-          ));
+          _entities.add(
+            _EREntity(
+              id: 'er_entity_${_entityIdCounter++}',
+              name: name,
+              attrs: attrs,
+              position: Offset(100 + offset, 100 + offset),
+            ),
+          );
         });
         showToast(context, 'エンティティを追加しました');
       },
@@ -182,11 +196,13 @@ class _ERDiagramPageState extends State<ERDiagramPage> {
         ),
         onConfirm: () {
           setState(() {
-            _relations.add(_ERRelation(
-              fromId: _connectingFromId!,
-              toId: entityId,
-              label: labelController.text,
-            ));
+            _relations.add(
+              _ERRelation(
+                fromId: _connectingFromId!,
+                toId: entityId,
+                label: labelController.text,
+              ),
+            );
             _connectingFromId = null;
           });
         },
@@ -317,7 +333,12 @@ class _ERDiagramPageState extends State<ERDiagramPage> {
             ),
             borderRadius: BorderRadius.circular(AppTheme.radiusSm),
             boxShadow: isSelected
-                ? [BoxShadow(color: AppColors.accent2.withValues(alpha: 0.2), blurRadius: 20)]
+                ? [
+                    BoxShadow(
+                      color: AppColors.accent2.withValues(alpha: 0.2),
+                      blurRadius: 20,
+                    ),
+                  ]
                 : null,
           ),
           child: Column(
@@ -326,8 +347,10 @@ class _ERDiagramPageState extends State<ERDiagramPage> {
             children: [
               // Header
               Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -342,49 +365,73 @@ class _ERDiagramPageState extends State<ERDiagramPage> {
                     top: Radius.circular(AppTheme.radiusSm - 2),
                   ),
                 ),
-                child: Text(entity.name,
-                    style: const TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.text)),
+                child: Text(
+                  entity.name,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.text,
+                  ),
+                ),
               ),
               // Attributes
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Column(
                   children: entity.attrs
-                      .map((a) => Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 4),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (a.pk)
-                                  Container(
-                                    margin: const EdgeInsets.only(right: 6),
-                                    child: const Text('PK',
-                                        style: TextStyle(
-                                            color: AppColors.warn,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600)),
+                      .map(
+                        (a) => Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 4,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              if (a.pk)
+                                Container(
+                                  margin: const EdgeInsets.only(right: 6),
+                                  child: const Text(
+                                    'PK',
+                                    style: TextStyle(
+                                      color: AppColors.warn,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
-                                if (a.fk)
-                                  Container(
-                                    margin: const EdgeInsets.only(right: 6),
-                                    child: const Text('FK',
-                                        style: TextStyle(
-                                            color: AppColors.accent2,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600)),
+                                ),
+                              if (a.fk)
+                                Container(
+                                  margin: const EdgeInsets.only(right: 6),
+                                  child: const Text(
+                                    'FK',
+                                    style: TextStyle(
+                                      color: AppColors.accent2,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
-                                Text(a.name,
-                                    style: const TextStyle(
-                                        fontSize: 12, color: AppColors.textDim)),
-                                const Spacer(),
-                                Text(a.type,
-                                    style: const TextStyle(
-                                        fontSize: 11, color: AppColors.accent2)),
-                              ],
-                            ),
-                          ))
+                                ),
+                              Text(
+                                a.name,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.textDim,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                a.type,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.accent2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
                       .toList(),
                 ),
               ),

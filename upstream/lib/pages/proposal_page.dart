@@ -95,8 +95,9 @@ class _ProposalPageState extends State<ProposalPage> {
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode(body),
         );
-        if (res.statusCode != 200)
+        if (res.statusCode != 200) {
           throw Exception('API Error: ${res.statusCode}');
+        }
         if (!mounted) return;
         setState(() {
           _lastResult = jsonDecode(res.body);

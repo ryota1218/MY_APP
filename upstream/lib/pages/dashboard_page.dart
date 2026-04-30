@@ -76,44 +76,46 @@ class DashboardPage extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final count = constraints.maxWidth > 800 ? 4 : 2;
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: count,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            childAspectRatio: 2.8,
-          ),
-          itemCount: stats.length,
-          itemBuilder: (context, index) {
-            final s = stats[index];
-            return Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.bgCard,
-                border: Border.all(color: AppColors.border),
-                borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ShaderMask(
-                    shaderCallback: (bounds) => const LinearGradient(
-                      colors: [AppColors.accentLight, AppColors.accent2],
-                    ).createShader(bounds),
-                    child: Text(s['value']!,
+        final spacing = 16.0;
+        final cardWidth =
+            (constraints.maxWidth - spacing * (count - 1)) / count;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: stats.map((s) {
+            return SizedBox(
+              width: cardWidth,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 20, vertical: 16),
+                decoration: BoxDecoration(
+                  color: AppColors.bgCard,
+                  border: Border.all(color: AppColors.border),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ShaderMask(
+                      shaderCallback: (bounds) => const LinearGradient(
+                        colors: [AppColors.accentLight, AppColors.accent2],
+                      ).createShader(bounds),
+                      child: Text(s['value']!,
+                          style: const TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white)),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(s['label']!,
                         style: const TextStyle(
-                            fontSize: 32, fontWeight: FontWeight.w700, color: Colors.white)),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(s['label']!,
-                      style: const TextStyle(fontSize: 13, color: AppColors.textDim)),
-                ],
+                            fontSize: 13, color: AppColors.textDim)),
+                  ],
+                ),
               ),
             );
-          },
+          }).toList(),
         );
       },
     );
