@@ -1,17 +1,60 @@
-<!-- UML -->
+<!-- UML図 -->
 <div class="section-header">
-  <h1>UML・画面遷移図</h1>
-  <p>画面遷移やステートマシンの図を作成します</p>
+  <h1>UML図</h1>
+  <p>クラス図・シーケンス図・ユースケース図などのUMLダイアグラムを作成します</p>
 </div>
-<div class="toolbar">
-  <span class="toolbar-title">UMLエディタ</span>
+<div class="toolbar architecture-toolbar">
+  <div class="toolbar-left-group">
+    <span class="toolbar-title">UMLエディタ</span>
+    <div class="diagram-overlay-palette" id="uml-palette"></div>
+    <div class="diagram-style-controls" id="uml-style-controls">
+      <label class="diagram-style-field">
+        <span>文字サイズ</span>
+        <select id="uml-font-size">
+          <option value="12">12</option>
+          <option value="14" selected>14</option>
+          <option value="16">16</option>
+          <option value="18">18</option>
+          <option value="20">20</option>
+        </select>
+      </label>
+      <label class="diagram-style-field">
+        <span>文字色</span>
+        <details class="diagram-color-picker" id="uml-text-color-picker">
+          <summary class="diagram-color-button" id="uml-text-color-btn">
+            <span class="diagram-color-sample" id="uml-text-color-sample"></span>
+            <span class="diagram-color-text" id="uml-text-color-text">自動</span>
+            <span class="diagram-color-caret">▾</span>
+          </summary>
+          <div class="diagram-color-menu" id="uml-text-color-menu" aria-label="文字色の選択">
+            <button type="button" class="diagram-color-auto-row diagram-color-option" data-color="" data-label="自動">
+              <span class="diagram-color-option-swatch diagram-color-option-auto"></span>
+              <span>自動</span>
+            </button>
+            <div class="diagram-color-divider"></div>
+            <div class="diagram-color-group-label">テーマの色</div>
+            <div class="diagram-color-theme-row" id="uml-theme-row"></div>
+            <div class="diagram-color-shade-grid" id="uml-shade-grid"></div>
+            <div class="diagram-color-group-label">標準の色</div>
+            <div class="diagram-color-standard-row" id="uml-standard-row"></div>
+            <button type="button" class="diagram-color-other-btn" id="uml-other-color-btn">
+              <span class="diagram-color-other-icon">🎨</span>
+              <span>その他の色(M)...</span>
+            </button>
+          </div>
+        </details>
+      </label>
+    </div>
+  </div>
+  <div class="toolbar-spacer"></div>
   <button class="btn btn-sm btn-secondary" onclick="app.uml.clearAll()">🗑 クリア</button>
   <button class="btn btn-sm btn-secondary" onclick="app.uml.undoLastAction()">↩ 一つ戻る</button>
+  <button class="btn btn-sm btn-secondary" onclick="app.uml.redoLastAction()">↪ 一つ先に戻る</button>
+  <button class="btn btn-sm btn-secondary" onclick="app.uml.autoLayout()">📐 自動配置</button>
   <div class="toolbar-sep"></div>
   <button class="btn btn-sm btn-primary" onclick="app.uml.exportSVG()">📥 SVGエクスポート</button>
 </div>
-<div class="diagram-workspace">
-  <div class="diagram-palette" id="uml-palette"></div>
+<div class="diagram-workspace architecture-workspace">
   <div class="diagram-canvas" id="uml-canvas">
     <svg class="connections" id="uml-svg"></svg>
   </div>
