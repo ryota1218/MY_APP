@@ -1,0 +1,16 @@
+<!-- Layout -->
+<div class="section-header">
+  <h1>画面レイアウト</h1>
+  <p>ワイヤーフレームをドラッグ＆ドロップで作成します</p>
+</div>
+<div class="toolbar">
+  <span class="toolbar-title">レイアウトエディタ</span>
+  <button class="btn btn-sm btn-secondary" onclick="app.layout.clearAll()">🗑 クリア</button>
+  <button class="btn btn-sm btn-secondary" onclick="app.layout.undoLastAction()">↩ 一つ戻る</button>
+  <div class="toolbar-sep"></div>
+  <button class="btn btn-sm btn-primary" onclick="app.layout.exportPNG()">📥 エクスポート</button>
+</div>
+<div class="diagram-workspace">
+  <div class="diagram-palette" id="layout-palette"></div>
+  <div class="layout-canvas" id="layout-canvas"></div>
+</div>

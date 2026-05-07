@@ -1,0 +1,18 @@
+<!-- UML -->
+<div class="section-header">
+  <h1>UML・画面遷移図</h1>
+  <p>画面遷移やステートマシンの図を作成します</p>
+</div>
+<div class="toolbar">
+  <span class="toolbar-title">UMLエディタ</span>
+  <button class="btn btn-sm btn-secondary" onclick="app.uml.clearAll()">🗑 クリア</button>
+  <button class="btn btn-sm btn-secondary" onclick="app.uml.undoLastAction()">↩ 一つ戻る</button>
+  <div class="toolbar-sep"></div>
+  <button class="btn btn-sm btn-primary" onclick="app.uml.exportSVG()">📥 SVGエクスポート</button>
+</div>
+<div class="diagram-workspace">
+  <div class="diagram-palette" id="uml-palette"></div>
+  <div class="diagram-canvas" id="uml-canvas">
+    <svg class="connections" id="uml-svg"></svg>
+  </div>
+</div>

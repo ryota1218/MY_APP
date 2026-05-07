@@ -1,0 +1,23 @@
+/* ER Diagram */
+.er-entity {
+  position: absolute; min-width: 180px;
+  background: var(--bg-secondary); border: 2px solid var(--border);
+  border-radius: var(--radius-sm); z-index: 10;
+  cursor: move; user-select: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.er-entity:hover { border-color: var(--accent2); }
+.er-entity.selected { border-color: var(--accent2); box-shadow: 0 0 20px rgba(6,182,212,0.2); }
+.er-entity-header {
+  padding: 10px 14px; font-weight: 600; font-size: 0.85rem;
+  background: linear-gradient(135deg, rgba(6,182,212,0.15), rgba(124,58,237,0.1));
+  border-bottom: 1px solid var(--border);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+.er-entity-attrs { padding: 8px 0; }
+.er-attr {
+  padding: 5px 14px; font-size: 0.8rem; display: flex; gap: 8px;
+  color: var(--text-dim);
+}
+.er-attr .attr-key { color: var(--warn); }
+.er-attr .attr-type { color: var(--accent2); margin-left: auto; font-size: 0.75rem; }
