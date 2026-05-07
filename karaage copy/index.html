@@ -20,7 +20,28 @@
       <a data-tool="proposal"><span class="nav-icon">💡</span><span>技術スタック提案</span></a>
       <a data-tool="requirements"><span class="nav-icon">📋</span><span>要件定義書</span></a>
       <a data-tool="architecture"><span class="nav-icon">🏗️</span><span>システム構成図</span></a>
-      <a data-tool="uml"><span class="nav-icon">🔄</span><span>UML・画面遷移図</span></a>
+      <div class="nav-has-submenu">
+        <a data-tool="uml" id="uml-nav-trigger"><span class="nav-icon">📐</span><span>UML図</span><span class="nav-arrow">▶</span></a>
+        <div class="nav-submenu" id="uml-submenu">
+          <div class="nav-submenu-title">UML図の種類</div>
+          <div class="nav-submenu-group">■構造図</div>
+          <a data-tool="uml" data-uml-type="class">クラス図</a>
+          <a data-tool="uml" data-uml-type="object">オブジェクト図</a>
+          <a data-tool="uml" data-uml-type="component">コンポーネント図</a>
+          <a data-tool="uml" data-uml-type="deployment">配置図</a>
+          <a data-tool="uml" data-uml-type="composite">コンポジット構造図</a>
+          <a data-tool="uml" data-uml-type="package">パッケージ図</a>
+          <div class="nav-submenu-group">■振る舞い図</div>
+          <a data-tool="uml" data-uml-type="activity">アクティビティ図</a>
+          <a data-tool="uml" data-uml-type="state">ステートマシン図</a>
+          <a data-tool="uml" data-uml-type="usecase">ユースケース図</a>
+          <a data-tool="uml" data-uml-type="communication">コミュニケーション図</a>
+          <a data-tool="uml" data-uml-type="sequence">シーケンス図</a>
+          <a data-tool="uml" data-uml-type="interaction">相互作用図</a>
+          <a data-tool="uml" data-uml-type="timing">タイミング図</a>
+        </div>
+      </div>
+      <a data-tool="screen-transition"><span class="nav-icon">🔄</span><span>画面遷移図</span></a>
       <a data-tool="layout"><span class="nav-icon">📐</span><span>画面レイアウト</span></a>
       <a data-tool="erdiagram"><span class="nav-icon">🗃️</span><span>E-R図</span></a>
       <a data-tool="gantt"><span class="nav-icon">📅</span><span>ガントチャート</span></a>
