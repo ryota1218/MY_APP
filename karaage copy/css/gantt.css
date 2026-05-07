@@ -1,57 +1,205 @@
-/* Gantt Chart */
+/* ===== 上タブ ===== */
+.top-tabs {
+  display: flex;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  background: var(--bg-secondary);
+}
+
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 12px;
+  cursor: pointer;
+  border-right: 1px solid var(--border);
+}
+
+.tab:last-child {
+  border-right: none;
+}
+
+.tab.active {
+  background: var(--bg-card);
+  font-weight: bold;
+}
+
+/* ===== ガント全体 ===== */
 .gantt-container {
-  display: flex; height: calc(100vh - 220px);
-  background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: var(--radius); overflow: hidden;
+  display: flex;
+  height: calc(100vh - 120px);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  overflow: hidden;
 }
+
+/* ===== 左：タスク ===== */
 .gantt-tasks {
-  width: 300px; flex-shrink: 0; border-right: 1px solid var(--border);
+  width: 220px;
+  border-right: 1px solid var(--border);
   overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--bg-secondary);
 }
+
+/* ヘッダー */
 .gantt-tasks-header {
-  display: grid; grid-template-columns: 1fr 80px 80px;
-  padding: 12px 16px; font-size: 0.8rem; font-weight: 600;
-  color: var(--text-dim); background: var(--bg-secondary);
+  display: grid;
+  grid-template-columns: 1fr 70px 70px;
+  padding: 8px 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
   border-bottom: 1px solid var(--border);
 }
+
+/* 行 */
 .gantt-task-row {
-  display: grid; grid-template-columns: 1fr 80px 80px;
-  padding: 10px 16px; font-size: 0.82rem; align-items: center;
-  border-bottom: 1px solid var(--border); cursor: pointer;
-  transition: var(--transition);
+  display: grid;
+  grid-template-columns: 1fr 70px 70px;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  align-items: center;
+  height: 32px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
 }
-.gantt-task-row:hover { background: var(--bg-glass); }
+
+.gantt-task-row:hover {
+  background: var(--bg-glass);
+}
+
 .gantt-task-row.phase {
-  background: rgba(124,58,237,0.08); font-weight: 600;
+  background: rgba(124,58,237,0.08);
+  font-weight: bold;
 }
+
+/* ===== 右：タイムライン ===== */
 .gantt-timeline {
-  flex: 1; overflow-x: auto; overflow-y: auto; position: relative;
+  flex: 1;
+  overflow: auto;
+  position: relative;
 }
+
+/* 日付ヘッダー */
 .gantt-timeline-header {
-  display: flex; position: sticky; top: 0; z-index: 5;
-  background: var(--bg-secondary); border-bottom: 1px solid var(--border);
+  display: flex;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
 }
+
+/* 日付セル */
 .gantt-day {
-  min-width: 36px; text-align: center; padding: 12px 0;
-  font-size: 0.7rem; color: var(--text-muted);
-  border-right: 1px solid rgba(255,255,255,0.03);
+  min-width: 32px;
+  text-align: center;
+  padding: 8px 0;
+  font-size: 0.65rem;
+  border-right: 1px solid rgba(0,0,0,0.08);
 }
-.gantt-day.weekend { background: rgba(255,255,255,0.02); }
-.gantt-bars { position: relative; }
+
+/* ===== バー ===== */
+.gantt-bars {
+  position: relative;
+}
+
 .gantt-bar-row {
-  height: 41px; position: relative;
-  border-bottom: 1px solid rgba(255,255,255,0.03);
+  height: 32px;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  position: relative;
 }
+
 .gantt-bar {
-  position: absolute; height: 24px; top: 8px;
-  border-radius: 6px; min-width: 20px;
+  position: absolute;
+  height: 18px;
+  top: 6px;
+  border-radius: 4px;
   background: linear-gradient(135deg, var(--accent), #6d28d9);
-  cursor: pointer; transition: box-shadow 0.2s;
-  display: flex; align-items: center; padding: 0 8px;
-  font-size: 0.7rem; color: white; white-space: nowrap; overflow: hidden;
+  color: white;
+  font-size: 0.65rem;
+  padding: 0 6px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
 }
-.gantt-bar:hover { box-shadow: 0 2px 12px rgba(124,58,237,0.4); }
-.gantt-bar.phase-bar {
-  background: linear-gradient(135deg, rgba(124,58,237,0.3), rgba(109,40,217,0.3));
-  border: 1px solid rgba(124,58,237,0.5); height: 8px; top: 16px; border-radius: 4px;
+
+/* ===== スクロールバー ===== */
+.gantt-tasks::-webkit-scrollbar,
+.gantt-timeline::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.gantt-tasks::-webkit-scrollbar-thumb,
+.gantt-timeline::-webkit-scrollbar-thumb {
+  background: rgba(120,120,120,0.4);
+  border-radius: 6px;
+}
+
+.gantt-tasks,
+.gantt-timeline {
+  scrollbar-width: thin;
+}
+
+.gantt-bar {
+  user-select: none;
+}
+
+.gantt-bar:active {
+  cursor: grabbing;
+}
+
+/* ===== ガント全体を白に ===== */
+.gantt-container {
+  background: #ffffff;
+  color: #333;
+}
+
+/* 左タスク側 */
+.gantt-tasks {
+  background: #fafafa;
+  color: #333;
+}
+
+/* ヘッダー */
+.gantt-tasks-header {
+  background: #f0f0f0;
+  color: #555;
+}
+
+/* ===== タイムライン背景（重要） ===== */
+.gantt-timeline {
+  background: #ffffff;
+}
+
+/* 縦グリッド（1日ごとの線） */
+.gantt-bars {
+  position: relative;
+  background-image: linear-gradient(
+    to right,
+    rgba(0,0,0,0.06) 1px,
+    transparent 1px
+  );
+  background-size: 36px 100%;
+}
+
+/* 横グリッド */
+.gantt-bar-row {
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+
+/* 日付ヘッダー */
+.gantt-timeline-header {
+  background: #f8f8f8;
+  color: #444;
+}
+
+/* 土日少し色変える */
+.gantt-day.weekend {
+  background: #f3f4f6;
+}
+
+/* ===== バーを少し濃くして見やすく ===== */
+.gantt-bar {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
