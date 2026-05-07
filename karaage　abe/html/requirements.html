@@ -1,0 +1,15 @@
+<!-- Requirements -->
+<div class="section-header">
+  <h1>要件定義書</h1>
+  <p>テンプレートに沿って要件定義書を作成・エクスポートできます</p>
+</div>
+<div class="toolbar">
+  <span class="toolbar-title">要件定義書エディタ</span>
+  <button class="btn btn-sm btn-secondary" onclick="app.requirements.addSection()">＋ セクション追加</button>
+  <div class="toolbar-sep"></div>
+  <button class="btn btn-sm btn-primary" onclick="app.requirements.exportDoc()">📄 エクスポート</button>
+</div>
+<div class="req-editor">
+  <div class="req-nav" id="req-nav"></div>
+  <div class="req-content" id="req-content"></div>
+</div>

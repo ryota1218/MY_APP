@@ -1,0 +1,473 @@
+/* Diagram Style Controls */
+.diagram-style-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.diagram-style-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-glass);
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+.diagram-style-field span {
+  white-space: nowrap;
+}
+.diagram-style-field select,
+.diagram-style-field input[type="color"] {
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text);
+  border-radius: 6px;
+  font: inherit;
+}
+.diagram-style-field select {
+  padding: 4px 8px;
+}
+.diagram-style-field input[type="color"] {
+  width: 34px;
+  height: 28px;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* Color Picker */
+.diagram-color-picker {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.diagram-color-picker > summary {
+  list-style: none;
+}
+.diagram-color-picker > summary::-webkit-details-marker {
+  display: none;
+}
+.diagram-color-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 118px;
+  padding: 5px 9px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(24,31,48,0.98), rgba(16,20,33,0.98));
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+}
+.diagram-color-button:hover {
+  border-color: rgba(167,139,250,0.65);
+  box-shadow: 0 0 0 1px rgba(167,139,250,0.15);
+}
+.diagram-color-sample {
+  width: 13px;
+  height: 13px;
+  border-radius: 2px;
+  background: #e5e7eb;
+  border: 1px solid rgba(255,255,255,0.18);
+  flex-shrink: 0;
+}
+.diagram-color-text {
+  line-height: 1;
+}
+.diagram-color-caret {
+  margin-left: 2px;
+  font-size: 0.68rem;
+  color: var(--text-dim);
+}
+.diagram-color-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 80;
+  width: 272px;
+  padding: 10px 10px 8px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,247,250,0.98));
+  color: #111827;
+  box-shadow: 0 12px 24px rgba(0,0,0,0.45);
+}
+.diagram-color-picker[open] .diagram-color-menu {
+  display: block;
+}
+.diagram-color-picker.open .diagram-color-menu {
+  display: block;
+}
+.diagram-color-menu.open {
+  display: block;
+}
+.diagram-color-group-label {
+  margin: 10px 0 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #111827;
+}
+.diagram-color-divider {
+  height: 1px;
+  margin: 8px 0 10px;
+  background: rgba(17,24,39,0.12);
+}
+.diagram-color-auto-row {
+  width: 100%;
+  margin: 0 0 4px;
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #111827;
+  cursor: pointer;
+}
+.diagram-color-auto-row:hover {
+  background: rgba(59,130,246,0.08);
+  border-color: rgba(59,130,246,0.18);
+}
+.diagram-color-theme-row {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.diagram-color-shade-grid {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.diagram-color-standard-row {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.diagram-color-option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 24px;
+  padding: 0;
+  border: 1px solid rgba(17,24,39,0.12);
+  border-radius: 5px;
+  background: transparent;
+  cursor: pointer;
+}
+.diagram-color-option:hover {
+  border-color: rgba(17,24,39,0.35);
+  transform: translateY(-1px);
+}
+.diagram-color-option-swatch {
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+}
+.diagram-color-option-auto {
+  background: linear-gradient(135deg, #ffffff, #cbd5e1);
+}
+.diagram-color-option.is-auto {
+  width: 100%;
+  height: 28px;
+  gap: 8px;
+  padding: 0 10px;
+  justify-content: flex-start;
+  color: var(--text);
+  border-radius: 8px;
+}
+.diagram-color-option.is-auto .diagram-color-option-swatch {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+.diagram-color-option.is-active {
+  outline: 2px solid #f59e0b;
+  outline-offset: 1px;
+}
+.diagram-color-theme-row .diagram-color-option,
+.diagram-color-standard-row .diagram-color-option {
+  height: 18px;
+  border-radius: 3px;
+}
+.diagram-color-theme-row .diagram-color-option-swatch,
+.diagram-color-standard-row .diagram-color-option-swatch {
+  border-radius: 2px;
+}
+.diagram-color-shade-column {
+  display: grid;
+  grid-template-rows: repeat(4, 1fr);
+  gap: 4px;
+}
+.diagram-color-shade-option {
+  width: 100%;
+  height: 21px;
+  border: 1px solid rgba(17,24,39,0.1);
+  border-radius: 3px;
+  cursor: pointer;
+}
+.diagram-color-shade-option:hover {
+  border-color: rgba(17,24,39,0.35);
+  transform: translateY(-1px);
+}
+.diagram-color-other-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+  padding: 8px 10px;
+  border: 1px solid rgba(17,24,39,0.12);
+  border-radius: 8px;
+  background: transparent;
+  color: #111827;
+  cursor: pointer;
+}
+.diagram-color-other-btn:hover {
+  background: rgba(59,130,246,0.08);
+  border-color: rgba(59,130,246,0.18);
+}
+.diagram-color-other-icon {
+  font-size: 0.95rem;
+}
+
+/* Diagram Workspace & Canvas */
+.diagram-workspace {
+  display: flex; gap: 16px; height: calc(100vh - 220px);
+}
+.architecture-workspace { display: block; height: calc(100vh - 270px); }
+.architecture-workspace .diagram-canvas {
+  height: 100%;
+}
+
+/* Diagram Palette */
+.diagram-palette {
+  width: 200px; flex-shrink: 0;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px;
+  overflow-y: auto;
+}
+.palette-title { font-size: 0.8rem; font-weight: 600; color: var(--text-dim); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+.palette-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: var(--radius-sm);
+  background: var(--bg-glass); border: 1px solid var(--border);
+  margin-bottom: 6px; cursor: grab; font-size: 0.85rem;
+  transition: var(--transition);
+}
+.palette-item:hover { border-color: var(--border-hover); background: rgba(124,58,237,0.08); }
+.palette-item .p-icon { font-size: 1.1rem; }
+
+/* Overlay Palette */
+.diagram-overlay-palette {
+  position: absolute; top: 14px; left: 14px; z-index: 30;
+  width: 230px; padding: 10px;
+  background: rgba(17, 24, 39, 0.9); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); backdrop-filter: blur(8px);
+}
+.palette-dropdown { position: relative; }
+.palette-dropdown-btn,
+.palette-action-btn {
+  width: 100%; text-align: left; font-size: 0.82rem; color: var(--text);
+  background: var(--bg-glass); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 9px 12px; cursor: pointer;
+  transition: var(--transition); font-family: inherit;
+}
+.palette-action-btn { margin-top: 8px; }
+.palette-dropdown-btn:hover,
+.palette-action-btn:hover {
+  border-color: var(--border-hover);
+  background: rgba(124,58,237,0.08);
+}
+.palette-action-btn.active {
+  background: linear-gradient(135deg, rgba(124,58,237,0.38), rgba(6,182,212,0.18));
+  border-color: rgba(167,139,250,0.9);
+  color: #ffffff;
+  box-shadow: 0 0 0 1px rgba(167,139,250,0.25), 0 8px 24px rgba(124,58,237,0.28);
+}
+.palette-dropdown-menu {
+  display: none;
+  position: absolute; top: calc(100% + 8px); left: 0;
+  width: 100%; padding: 10px;
+  background: var(--bg-secondary); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); box-shadow: var(--shadow);
+  grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;
+}
+.palette-dropdown-menu.open { display: grid; }
+.shape-option {
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; aspect-ratio: 1 / 1;
+  border-radius: var(--radius-sm); border: 1px solid var(--border);
+  background: var(--bg-glass); color: var(--text); cursor: pointer;
+  transition: var(--transition); font-size: 1.2rem;
+}
+.shape-option::after {
+  content: attr(data-label);
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 7px);
+  transform: translate(-50%, 4px);
+  opacity: 0;
+  pointer-events: none;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  color: var(--text);
+  background: rgba(10, 14, 26, 0.95);
+  border: 1px solid var(--border);
+  z-index: 60;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.shape-option:hover {
+  border-color: var(--border-hover);
+  background: rgba(124,58,237,0.12);
+  transform: translateY(-1px);
+}
+.shape-option:hover::after,
+.shape-option:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* Architecture Toolbar overrides */
+.architecture-toolbar {
+  gap: 10px !important;
+  height: auto !important;
+  padding: 12px !important;
+}
+.architecture-toolbar .btn {
+  font-size: 0.95rem !important;
+  padding: 8px 14px !important;
+  min-height: 38px !important;
+}
+.architecture-toolbar .toolbar-title {
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+}
+.architecture-toolbar .diagram-overlay-palette {
+  position: static; top: auto; left: auto; z-index: auto;
+  width: auto; padding: 0;
+  background: transparent; border: none;
+  border-radius: 0; backdrop-filter: none;
+  display: flex; align-items: center; gap: 10px;
+}
+.architecture-toolbar .palette-dropdown {
+  position: relative;
+  display: block;
+}
+.architecture-toolbar .palette-action-btn {
+  margin-top: 0;
+}
+.architecture-toolbar .palette-dropdown-btn,
+.architecture-toolbar .palette-action-btn {
+  width: auto;
+  min-width: 110px;
+  padding: 8px 12px;
+  white-space: nowrap;
+  font-size: 0.9rem !important;
+}
+.architecture-toolbar .palette-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: auto;
+  min-width: 200px;
+  padding: 10px;
+  margin: 0;
+  background: rgba(17, 24, 39, 0.95);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  z-index: 80;
+  gap: 8px;
+}
+.architecture-toolbar .shape-option {
+  font-size: 1.4rem !important;
+  padding: 10px !important;
+}
+.architecture-toolbar .diagram-style-controls {
+  display: flex;
+  gap: 14px;
+}
+.architecture-toolbar .diagram-style-field {
+  font-size: 0.9rem !important;
+}
+.architecture-toolbar .diagram-style-field select,
+.architecture-toolbar .diagram-style-field input {
+  font-size: 0.9rem !important;
+  padding: 6px 10px !important;
+  min-height: 32px !important;
+}
+.architecture-toolbar .diagram-color-button {
+  font-size: 0.9rem !important;
+  padding: 6px 10px !important;
+}
+.architecture-toolbar .toolbar-sep {
+  height: 24px !important;
+}
+
+
+
+/* Diagram Canvas */
+.diagram-canvas {
+  flex: 1; position: relative;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.diagram-canvas svg.connections {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 1;
+}
+
+/* Diagram Nodes */
+.diagram-node {
+  position: absolute; min-width: 120px;
+  background: var(--bg-secondary); border: 2px solid var(--border);
+  border-radius: var(--radius-sm); padding: 12px 16px;
+  cursor: move; z-index: 10; font-size: 0.85rem;
+  display: flex; align-items: center; gap: 8px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  user-select: none;
+}
+.diagram-node:hover { border-color: var(--accent); box-shadow: 0 0 20px rgba(124,58,237,0.2); }
+.diagram-node.selected { border-color: var(--accent); box-shadow: 0 0 20px rgba(124,58,237,0.3); }
+.diagram-node .node-icon { font-size: 1.2rem; }
+.diagram-node .node-label {
+  font-weight: 500; white-space: nowrap;
+  outline: none;
+}
+.diagram-node .node-label[contenteditable="true"] {
+  user-select: text;
+}
+.diagram-node .node-label.editing {
+  min-width: 64px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.06);
+  box-shadow: inset 0 0 0 1px rgba(124,58,237,0.55);
+  cursor: text;
+}
+.node-port {
+  position: absolute; width: 12px; height: 12px;
+  background: var(--accent); border: 2px solid var(--bg-secondary);
+  border-radius: 50%; cursor: crosshair; z-index: 20;
+  transition: transform 0.2s;
+}
+.node-port:hover { transform: scale(1.4); }
+.node-port.port-top { top: -6px; left: 50%; transform: translateX(-50%); }
+.node-port.port-bottom { bottom: -6px; left: 50%; transform: translateX(-50%); }
+.node-port.port-left { left: -6px; top: 50%; transform: translateY(-50%); }
+.node-port.port-right { right: -6px; top: 50%; transform: translateY(-50%); }

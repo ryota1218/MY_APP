@@ -1,0 +1,22 @@
+<!-- Gantt -->
+<div class="section-header">
+  <h1>ガントチャート</h1>
+  <p>プロジェクトのスケジュールを視覚的に管理します</p>
+</div>
+<div class="toolbar">
+  <span class="toolbar-title">ガントチャート</span>
+  <button class="btn btn-sm btn-secondary" onclick="app.gantt.addPhase()">＋ フェーズ追加</button>
+  <button class="btn btn-sm btn-secondary" onclick="app.gantt.addTask()">＋ タスク追加</button>
+  <div class="toolbar-sep"></div>
+  <button class="btn btn-sm btn-primary" onclick="app.gantt.exportCSV()">📥 CSVエクスポート</button>
+</div>
+<div class="gantt-container">
+  <div class="gantt-tasks">
+    <div class="gantt-tasks-header"><span>タスク名</span><span>開始日</span><span>終了日</span></div>
+    <div id="gantt-task-list"></div>
+  </div>
+  <div class="gantt-timeline">
+    <div class="gantt-timeline-header" id="gantt-header"></div>
+    <div class="gantt-bars" id="gantt-bars"></div>
+  </div>
+</div>

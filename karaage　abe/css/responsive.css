@@ -1,0 +1,43 @@
+/* Responsive */
+@media (max-width: 1024px) {
+  .sidebar { width: 60px; }
+  .sidebar nav a span:not(.nav-icon) { display: none; }
+  .logo span:not(.logo-icon) { display: none; }
+  .logo { padding: 20px 10px; justify-content: center; }
+  .proposal-layout { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: repeat(2,1fr); }
+  .diagram-overlay-palette { width: 200px; }
+  .architecture-toolbar .toolbar-left-group {
+    width: 100%;
+  }
+}
+
+/* Hamburger menu & overlay for small screens */
+.hamburger {
+  position: fixed; top: 12px; left: 12px;
+  width: 44px; height: 44px; border-radius: 10px; border: none;
+  background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+  color: var(--text); font-size: 1.2rem; display: none;
+  align-items: center; justify-content: center; z-index: 1200;
+  cursor: pointer; box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+}
+
+#menu-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+  display: none; z-index: 1100; backdrop-filter: blur(2px);
+}
+
+@media (max-width: 1024px) {
+  .hamburger { display: flex; }
+  /* Move sidebar to overlay panel */
+  .sidebar {
+    position: fixed; left: 0; top: 0; height: 100vh;
+    transform: translateX(-120%); transition: transform var(--transition);
+    width: var(--sidebar-w); z-index: 1150; box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  }
+  body.menu-open .sidebar { transform: translateX(0); }
+  body.menu-open #menu-overlay { display: block; }
+
+  /* Make main content scrollable behind overlay */
+  .main-content { height: 100vh; }
+}

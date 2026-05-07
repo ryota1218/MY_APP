@@ -1,0 +1,17 @@
+<!-- ER Diagram -->
+<div class="section-header">
+  <h1>E-R図</h1>
+  <p>エンティティとリレーションシップを視覚的に設計します</p>
+</div>
+<div class="toolbar">
+  <span class="toolbar-title">E-R図エディタ</span>
+  <button class="btn btn-sm btn-secondary" onclick="app.erdiagram.addEntity()">＋ エンティティ追加</button>
+  <button class="btn btn-sm btn-secondary" onclick="app.erdiagram.addRelation()">🔗 リレーション追加</button>
+  <button class="btn btn-sm btn-secondary" onclick="app.erdiagram.clearAll()">🗑 クリア</button>
+  <button class="btn btn-sm btn-secondary" onclick="app.erdiagram.undoLastAction()">↩ 一つ戻る</button>
+  <div class="toolbar-sep"></div>
+  <button class="btn btn-sm btn-primary" onclick="app.erdiagram.exportSVG()">📥 SVGエクスポート</button>
+</div>
+<div class="diagram-canvas" id="er-canvas" style="height:calc(100vh - 240px);">
+  <svg class="connections" id="er-svg"></svg>
+</div>

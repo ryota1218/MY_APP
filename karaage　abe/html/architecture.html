@@ -1,0 +1,60 @@
+<!-- Architecture -->
+<div class="section-header">
+</div>
+<div class="toolbar architecture-toolbar">
+  <div class="toolbar-left-group">
+    <div class="diagram-overlay-palette" id="arch-palette"></div>
+    <button class="btn btn-sm btn-secondary" onclick="app.architecture.clearAll()">クリア</button>
+    <button class="btn btn-sm btn-secondary" onclick="app.architecture.undoLastAction()">↩</button>
+    <button class="btn btn-sm btn-secondary" onclick="app.architecture.redoLastAction()">↪</button>
+    <button class="btn btn-sm btn-secondary" onclick="app.architecture.autoLayout()">🤖</button>
+    <div class="toolbar-sep"></div>
+    <div class="diagram-style-controls" id="arch-style-controls">
+      <label class="diagram-style-field">
+        <span>文字サイズ</span>
+        <select id="arch-font-size">
+          <option value="12">12</option>
+          <option value="14" selected>14</option>
+          <option value="16">16</option>
+          <option value="18">18</option>
+          <option value="20">20</option>
+        </select>
+      </label>
+      <label class="diagram-style-field">
+        <span>文字色</span>
+        <details class="diagram-color-picker" id="arch-text-color-picker">
+          <summary class="diagram-color-button" id="arch-text-color-btn">
+            <span class="diagram-color-sample" id="arch-text-color-sample"></span>
+            <span class="diagram-color-text" id="arch-text-color-text">自動</span>
+            <span class="diagram-color-caret">▾</span>
+          </summary>
+          <div class="diagram-color-menu" id="arch-text-color-menu" aria-label="文字色の選択">
+            <button type="button" class="diagram-color-auto-row diagram-color-option" data-color="" data-label="自動">
+              <span class="diagram-color-option-swatch diagram-color-option-auto"></span>
+              <span>自動</span>
+            </button>
+            <div class="diagram-color-divider"></div>
+            <div class="diagram-color-group-label">テーマの色</div>
+            <div class="diagram-color-theme-row" id="arch-theme-row"></div>
+            <div class="diagram-color-shade-grid" id="arch-shade-grid"></div>
+            <div class="diagram-color-group-label">標準の色</div>
+            <div class="diagram-color-standard-row" id="arch-standard-row"></div>
+            <button type="button" class="diagram-color-other-btn" id="arch-other-color-btn">
+              <span class="diagram-color-other-icon">🎨</span>
+              <span>その他の色(M)...</span>
+            </button>
+          </div>
+        </details>
+      </label>
+    </div>
+  </div>
+  <div class="toolbar-spacer"></div>
+  <button class="btn btn-sm btn-secondary" id="arch-shape-add-btn" onclick="event.stopPropagation(); openArchShapeMenu()">🔳 図形を追加</button>
+  <div class="toolbar-sep"></div>
+  <button class="btn btn-sm btn-primary" onclick="app.architecture.exportSVG()">📥 SVGエクスポート</button>
+</div>
+<div class="diagram-workspace architecture-workspace">
+  <div class="diagram-canvas" id="arch-canvas">
+    <svg class="connections" id="arch-svg"></svg>
+  </div>
+</div>
