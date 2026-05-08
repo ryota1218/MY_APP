@@ -1,29 +1,204 @@
 /* ===== Diagram Tool (Architecture + UML) ===== */
 const archComponents = [
-  { icon:'🌐', label:'Webサーバー', color:'#7c3aed' },
-  { icon:'🗄️', label:'データベース', color:'#06b6d4' },
-  { icon:'⚙️', label:'APIサーバー', color:'#10b981' },
-  { icon:'📦', label:'キャッシュ', color:'#f59e0b' },
-  { icon:'☁️', label:'CDN', color:'#8b5cf6' },
-  { icon:'🔐', label:'認証', color:'#ef4444' },
-  { icon:'📨', label:'メッセージキュー', color:'#ec4899' },
-  { icon:'📊', label:'ログ/監視', color:'#14b8a6' },
-  { icon:'💾', label:'ストレージ', color:'#6366f1' },
-  { icon:'🔄', label:'ロードバランサー', color:'#f97316' },
-  { icon:'👤', label:'クライアント', color:'#64748b' },
-  { icon:'📱', label:'モバイル', color:'#a855f7' },
+  // ── サーバー / コンピュート ──
+  { icon:'<i data-lucide="globe" class="node-lucide-icon"></i>', label:'Webサーバー', color:'#7c3aed' },
+  { icon:'<i data-lucide="server" class="node-lucide-icon"></i>', label:'APIサーバー', color:'#10b981' },
+  { icon:'<i data-lucide="monitor" class="node-lucide-icon"></i>', label:'アプリサーバー', color:'#3b82f6' },
+  { icon:'<i data-lucide="zap" class="node-lucide-icon"></i>', label:'Lambda/Function', color:'#f59e0b' },
+  { icon:'<i data-lucide="container" class="node-lucide-icon"></i>', label:'コンテナ', color:'#06b6d4' },
+  // ── データ / ストレージ ──
+  { icon:'<i data-lucide="database" class="node-lucide-icon"></i>', label:'データベース', color:'#06b6d4' },
+  { icon:'<i data-lucide="hard-drive" class="node-lucide-icon"></i>', label:'ストレージ', color:'#6366f1' },
+  { icon:'<i data-lucide="box" class="node-lucide-icon"></i>', label:'キャッシュ(Redis)', color:'#ef4444' },
+  { icon:'<i data-lucide="search" class="node-lucide-icon"></i>', label:'検索エンジン', color:'#f97316' },
+  // ── ネットワーク / セキュリティ ──
+  { icon:'<i data-lucide="network" class="node-lucide-icon"></i>', label:'ロードバランサー', color:'#f97316' },
+  { icon:'<i data-lucide="cloud" class="node-lucide-icon"></i>', label:'CDN', color:'#8b5cf6' },
+  { icon:'<i data-lucide="shield-check" class="node-lucide-icon"></i>', label:'ファイアウォール', color:'#ef4444' },
+  { icon:'<i data-lucide="lock" class="node-lucide-icon"></i>', label:'認証/認可', color:'#ec4899' },
+  { icon:'<i data-lucide="waypoints" class="node-lucide-icon"></i>', label:'APIゲートウェイ', color:'#14b8a6' },
+  { icon:'<i data-lucide="at-sign" class="node-lucide-icon"></i>', label:'DNS', color:'#64748b' },
+  { icon:'<i data-lucide="shield" class="node-lucide-icon"></i>', label:'WAF', color:'#dc2626' },
+  { icon:'<i data-lucide="key-round" class="node-lucide-icon"></i>', label:'VPN', color:'#7c3aed' },
+  { icon:'<i data-lucide="arrow-left-right" class="node-lucide-icon"></i>', label:'リバースプロキシ', color:'#0ea5e9' },
+  // ── メッセージング / 非同期 ──
+  { icon:'<i data-lucide="mail" class="node-lucide-icon"></i>', label:'メッセージキュー', color:'#ec4899' },
+  { icon:'<i data-lucide="webhook" class="node-lucide-icon"></i>', label:'Webhook', color:'#a855f7' },
+  { icon:'<i data-lucide="clock" class="node-lucide-icon"></i>', label:'バッチ/Cron', color:'#64748b' },
+  // ── 監視 / ログ ──
+  { icon:'<i data-lucide="activity" class="node-lucide-icon"></i>', label:'監視/APM', color:'#14b8a6' },
+  { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ログ収集', color:'#6366f1' },
+  // ── CI/CD / 開発ツール ──
+  { icon:'<i data-lucide="git-branch" class="node-lucide-icon"></i>', label:'CI/CDパイプライン', color:'#f59e0b' },
+  // ── 外部連携 / クライアント ──
+  { icon:'<i data-lucide="plug" class="node-lucide-icon"></i>', label:'外部API', color:'#0ea5e9' },
+  { icon:'<i data-lucide="bell" class="node-lucide-icon"></i>', label:'通知サービス', color:'#f43f5e' },
+  { icon:'<i data-lucide="user" class="node-lucide-icon"></i>', label:'クライアント', color:'#64748b' },
+  { icon:'<i data-lucide="smartphone" class="node-lucide-icon"></i>', label:'モバイル', color:'#a855f7' },
+  { icon:'<i data-lucide="layout-dashboard" class="node-lucide-icon"></i>', label:'管理画面', color:'#3b82f6' },
 ];
 const umlComponents = [
-  { icon:'⬜', label:'画面', color:'#7c3aed' },
+  { icon:'📦', label:'クラス', color:'#7c3aed' },
+  { icon:'🔷', label:'インターフェース', color:'#3b82f6' },
+  { icon:'📂', label:'パッケージ', color:'#06b6d4' },
+  { icon:'👤', label:'アクター', color:'#10b981' },
+  { icon:'⭕', label:'ユースケース', color:'#f59e0b' },
+  { icon:'📜', label:'ノート', color:'#8b5cf6' },
+  { icon:'⬜', label:'オブジェクト', color:'#14b8a6' },
+  { icon:'🔄', label:'ステート', color:'#6366f1' },
+  { icon:'▶️', label:'アクティビティ', color:'#ec4899' },
+  { icon:'📨', label:'メッセージ', color:'#f97316' },
+];
+
+/* ===== UML Diagram Sub-Types ===== */
+const umlDiagramTypes = {
+  class: {
+    label: 'クラス図',
+    components: [
+      { icon:'📦', label:'クラス', color:'#7c3aed' },
+      { icon:'🔷', label:'インターフェース', color:'#3b82f6' },
+      { icon:'📦', label:'抽象クラス', color:'#8b5cf6' },
+      { icon:'📋', label:'列挙型', color:'#06b6d4' },
+      { icon:'📂', label:'パッケージ', color:'#f59e0b' },
+      { icon:'📜', label:'ノート', color:'#64748b' },
+    ],
+  },
+  object: {
+    label: 'オブジェクト図',
+    components: [
+      { icon:'⬜', label:'オブジェクト', color:'#14b8a6' },
+      { icon:'🔗', label:'リンク', color:'#7c3aed' },
+      { icon:'📦', label:'クラス', color:'#3b82f6' },
+      { icon:'📜', label:'ノート', color:'#64748b' },
+    ],
+  },
+  package: {
+    label: 'パッケージ図',
+    components: [
+      { icon:'📂', label:'パッケージ', color:'#06b6d4' },
+      { icon:'📦', label:'クラス', color:'#7c3aed' },
+      { icon:'🔷', label:'インターフェース', color:'#3b82f6' },
+      { icon:'📎', label:'依存', color:'#f59e0b' },
+      { icon:'📜', label:'ノート', color:'#64748b' },
+    ],
+  },
+  composite: {
+    label: 'コンポジット構造図',
+    components: [
+      { icon:'📦', label:'クラス/コンポーネント', color:'#7c3aed' },
+      { icon:'🔌', label:'ポート', color:'#10b981' },
+      { icon:'🧩', label:'パート', color:'#06b6d4' },
+      { icon:'🔷', label:'インターフェース', color:'#3b82f6' },
+      { icon:'🔗', label:'コネクタ', color:'#f59e0b' },
+      { icon:'📜', label:'ノート', color:'#64748b' },
+    ],
+  },
+  component: {
+    label: 'コンポーネント図',
+    components: [
+      { icon:'🧩', label:'コンポーネント', color:'#7c3aed' },
+      { icon:'🔷', label:'インターフェース', color:'#3b82f6' },
+      { icon:'🔌', label:'ポート', color:'#10b981' },
+      { icon:'📂', label:'パッケージ', color:'#06b6d4' },
+      { icon:'📜', label:'ノート', color:'#64748b' },
+    ],
+  },
+  deployment: {
+    label: '配置図',
+    components: [
+      { icon:'🖥️', label:'ノード', color:'#7c3aed' },
+      { icon:'📱', label:'デバイス', color:'#a855f7' },
+      { icon:'🌐', label:'実行環境', color:'#06b6d4' },
+      { icon:'🧩', label:'コンポーネント', color:'#10b981' },
+      { icon:'💾', label:'成果物', color:'#f59e0b' },
+      { icon:'📜', label:'ノート', color:'#64748b' },
+    ],
+  },
+  usecase: {
+    label: 'ユースケース図',
+    components: [
+      { icon:'👤', label:'アクター', color:'#10b981' },
+      { icon:'⭕', label:'ユースケース', color:'#f59e0b' },
+      { icon:'🔲', label:'システム境界', color:'#7c3aed' },
+      { icon:'📜', label:'ノート', color:'#64748b' },
+    ],
+  },
+  activity: {
+    label: 'アクティビティ図',
+    components: [
+      { icon:'▶️', label:'アクション', color:'#06b6d4' },
+      { icon:'🔵', label:'開始ノード', color:'#10b981' },
+      { icon:'🔴', label:'終了ノード', color:'#ef4444' },
+      { icon:'◇', label:'分岐/合流', color:'#f59e0b' },
+      { icon:'═', label:'フォーク/ジョイン', color:'#8b5cf6' },
+      { icon:'📝', label:'オブジェクトノード', color:'#7c3aed' },
+      { icon:'📜', label:'ノート', color:'#64748b' },
+    ],
+  },
+  state: {
+    label: 'ステートマシン図',
+    components: [
+      { icon:'🔄', label:'ステート', color:'#6366f1' },
+      { icon:'🔵', label:'初期状態', color:'#10b981' },
+      { icon:'🔴', label:'終了状態', color:'#ef4444' },
+      { icon:'◇', label:'選択', color:'#f59e0b' },
+      { icon:'📦', label:'複合ステート', color:'#7c3aed' },
+      { icon:'📜', label:'ノート', color:'#64748b' },
+    ],
+  },
+  sequence: {
+    label: 'シーケンス図',
+    components: [
+      { icon:'👤', label:'ライフライン', color:'#7c3aed' },
+      { icon:'📨', label:'メッセージ', color:'#06b6d4' },
+      { icon:'↩️', label:'返信', color:'#10b981' },
+      { icon:'🔲', label:'フラグメント', color:'#f59e0b' },
+      { icon:'📜', label:'ノート', color:'#64748b' },
+    ],
+  },
+  communication: {
+    label: 'コミュニケーション図',
+    components: [
+      { icon:'⬜', label:'オブジェクト', color:'#14b8a6' },
+      { icon:'📨', label:'メッセージ', color:'#06b6d4' },
+      { icon:'🔗', label:'リンク', color:'#7c3aed' },
+      { icon:'📜', label:'ノート', color:'#64748b' },
+    ],
+  },
+  timing: {
+    label: 'タイミング図',
+    components: [
+      { icon:'👤', label:'ライフライン', color:'#7c3aed' },
+      { icon:'🔄', label:'状態/条件', color:'#6366f1' },
+      { icon:'⏱️', label:'時間制約', color:'#f59e0b' },
+      { icon:'📨', label:'メッセージ', color:'#06b6d4' },
+      { icon:'📜', label:'ノート', color:'#64748b' },
+    ],
+  },
+  interaction: {
+    label: '相互作用図',
+    components: [
+      { icon:'🔲', label:'相互作用', color:'#7c3aed' },
+      { icon:'👤', label:'ライフライン', color:'#3b82f6' },
+      { icon:'📨', label:'メッセージ', color:'#06b6d4' },
+      { icon:'▶️', label:'制御フロー', color:'#10b981' },
+      { icon:'📜', label:'ノート', color:'#64748b' },
+    ],
+  },
+};
+const screenTransitionComponents = [
+  { icon:'🖥️', label:'画面', color:'#7c3aed' },
   { icon:'🔵', label:'開始', color:'#10b981' },
   { icon:'🔴', label:'終了', color:'#ef4444' },
   { icon:'◇', label:'分岐', color:'#f59e0b' },
-  { icon:'▶️', label:'アクション', color:'#06b6d4' },
-  { icon:'📋', label:'フォーム', color:'#8b5cf6' },
+  { icon:'📋', label:'フォーム', color:'#06b6d4' },
+  { icon:'🪟', label:'モーダル', color:'#8b5cf6' },
   { icon:'📊', label:'ダッシュボード', color:'#14b8a6' },
-  { icon:'⚙️', label:'設定', color:'#6366f1' },
-  { icon:'🔔', label:'通知', color:'#ec4899' },
-  { icon:'📝', label:'入力', color:'#f97316' },
+  { icon:'⚙️', label:'設定画面', color:'#6366f1' },
+  { icon:'🔔', label:'通知/アラート', color:'#ec4899' },
+  { icon:'🔐', label:'認証画面', color:'#ef4444' },
+  { icon:'📝', label:'入力画面', color:'#f97316' },
+  { icon:'📄', label:'一覧画面', color:'#64748b' },
 ];
 
 class DiagramTool {
@@ -87,6 +262,7 @@ class DiagramTool {
       this.initPalette();
       this.initCanvasEvents();
       this.initTextStyleControls();
+      this.initPropertyPanel();
     }
   }
   initPalette() {
@@ -96,9 +272,10 @@ class DiagramTool {
         <div class="palette-dropdown">
           <button type="button" class="palette-dropdown-btn" id="${this.prefix}-shape-toggle">◽ 図形を追加</button>
           <div class="palette-dropdown-menu" id="${this.prefix}-shape-menu">
-            ${this.components.map((c, i) => `<button type="button" class="shape-option" data-idx="${i}" data-label="${c.label}" aria-label="${c.label}" title="${c.label}">${c.icon}</button>`).join('')}
+            ${this.components.map((c, i) => `<button type="button" class="shape-option" draggable="true" data-idx="${i}" data-label="${c.label}" aria-label="${c.label}" title="${c.label}">${c.icon}</button>`).join('')}
           </div>
         </div>
+        <button type="button" class="palette-action-btn sidebar-toggle-btn" id="${this.prefix}-sidebar-toggle" title="サイドバー表示切替">☰</button>
         <button type="button" class="palette-action-btn" id="${this.prefix}-connect-mode">🔗 接続モード</button>`;
 
       const toggleButton = document.getElementById(this.prefix + '-shape-toggle');
@@ -107,18 +284,23 @@ class DiagramTool {
         e.stopPropagation();
         shapeMenu.classList.toggle('open');
       });
-      // If this is the architecture toolbar, remove the left-side toggle button
-      // to avoid duplicate "図形を追加" controls — the toolbar button will
-      // toggle the same menu instead.
-      if (this.prefix === 'arch') {
-        toggleButton.remove();
-      }
+      this.openPaletteMenu = () => {
+        shapeMenu.classList.toggle('open');
+      };
+      // Move the dropdown menu to the inline shapes group
+      toggleButton.remove();
+      const container = this.canvas.closest('.tool-section');
+      const inlineGroup = container ? container.querySelector('.toolbar-inline-shapes-group') : null;
+      if (inlineGroup) inlineGroup.appendChild(shapeMenu);
       shapeMenu.querySelectorAll('.shape-option').forEach(option => {
         option.addEventListener('click', () => {
           const idx = parseInt(option.dataset.idx, 10);
           if (isNaN(idx)) return;
           this.addNodeFromPalette(idx);
           shapeMenu.classList.remove('open');
+        });
+        option.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('text/plain', option.dataset.idx);
         });
       });
       // Close menu only when clicking outside palette, menu, and toolbar button
@@ -163,6 +345,41 @@ class DiagramTool {
       this.canvas.style.cursor = this.connectMode ? 'crosshair' : 'default';
       showToast(this.connectMode ? '接続モード: ONー ノードをクリックして接続' : '接続モード: OFF');
     });
+
+    // Sidebar toggle button
+    const sidebarToggle = document.getElementById(this.prefix + '-sidebar-toggle');
+    if (sidebarToggle) {
+      sidebarToggle.addEventListener('click', () => {
+        document.body.classList.toggle('sidebar-collapsed');
+      });
+    }
+
+    // Inline shape strip — show component icons directly in toolbar when space allows
+    const inlineStrip = document.getElementById(this.prefix + '-inline-shapes');
+    if (inlineStrip) {
+      inlineStrip.innerHTML = this.components.map((c, i) =>
+        `<button type="button" class="inline-shape-btn" draggable="true" data-idx="${i}" title="${c.label}" aria-label="${c.label}"><span class="inline-shape-icon">${c.icon}</span></button>`
+      ).join('');
+      inlineStrip.querySelectorAll('.inline-shape-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.dataset.idx, 10);
+          if (!isNaN(idx)) this.addNodeFromPalette(idx);
+        });
+        btn.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('text/plain', btn.dataset.idx);
+        });
+      });
+    }
+    if (window.lucide) {
+      if (palette) lucide.createIcons({ root: palette });
+      const container = this.canvas.closest('.tool-section');
+      const inlineGroup = container ? container.querySelector('.toolbar-inline-shapes-group') : null;
+      if (inlineGroup) {
+        lucide.createIcons({ root: inlineGroup });
+      } else if (inlineStrip) {
+        lucide.createIcons({ root: inlineStrip });
+      }
+    }
   }
   addNodeFromPalette(idx) {
     const comp = this.components[idx];
@@ -191,8 +408,26 @@ class DiagramTool {
     this.canvas.addEventListener('click', e => {
       if (e.target === this.canvas || e.target === this.svg) {
         this.deselectAll();
+        this.closePropertyPanel();
       }
     });
+
+    // UIボタンのイベントバインディング
+    const container = this.canvas.closest('.tool-section');
+    if (container) {
+      container.querySelectorAll('[data-action]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          const action = btn.dataset.action;
+          if (action === 'openPaletteMenu') {
+            e.stopPropagation();
+          }
+          if (typeof this[action] === 'function') {
+            this[action]();
+          }
+        });
+      });
+    }
+
     document.addEventListener('keydown', e => {
       const target = e.target;
       const isEditingField = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable);
@@ -204,6 +439,84 @@ class DiagramTool {
       this.deleteSelectedNode();
     });
   }
+  
+  initPropertyPanel() {
+    this.propertyPanelNode = null;
+    const panel = document.getElementById(this.prefix + '-property-panel');
+    if (!panel) return;
+
+    const bindInput = (suffix, prop, parser = String) => {
+      const el = document.getElementById(this.prefix + '-prop-' + suffix);
+      if (el) {
+        el.addEventListener('input', (e) => {
+          if (!this.propertyPanelNode) return;
+          this.propertyPanelNode[prop] = parser(e.target.value);
+          this.updateNodeDOM(this.propertyPanelNode);
+        });
+      }
+    };
+    bindInput('label', 'label');
+    bindInput('x', 'x', Number);
+    bindInput('y', 'y', Number);
+    bindInput('fontsize', 'textSize', Number);
+    bindInput('textcolor', 'textColor');
+    bindInput('color', 'color');
+  }
+
+  openPropertyPanel(node) {
+    this.propertyPanelNode = node;
+    const panel = document.getElementById(this.prefix + '-property-panel');
+    if (panel) panel.classList.add('open');
+
+    // Populate fields
+    const setVal = (suffix, val) => {
+      const el = document.getElementById(this.prefix + '-prop-' + suffix);
+      if (el) el.value = val;
+    };
+    setVal('label', node.label);
+    setVal('x', node.x);
+    setVal('y', node.y);
+    setVal('fontsize', node.textSize || this.defaultTextStyle.fontSize);
+    
+    // color input needs #rrggbb format
+    const rgbToHex = (color) => {
+      if (!color) return '#e5e7eb';
+      if (color.startsWith('#') && color.length === 7) return color;
+      return color; // simplified, assuming hex is mostly used
+    };
+    setVal('textcolor', rgbToHex(node.textColor || this.defaultTextStyle.color));
+    setVal('color', rgbToHex(node.color));
+
+    // Focus and select the label input
+    setTimeout(() => {
+      const labelInput = document.getElementById(this.prefix + '-prop-label');
+      if (labelInput) {
+        labelInput.focus({ preventScroll: true });
+        labelInput.select();
+      }
+    }, 300); // wait for panel animation to finish to prevent layout shift
+  }
+
+  closePropertyPanel() {
+    this.propertyPanelNode = null;
+    const panel = document.getElementById(this.prefix + '-property-panel');
+    if (panel) panel.classList.remove('open');
+  }
+  
+  updateNodeDOM(node) {
+    const el = document.getElementById(node.id);
+    if (!el) return;
+    el.style.left = node.x + 'px';
+    el.style.top = node.y + 'px';
+    el.style.borderColor = (node.color || '#e5e7eb') + '60'; // with alpha
+    const labelEl = el.querySelector('.node-label');
+    if (labelEl) {
+      labelEl.textContent = node.label;
+      this.applyNodeTextStyle(node, labelEl);
+    }
+    this.drawConnections();
+  }
+
   addNode(comp, x, y, options = {}) {
     const id = this.prefix + '_node_' + (this.nodeIdCounter++);
     const node = {
@@ -295,11 +608,14 @@ class DiagramTool {
       document.addEventListener('mousemove', onMouseMove);
       document.addEventListener('mouseup', onMouseUp);
     });
-    // Double click to rename inline
+    // Double click to open property panel (or rename inline)
     el.addEventListener('dblclick', e => {
       e.preventDefault();
       e.stopPropagation();
-      this.beginInlineRename(node, labelEl);
+      this.selectNode(node, el);
+      this.openPropertyPanel(node);
+      // Inline rename fallback
+      // this.beginInlineRename(node, labelEl);
     });
     // Port click for connection
     el.querySelectorAll('.node-port').forEach(port => {
@@ -317,6 +633,9 @@ class DiagramTool {
       });
     });
     this.canvas.appendChild(el);
+    if (window.lucide) {
+      lucide.createIcons({ root: el });
+    }
   }
   beginInlineRename(node, labelEl) {
     if (!labelEl || this.editingNodeId === node.id) return;
@@ -418,6 +737,24 @@ class DiagramTool {
       node,
       connections: removedConnections,
     };
+  }
+  
+  deleteSelectedNode() {
+    if (!this.selectedNode) return;
+    const nodeId = this.selectedNode.id;
+    const result = this.detachNode(nodeId);
+    if (result) {
+      this.pushUndoAction({
+        type: 'removeNode',
+        nodeId,
+        node: result.node,
+        connections: result.connections,
+      });
+      if (this.propertyPanelNode && this.propertyPanelNode.id === nodeId) {
+        this.closePropertyPanel();
+      }
+      this.drawConnections();
+    }
   }
   restoreNode(node, connections = []) {
     if (!node) return;
@@ -849,5 +1186,11 @@ class DiagramTool {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob); a.download = this.prefix+'_diagram.svg'; a.click();
     showToast('SVGをエクスポートしました');
+  }
+  swapComponents(newComponents) {
+    if (!newComponents || !newComponents.length) return;
+    this.components = newComponents;
+    this.quickAddCounter = 0;
+    this.initPalette();
   }
 }

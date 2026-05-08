@@ -1,0 +1,128 @@
+<!-- Diagram Template -->
+<div class="section-header editor-header">
+  <div class="editor-header-bar">
+    <div class="editor-header-group">
+      <button class="editor-header-btn" title="新規作成" data-action="clearAll"><i data-lucide="file-plus" class="editor-icon"></i></button>
+      <button class="editor-header-btn" title="保存"><i data-lucide="save" class="editor-icon"></i></button>
+      <button class="editor-header-btn" title="フォルダを開く"><i data-lucide="folder-open" class="editor-icon"></i></button>
+      <div class="editor-header-sep"></div>
+    </div>
+    <div class="editor-header-group">
+      <button class="editor-header-btn" title="元に戻す" data-action="undoLastAction"><i data-lucide="undo-2" class="editor-icon"></i></button>
+      <button class="editor-header-btn" title="やり直す" data-action="redoLastAction"><i data-lucide="redo-2" class="editor-icon"></i></button>
+      <button class="editor-header-btn" title="コピー"><i data-lucide="copy" class="editor-icon"></i></button>
+      <button class="editor-header-btn" title="貼り付け"><i data-lucide="clipboard-paste" class="editor-icon"></i></button>
+      <div class="editor-header-sep"></div>
+    </div>
+    <div class="editor-header-group">
+      <button class="editor-header-btn" title="ズームイン"><i data-lucide="zoom-in" class="editor-icon"></i></button>
+      <button class="editor-header-btn" title="ズームアウト"><i data-lucide="zoom-out" class="editor-icon"></i></button>
+      <button class="editor-header-btn" title="全体表示"><i data-lucide="maximize-2" class="editor-icon"></i></button>
+      <button class="editor-header-btn" title="グリッド表示"><i data-lucide="grid-3x3" class="editor-icon"></i></button>
+      <div class="editor-header-sep"></div>
+    </div>
+    <div class="editor-header-group">
+      <button class="editor-header-btn" title="自動配置" data-action="autoLayout"><i data-lucide="bot" class="editor-icon"></i></button>
+      <button class="editor-header-btn" title="SVGエクスポート" data-action="exportSVG"><i data-lucide="download" class="editor-icon"></i></button>
+      <button class="editor-header-btn" title="共有"><i data-lucide="share-2" class="editor-icon"></i></button>
+      <button class="editor-header-btn" title="ユーザー"><i data-lucide="user" class="editor-icon"></i></button>
+    </div>
+    <div class="editor-header-spacer"></div>
+    <div class="editor-header-group">
+      <button class="editor-header-btn" title="ヘルプ"><i data-lucide="help-circle" class="editor-icon"></i></button>
+      <button class="editor-header-btn" title="設定"><i data-lucide="settings" class="editor-icon"></i></button>
+    </div>
+  </div>
+</div>
+<div class="toolbar architecture-toolbar">
+  <div class="toolbar-left-group">
+    <div class="diagram-overlay-palette" id="{{prefix}}-palette"></div>
+    <button class="btn btn-sm btn-secondary" data-action="clearAll">クリア</button>
+    <div class="toolbar-sep"></div>
+    <div class="diagram-style-controls" id="{{prefix}}-style-controls">
+      <label class="diagram-style-field">
+        <span>文字サイズ</span>
+        <select id="{{prefix}}-font-size">
+          <option value="12">12</option>
+          <option value="14" selected>14</option>
+          <option value="16">16</option>
+          <option value="18">18</option>
+          <option value="20">20</option>
+        </select>
+      </label>
+      <label class="diagram-style-field">
+        <span>文字色</span>
+        <details class="diagram-color-picker" id="{{prefix}}-text-color-picker">
+          <summary class="diagram-color-button" id="{{prefix}}-text-color-btn">
+            <span class="diagram-color-sample" id="{{prefix}}-text-color-sample"></span>
+            <span class="diagram-color-text" id="{{prefix}}-text-color-text">自動</span>
+            <span class="diagram-color-caret">▾</span>
+          </summary>
+          <div class="diagram-color-menu" id="{{prefix}}-text-color-menu" aria-label="文字色の選択">
+            <button type="button" class="diagram-color-auto-row diagram-color-option" data-color="" data-label="自動">
+              <span class="diagram-color-option-swatch diagram-color-option-auto"></span>
+              <span>自動</span>
+            </button>
+            <div class="diagram-color-divider"></div>
+            <div class="diagram-color-group-label">テーマの色</div>
+            <div class="diagram-color-theme-row" id="{{prefix}}-theme-row"></div>
+            <div class="diagram-color-shade-grid" id="{{prefix}}-shade-grid"></div>
+            <div class="diagram-color-group-label">標準の色</div>
+            <div class="diagram-color-standard-row" id="{{prefix}}-standard-row"></div>
+            <button type="button" class="diagram-color-other-btn" id="{{prefix}}-other-color-btn">
+              <span class="diagram-color-other-icon">🎨</span>
+              <span>その他の色(M)...</span>
+            </button>
+          </div>
+        </details>
+      </label>
+    </div>
+    <div class="toolbar-sep"></div>
+  </div>
+  <div class="toolbar-inline-shapes-group">
+    <div class="toolbar-inline-shapes" id="{{prefix}}-inline-shapes"></div>
+    <button class="inline-shape-more-btn" id="{{prefix}}-shape-add-btn" data-action="openPaletteMenu" title="すべての図形を表示">
+      <i data-lucide="chevron-down" class="editor-icon"></i>
+    </button>
+  </div>
+</div>
+<div class="diagram-workspace architecture-workspace" style="position: relative; overflow: hidden; display: flex;">
+  <div class="diagram-canvas" id="{{prefix}}-canvas">
+    <svg class="connections" id="{{prefix}}-svg"></svg>
+  </div>
+  
+  <!-- プロパティパネル (右からのスライドバー) -->
+  <div class="diagram-property-panel" id="{{prefix}}-property-panel">
+    <div class="property-panel-header">
+      <span class="property-panel-title">プロパティ</span>
+      <button class="property-panel-close" data-action="closePropertyPanel"><i data-lucide="x" class="editor-icon"></i></button>
+    </div>
+    <div class="property-panel-body">
+      <div class="property-group">
+        <label>ラベル</label>
+        <input type="text" id="{{prefix}}-prop-label" class="property-input">
+      </div>
+      <div class="property-group">
+        <label>X座標</label>
+        <input type="number" id="{{prefix}}-prop-x" class="property-input">
+      </div>
+      <div class="property-group">
+        <label>Y座標</label>
+        <input type="number" id="{{prefix}}-prop-y" class="property-input">
+      </div>
+      <div class="property-group">
+        <label>フォントサイズ</label>
+        <input type="number" id="{{prefix}}-prop-fontsize" class="property-input" min="10" max="48">
+      </div>
+      <div class="property-group">
+        <label>文字色</label>
+        <input type="color" id="{{prefix}}-prop-textcolor" class="property-input color-input">
+      </div>
+      <div class="property-group">
+        <label>ノード枠色</label>
+        <input type="color" id="{{prefix}}-prop-color" class="property-input color-input">
+      </div>
+      <button class="btn btn-sm btn-danger" data-action="deleteSelectedNode" style="width: 100%; margin-top: 16px;">ノードを削除</button>
+    </div>
+  </div>
+</div>
