@@ -213,10 +213,83 @@ function showModal(title, bodyHtml, onConfirm) {
   container.querySelector('.modal-overlay').addEventListener('click', e => { if(e.target === e.currentTarget) container.innerHTML = ''; });
 }
 
+function installInstantTooltips() {
+  if (document.getElementById('instant-label-tooltip')) return;
+
+  const tooltip = document.createElement('div');
+  tooltip.id = 'instant-label-tooltip';
+  tooltip.className = 'instant-label-tooltip';
+  tooltip.setAttribute('role', 'tooltip');
+  document.body.appendChild(tooltip);
+
+  let activeTarget = null;
+
+  const getLabel = (target) => target?.dataset?.label || target?.getAttribute('title') || '';
+
+  const positionTooltip = () => {
+    if (!activeTarget || tooltip.classList.contains('is-hidden')) return;
+    const rect = activeTarget.getBoundingClientRect();
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const margin = 8;
+    let top = rect.top - tooltipRect.height - margin;
+    if (top < margin) top = rect.bottom + margin;
+    let left = rect.left + rect.width / 2 - tooltipRect.width / 2;
+    left = Math.max(margin, Math.min(left, window.innerWidth - tooltipRect.width - margin));
+    tooltip.style.left = `${left}px`;
+    tooltip.style.top = `${top}px`;
+  };
+
+  const show = (target) => {
+    const label = getLabel(target);
+    if (!label) return;
+    activeTarget = target;
+    tooltip.textContent = label;
+    tooltip.classList.remove('is-hidden');
+    tooltip.style.visibility = 'hidden';
+    tooltip.style.opacity = '0';
+    requestAnimationFrame(() => {
+      if (activeTarget !== target) return;
+      positionTooltip();
+      tooltip.style.visibility = 'visible';
+      tooltip.style.opacity = '1';
+    });
+  };
+
+  const hide = () => {
+    activeTarget = null;
+    tooltip.classList.add('is-hidden');
+    tooltip.style.opacity = '0';
+    tooltip.style.visibility = 'hidden';
+  };
+
+  document.addEventListener('mouseover', (e) => {
+    const target = e.target.closest('[data-label], [title]');
+    if (!target || target === tooltip) return;
+    show(target);
+  });
+
+  document.addEventListener('mousemove', () => {
+    if (activeTarget) positionTooltip();
+  });
+
+  document.addEventListener('mouseout', (e) => {
+    if (!activeTarget) return;
+    const related = e.relatedTarget;
+    if (related && (activeTarget.contains(related) || tooltip.contains(related))) return;
+    const target = e.target.closest('[data-label], [title]');
+    if (target && target === activeTarget) hide();
+  });
+
+  window.addEventListener('scroll', hide, true);
+  window.addEventListener('blur', hide);
+}
+
 
 
 // --- Hamburger menu toggle (mobile) ---
 document.addEventListener('DOMContentLoaded', async () => {
+  installInstantTooltips();
+
   // instantiate app & load HTML partials
   if (!window.app) {
     window.app = new App();

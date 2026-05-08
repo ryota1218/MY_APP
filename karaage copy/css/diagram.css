@@ -243,9 +243,9 @@
 
 /* Diagram Workspace & Canvas */
 .diagram-workspace {
-  display: flex; gap: 16px; height: calc(100vh - 220px);
+  display: flex; gap: 16px; height: calc(100vh - 198px); margin-top: 24px;
 }
-.architecture-workspace { display: block; height: calc(100vh - 270px); }
+.architecture-workspace { display: block; height: calc(100vh - 225px); }
 .architecture-workspace .diagram-canvas {
   height: 100%;
 }
@@ -304,53 +304,34 @@
   grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px;
 }
 .palette-dropdown-menu.open { display: grid; }
-.shape-option {
+.shape-option,
+.inline-shape-btn {
   position: relative;
+}
+.shape-option {
   display: flex; align-items: center; justify-content: center;
   width: 100%; aspect-ratio: 1 / 1;
   border-radius: var(--radius-sm); border: 1px solid var(--border);
   background: var(--bg-glass); color: var(--text); cursor: pointer;
   transition: var(--transition); font-size: 1.2rem;
 }
-.shape-option::after {
-  content: attr(data-label);
-  position: absolute;
-  left: 50%;
-  bottom: calc(100% + 7px);
-  transform: translate(-50%, 4px);
-  opacity: 0;
-  pointer-events: none;
-  white-space: nowrap;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 0.72rem;
-  color: var(--text);
-  background: rgba(10, 14, 26, 0.95);
-  border: 1px solid var(--border);
-  z-index: 60;
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-.shape-option:hover {
+.shape-option:hover,
+.inline-shape-btn:hover {
   border-color: var(--border-hover);
   background: rgba(124,58,237,0.12);
   transform: translateY(-1px);
 }
-.shape-option:hover::after,
-.shape-option:focus-visible::after {
-  opacity: 1;
-  transform: translate(-50%, 0);
-}
 
 /* Architecture Toolbar overrides */
 .architecture-toolbar {
-  gap: 10px !important;
+  gap: 12px !important;
   height: auto !important;
-  padding: 12px !important;
+  padding: 14px !important;
 }
 .architecture-toolbar .btn {
-  font-size: 0.95rem !important;
-  padding: 8px 14px !important;
-  min-height: 38px !important;
+  font-size: 1rem !important;
+  padding: 9px 16px !important;
+  min-height: 42px !important;
 }
 .architecture-toolbar .toolbar-title {
   font-size: 1rem !important;
@@ -373,10 +354,10 @@
 .architecture-toolbar .palette-dropdown-btn,
 .architecture-toolbar .palette-action-btn {
   width: auto;
-  min-width: 110px;
-  padding: 8px 12px;
+  min-width: 118px;
+  padding: 10px 14px;
   white-space: nowrap;
-  font-size: 0.9rem !important;
+  font-size: 0.96rem !important;
 }
 .architecture-toolbar .palette-dropdown-menu {
   position: absolute;
@@ -393,28 +374,28 @@
   gap: 8px;
 }
 .architecture-toolbar .shape-option {
-  font-size: 1.4rem !important;
-  padding: 10px !important;
+  font-size: 1.55rem !important;
+  padding: 12px !important;
 }
 .architecture-toolbar .diagram-style-controls {
   display: flex;
   gap: 14px;
 }
 .architecture-toolbar .diagram-style-field {
-  font-size: 0.9rem !important;
+  font-size: 0.96rem !important;
 }
 .architecture-toolbar .diagram-style-field select,
 .architecture-toolbar .diagram-style-field input {
-  font-size: 0.9rem !important;
-  padding: 6px 10px !important;
-  min-height: 32px !important;
+  font-size: 0.96rem !important;
+  padding: 7px 12px !important;
+  min-height: 36px !important;
 }
 .architecture-toolbar .diagram-color-button {
-  font-size: 0.9rem !important;
-  padding: 6px 10px !important;
+  font-size: 0.96rem !important;
+  padding: 7px 12px !important;
 }
 .architecture-toolbar .toolbar-sep {
-  height: 24px !important;
+  height: 28px !important;
 }
 
 /* ── Inline Shape Strip ── */
@@ -433,15 +414,15 @@
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   overflow: hidden;
-  padding: 4px 8px;
+  padding: 6px 10px;
   min-width: 0;
 }
 .inline-shape-more-btn {
   flex-shrink: 0;
-  width: 24px;
-  height: 36px;
+  width: 28px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -462,13 +443,13 @@
   background: rgba(124, 58, 237, 0.3);
 }
 .inline-shape-more-btn .editor-icon {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
 }
 .inline-shape-btn {
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -488,7 +469,7 @@
   transform: scale(0.95);
 }
 .inline-shape-icon {
-  font-size: 1.15rem;
+  font-size: 1.25rem;
   line-height: 1;
 }
 
@@ -500,32 +481,33 @@
 .editor-header-bar {
   display: flex;
   align-items: center;
-  gap: 2px;
-  padding: 4px 12px;
+  gap: 4px;
+  padding: 6px 14px;
   background: rgba(17, 24, 39, 0.6);
   border-bottom: 1px solid var(--border);
-  min-height: 36px;
+  min-height: 42px;
 }
 .editor-header-group {
   display: flex;
   align-items: center;
-  gap: 1px;
+  gap: 4px;
 }
 .editor-header-sep {
   width: 1px;
-  height: 20px;
+  height: 24px;
   background: var(--border);
-  margin: 0 6px;
+  margin: 0 8px;
 }
 .editor-header-spacer {
   flex: 1;
 }
 .editor-header-btn {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   padding: 0;
   background: transparent;
   border: 1px solid transparent;
@@ -544,9 +526,30 @@
   transform: scale(0.93);
 }
 .editor-icon {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   stroke-width: 1.8;
+}
+
+.instant-label-tooltip {
+  position: fixed;
+  z-index: 9999;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: rgba(10, 14, 26, 0.96);
+  color: var(--text);
+  font-size: 0.72rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+.instant-label-tooltip.is-hidden {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(2px);
 }
 
 /* Diagram Canvas */
