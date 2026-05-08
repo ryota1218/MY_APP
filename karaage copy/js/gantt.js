@@ -1,28 +1,117 @@
+// ============================================
+// テストデータ（下記をコメントアウトして削除可能）
+// ============================================
+const GANTT_TEST_DATA = [
+  // フェーズ1：要件定義
+  { id:1, name:'要件定義', phase:true, start:'2026-05-01', end:'2026-05-14', color:'#7c3aed' },
+  { id:2, name:'ヒアリング', phase:false, start:'2026-05-01', end:'2026-05-07', color:'#a78bfa' },
+  { id:3, name:'要件書作成', phase:false, start:'2026-05-05', end:'2026-05-14', color:'#a78bfa' },
+  
+  // フェーズ2：基本設計
+  { id:4, name:'基本設計', phase:true, start:'2026-05-12', end:'2026-05-28', color:'#06b6d4' },
+  { id:5, name:'画面設計', phase:false, start:'2026-05-12', end:'2026-05-21', color:'#22d3ee' },
+  { id:6, name:'DB設計', phase:false, start:'2026-05-15', end:'2026-05-25', color:'#22d3ee' },
+  { id:7, name:'API設計', phase:false, start:'2026-05-19', end:'2026-05-28', color:'#22d3ee' },
+  
+  // フェーズ3：詳細設計
+  { id:8, name:'詳細設計', phase:true, start:'2026-05-26', end:'2026-06-11', color:'#10b981' },
+  { id:9, name:'コンポーネント設計', phase:false, start:'2026-05-26', end:'2026-06-04', color:'#34d399' },
+  { id:10, name:'テスト計画', phase:false, start:'2026-06-01', end:'2026-06-11', color:'#34d399' },
+];
+
+// テストデータを使用するかどうか（true=使用、false=使用しない）
+const USE_GANTT_TEST_DATA = true;
+
+// ============================================
+// GanttTool クラス
+// ============================================
 class GanttTool {
   constructor() {
-    this.tasks = [
-      { id:1, name:'要件定義', phase:true, start:'2026-05-01', end:'2026-05-14', color:'#7c3aed' },
-      { id:2, name:'ヒアリング', phase:false, start:'2026-05-01', end:'2026-05-07', color:'#a78bfa' },
-      { id:3, name:'要件書作成', phase:false, start:'2026-05-05', end:'2026-05-14', color:'#a78bfa' },
-      { id:4, name:'基本設計', phase:true, start:'2026-05-12', end:'2026-05-28', color:'#06b6d4' },
-      { id:5, name:'画面設計', phase:false, start:'2026-05-12', end:'2026-05-21', color:'#22d3ee' },
-      { id:6, name:'DB設計', phase:false, start:'2026-05-15', end:'2026-05-25', color:'#22d3ee' },
-      { id:7, name:'API設計', phase:false, start:'2026-05-19', end:'2026-05-28', color:'#22d3ee' },
-      { id:8, name:'詳細設計', phase:true, start:'2026-05-26', end:'2026-06-11', color:'#10b981' },
-      { id:9, name:'コンポーネント設計', phase:false, start:'2026-05-26', end:'2026-06-04', color:'#34d399' },
-      { id:10, name:'テスト計画', phase:false, start:'2026-06-01', end:'2026-06-11', color:'#34d399' },
-    ];
+    // テストデータを使用する場合はロード
+    this.tasks = USE_GANTT_TEST_DATA ? JSON.parse(JSON.stringify(GANTT_TEST_DATA)) : [];
+    this.selected = new Set(); // 選択状態を管理
 
-    this.taskIdCounter = 11;
+    // taskIdCounterを最大IDから設定
+    this.taskIdCounter = (this.tasks.length > 0 ? Math.max(...this.tasks.map(t => t.id)) : 10) + 1;
     this.isSyncingScroll = false;
 
     this.render();
+    this.setupButtons();
+  }
+
+  setupButtons() {
+    // ボタンイベントリスナーを設定
+    const addPhaseBtn = document.getElementById('add-phase-btn');
+    const addTaskBtn = document.getElementById('add-task-btn');
+    const deleteBtn = document.getElementById('delete-selected-btn');
+    const exportCsvBtn = document.getElementById('export-csv-btn');
+
+    if (addPhaseBtn) {
+      addPhaseBtn.onclick = () => this.addPhase();
+    }
+    if (addTaskBtn) {
+      addTaskBtn.onclick = () => this.addTask();
+    }
+    if (deleteBtn) {
+      deleteBtn.onclick = () => this.deleteSelected();
+    }
+    if (exportCsvBtn) {
+      exportCsvBtn.onclick = () => this.exportCSV();
+    }
+
+    // タブ機能
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        // パネルの表示切り替え
+        const editPanel = document.getElementById('edit-panel');
+        const editContent = document.getElementById('edit-content');
+        const calculatorContent = document.getElementById('calculator-content');
+        const tabType = tab.dataset.tab;
+
+        if (tabType === 'edit') {
+          editPanel.style.display = 'flex';
+          editContent.style.display = 'flex';
+          calculatorContent.style.display = 'none';
+        } else if (tabType === 'calculator') {
+          editPanel.style.display = 'none';
+          editContent.style.display = 'none';
+          calculatorContent.style.display = 'block';
+          this.updateCalculator();
+        }
+      });
+    });
   }
 
   render() {
     this.renderTasks();
     this.renderTimeline();
     this.setupScrollSync(); // ←重要
+    this.enableDrag(); // ドラッグ機能有効化
+    this.updateCalculator(); // 計算機も更新
+  }
+
+  formatDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  // "YYYY-MM-DD" 形式の日付文字列をUTC Dateに変換（タイムゾーン対応）
+  parseDate(dateStr) {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    // UTCで日付を作成
+    return new Date(Date.UTC(year, month - 1, day));
+  }
+
+  // 日付を「1970年1月1日からの日数」に変換（日数で正確に計算）
+  getDayNumber(dateStr) {
+    const d = this.parseDate(dateStr);
+    return Math.floor(d.getTime() / 86400000);
   }
 
   getDateRange() {
@@ -33,11 +122,20 @@ class GanttTool {
       if (t.end > max) max = t.end;
     });
 
-    const start = new Date(min);
-    start.setDate(start.getDate() - 3);
+    // タスクが空の場合は今日を基準に
+    if (this.tasks.length === 0) {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      min = max = `${year}-${month}-${day}`;
+    }
 
-    const end = new Date(max);
-    end.setDate(end.getDate() + 7);
+    const start = this.parseDate(min);
+    start.setUTCDate(start.getUTCDate() - 3);
+
+    const end = this.parseDate(max);
+    end.setUTCDate(end.getUTCDate() + 7);
 
     return { start, end };
   }
@@ -46,10 +144,11 @@ class GanttTool {
     const list = document.getElementById('gantt-task-list');
 
     list.innerHTML = this.tasks.map(t => `
-      <div class="gantt-task-row ${t.phase ? 'phase' : ''}" 
+      <div class="gantt-task-row ${t.phase ? 'phase' : ''} ${this.selected.has(t.id) ? 'selected' : ''}" 
            data-id="${t.id}" 
-           style="height:32px;">
-        <span style="padding-left:${t.phase?'0':'16'}px">
+           style="height:32px; position: relative; display: grid; grid-template-columns: 24px 1fr 70px 70px; align-items: center; gap: 8px;">
+        <input type="checkbox" class="task-checkbox" data-id="${t.id}" ${this.selected.has(t.id) ? 'checked' : ''} style="cursor: pointer; margin-left: 8px;">
+        <span style="padding-left:${t.phase?'0':'8'}px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
           ${t.phase?'▸ ':''}${t.name}
         </span>
         <span style="font-size:0.75rem;color:var(--text-muted)">
@@ -61,7 +160,21 @@ class GanttTool {
       </div>
     `).join('');
 
+    list.querySelectorAll('.task-checkbox').forEach(checkbox => {
+      checkbox.addEventListener('change', (e) => {
+        const id = parseInt(checkbox.dataset.id);
+        if (e.target.checked) {
+          this.selected.add(id);
+        } else {
+          this.selected.delete(id);
+        }
+        this.updateDeleteButtonVisibility();
+        this.updateRowSelection();
+      });
+    });
+
     list.querySelectorAll('.gantt-task-row').forEach(row => {
+      // ダブルクリック: 名前編集
       row.addEventListener('dblclick', () => {
         const id = parseInt(row.dataset.id);
         const task = this.tasks.find(t => t.id === id);
@@ -73,6 +186,45 @@ class GanttTool {
           this.render();
         }
       });
+    });
+
+    this.updateDeleteButtonVisibility();
+  }
+
+  updateRowSelection() {
+    const list = document.getElementById('gantt-task-list');
+    list.querySelectorAll('.gantt-task-row').forEach(row => {
+      const id = parseInt(row.dataset.id);
+      if (this.selected.has(id)) {
+        row.classList.add('selected');
+      } else {
+        row.classList.remove('selected');
+      }
+    });
+  }
+
+  updateDeleteButtonVisibility() {
+    const deleteBtn = document.getElementById('delete-selected-btn');
+    if (deleteBtn) {
+      deleteBtn.style.display = this.selected.size > 0 ? 'inline-block' : 'none';
+    }
+  }
+
+  deleteSelected() {
+    if (this.selected.size === 0) {
+      showToast('削除するタスクを選択してください');
+      return;
+    }
+
+    const count = this.selected.size;
+    showModal('タスク削除確認', `
+      <p><strong>${count}件</strong>のタスク/フェーズを削除してもよろしいですか？</p>
+    `,
+    () => {
+      this.tasks = this.tasks.filter(t => !this.selected.has(t.id));
+      this.selected.clear();
+      this.render();
+      showToast(`${count}件のタスク/フェーズを削除しました`);
     });
   }
 
@@ -87,19 +239,19 @@ class GanttTool {
 
   while (d <= end) {
     days.push(new Date(d));
-    d.setDate(d.getDate() + 1);
+    d.setUTCDate(d.getUTCDate() + 1);
   }
 
   const dayWidth = 36;
 
   // ヘッダー
   header.innerHTML = days.map(day => {
-    const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+    const isWeekend = day.getUTCDay() === 0 || day.getUTCDay() === 6;
     return `
       <div class="gantt-day ${isWeekend?'weekend':''}">
-        ${day.getDate()}<br>
+        ${day.getUTCDate()}<br>
         <span style="font-size:0.6rem;">
-          ${['日','月','火','水','木','金','土'][day.getDay()]}
+          ${['日','月','火','水','木','金','土'][day.getUTCDay()]}
         </span>
       </div>
     `;
@@ -109,12 +261,15 @@ class GanttTool {
 
   // ===== 今日ライン =====
   const today = new Date();
-  const todayOffset = Math.floor((today - start) / 86400000);
+  const todayUTC = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
+  const startDayNumber = Math.floor(start.getTime() / 86400000);
+  const todayDayNumber = Math.floor(todayUTC.getTime() / 86400000);
+  const todayOffset = (todayDayNumber - startDayNumber) * dayWidth;
 
   const todayLine = `
     <div style="
       position:absolute;
-      left:${todayOffset * dayWidth}px;
+      left:${todayOffset}px;
       top:0;
       bottom:0;
       width:2px;
@@ -124,14 +279,15 @@ class GanttTool {
   `;
 
   // バー
+  const startDayNum = Math.floor(start.getTime() / 86400000);
   bars.innerHTML = todayLine + this.tasks.map(task => {
-    const taskStart = new Date(task.start);
-    const taskEnd = new Date(task.end);
+    const taskStartDayNum = this.getDayNumber(task.start);
+    const taskEndDayNum = this.getDayNumber(task.end);
 
-    const startOffset = Math.round((taskStart - start) / 86400000);
-    const duration = Math.round((taskEnd - taskStart) / 86400000) + 1;
-
-    const left = startOffset * dayWidth;
+    // 開始位置：タスク開始日 - 基準開始日
+    const startOffset = (taskStartDayNum - startDayNum) * dayWidth;
+    // 工期：終了日 - 開始日 + 1日
+    const duration = (taskEndDayNum - taskStartDayNum) + 1;
     const width = duration * dayWidth;
 
     return `
@@ -139,11 +295,11 @@ class GanttTool {
         <div class="gantt-bar ${task.phase?'phase-bar':''}"
              data-id="${task.id}"
              style="
-               left:${left}px;
+               left:${startOffset}px;
                width:${width}px;
                background:linear-gradient(135deg,${task.color},${task.color}cc);
              ">
-          ${task.phase ? '' : task.name}
+          ${task.name}
         </div>
       </div>
     `;
@@ -210,23 +366,23 @@ enableDrag() {
         const task = this.tasks.find(t => t.id === id);
         if (!task) return;
 
-        let startDate = new Date(task.start);
-        let endDate = new Date(task.end);
+        let startDate = this.parseDate(task.start);
+        let endDate = this.parseDate(task.end);
 
         if (mode === 'move') {
-          startDate.setDate(startDate.getDate() + diffDays);
-          endDate.setDate(endDate.getDate() + diffDays);
+          startDate.setUTCDate(startDate.getUTCDate() + diffDays);
+          endDate.setUTCDate(endDate.getUTCDate() + diffDays);
         }
 
         if (mode === 'resize-left') {
-          startDate.setDate(startDate.getDate() + diffDays);
+          startDate.setUTCDate(startDate.getUTCDate() + diffDays);
           if (startDate <= endDate) {
             task.start = this.formatDate(startDate);
           }
         }
 
         if (mode === 'resize-right') {
-          endDate.setDate(endDate.getDate() + diffDays);
+          endDate.setUTCDate(endDate.getUTCDate() + diffDays);
           if (endDate >= startDate) {
             task.end = this.formatDate(endDate);
           }
@@ -277,6 +433,119 @@ enableDrag() {
         this.isSyncingScroll = false;
       }
     });
+  }
+
+  updateCalculator() {
+    if (this.tasks.length === 0) {
+      // タスクがない場合
+      document.getElementById('project-duration').textContent = '-';
+      document.getElementById('project-start').textContent = '-';
+      document.getElementById('project-end').textContent = '-';
+      document.getElementById('project-count').textContent = '0';
+      document.getElementById('calculator-table-body').innerHTML = `
+        <tr style="text-align: center; color: #9ca3af;">
+          <td colspan="6" style="padding: 20px;">データが入力されていません</td>
+        </tr>
+      `;
+      document.getElementById('critical-path').textContent = 'データが入力されていません';
+      return;
+    }
+
+    // プロジェクト全体の開始日・終了日
+    let minStart = this.parseDate('2099-12-31');
+    let maxEnd = this.parseDate('2000-01-01');
+
+    this.tasks.forEach(t => {
+      const start = this.parseDate(t.start);
+      const end = this.parseDate(t.end);
+      if (start < minStart) minStart = start;
+      if (end > maxEnd) maxEnd = end;
+    });
+
+    // プロジェクト期間計算
+    const projectDays = Math.ceil((maxEnd - minStart) / 86400000) + 1;
+    document.getElementById('project-duration').textContent = `${projectDays}日`;
+    document.getElementById('project-start').textContent = this.formatDate(minStart);
+    document.getElementById('project-end').textContent = this.formatDate(maxEnd);
+    document.getElementById('project-count').textContent = this.tasks.length;
+
+    // テーブル行生成
+    let tableHtml = '';
+    const sortedTasks = [...this.tasks].sort((a, b) => this.getDayNumber(a.start) - this.getDayNumber(b.start));
+
+    sortedTasks.forEach(t => {
+      const startDayNum = this.getDayNumber(t.start);
+      const endDayNum = this.getDayNumber(t.end);
+      const duration = (endDayNum - startDayNum) + 1;
+      
+      // スラック計算（簡易版）
+      // フェーズのスラックは0、タスクは親フェーズのスラック
+      let slack = '-';
+      if (!t.phase) {
+        // 親フェーズを探す
+        const parentPhase = this.tasks.filter(p => p.phase && this.getDayNumber(p.start) <= startDayNum && this.getDayNumber(p.end) >= endDayNum)[0];
+        if (parentPhase) {
+          const phaseEndDayNum = this.getDayNumber(parentPhase.end);
+          const slackDays = phaseEndDayNum - endDayNum;
+          slack = slackDays + '日';
+        }
+      }
+
+      const typeLabel = t.phase ? 'フェーズ' : 'タスク';
+      const rowBg = t.phase ? '#f0f0f0' : '#ffffff';
+      const textColor = t.phase ? '#1f2937' : '#374151';
+      const typeColor = t.phase ? '#dc2626' : '#0284c7';
+
+      tableHtml += `
+        <tr style="background: ${rowBg}; border-bottom: 1px solid #e5e7eb;">
+          <td style="padding: 12px 10px; font-weight: ${t.phase ? '700' : '500'}; color: ${textColor};">${t.phase ? '▸ ' : ''}${t.name}</td>
+          <td style="padding: 12px 10px; text-align: center; font-size: 0.75rem; color: ${typeColor}; font-weight: 600;">${typeLabel}</td>
+          <td style="padding: 12px 10px; text-align: center; color: ${textColor};">${t.start}</td>
+          <td style="padding: 12px 10px; text-align: center; color: ${textColor};">${t.end}</td>
+          <td style="padding: 12px 10px; text-align: center; font-weight: 600; color: #16a34a;">${duration}日</td>
+          <td style="padding: 12px 10px; text-align: center; color: ${slack === '-' ? '#9ca3af' : '#d97706'}; font-weight: ${slack === '-' ? '400' : '500'};">${slack}</td>
+        </tr>
+      `;
+    });
+
+    document.getElementById('calculator-table-body').innerHTML = tableHtml;
+
+    // クリティカルパス計算（最長経路の検出）
+    const criticalPath = this.calculateCriticalPath();
+    const cpHtml = criticalPath.length > 0
+      ? `<strong>最長経路: ${criticalPath.map(t => t.name).join(' → ')}</strong><br>期間: ${criticalPath.reduce((sum, t) => sum + (this.getDayNumber(t.end) - this.getDayNumber(t.start)) + 1, 0)}日`
+      : 'クリティカルパスを計算できません';
+    document.getElementById('critical-path').innerHTML = cpHtml;
+  }
+
+  calculateCriticalPath() {
+    if (this.tasks.length === 0) return [];
+
+    // 最長経路を見つける（簡易アルゴリズム）
+    let longestPath = [];
+    let longestDuration = 0;
+
+    // フェーズごとに最長経路を計算
+    const phases = this.tasks.filter(t => t.phase);
+    phases.forEach(phase => {
+      const phaseStartDayNum = this.getDayNumber(phase.start);
+      const phaseEndDayNum = this.getDayNumber(phase.end);
+
+      const tasksInPhase = this.tasks.filter(t => !t.phase && 
+        this.getDayNumber(t.start) >= phaseStartDayNum && 
+        this.getDayNumber(t.end) <= phaseEndDayNum
+      );
+      
+      const phaseTasks = [phase, ...tasksInPhase];
+      const duration = phaseTasks.reduce((sum, t) => sum + (this.getDayNumber(t.end) - this.getDayNumber(t.start)) + 1, 0);
+      
+      if (duration > longestDuration) {
+        longestDuration = duration;
+        longestPath = phaseTasks;
+      }
+    });
+
+    return longestPath;
   }
 
   addPhase() {
@@ -353,8 +622,5 @@ enableDrag() {
   }
 }
 
-/* 初期化 */
-let app;
-document.addEventListener('DOMContentLoaded', () => {
-  app = new App();
-});
+// 初期化は core.js の initNav() で自動的に行われます
+// ここではボタンセットアップは setupButtons() で処理済み
