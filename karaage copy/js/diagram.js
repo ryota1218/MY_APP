@@ -272,7 +272,7 @@ class DiagramTool {
         <div class="palette-dropdown">
           <button type="button" class="palette-dropdown-btn" id="${this.prefix}-shape-toggle">◽ 図形を追加</button>
           <div class="palette-dropdown-menu" id="${this.prefix}-shape-menu">
-            ${this.components.map((c, i) => `<button type="button" class="shape-option" draggable="true" data-idx="${i}" data-label="${c.label}" aria-label="${c.label}" title="${c.label}">${c.icon}</button>`).join('')}
+            ${this.components.map((c, i) => `<button type="button" class="shape-option" draggable="true" data-idx="${i}" data-label="${c.label}" aria-label="${c.label}">${c.icon}</button>`).join('')}
           </div>
         </div>
         <button type="button" class="palette-action-btn sidebar-toggle-btn" id="${this.prefix}-sidebar-toggle" title="サイドバー表示切替">☰</button>
@@ -358,7 +358,7 @@ class DiagramTool {
     const inlineStrip = document.getElementById(this.prefix + '-inline-shapes');
     if (inlineStrip) {
       inlineStrip.innerHTML = this.components.map((c, i) =>
-        `<button type="button" class="inline-shape-btn" draggable="true" data-idx="${i}" title="${c.label}" aria-label="${c.label}"><span class="inline-shape-icon">${c.icon}</span></button>`
+        `<button type="button" class="inline-shape-btn" draggable="true" data-idx="${i}" data-label="${c.label}" aria-label="${c.label}"><span class="inline-shape-icon">${c.icon}</span></button>`
       ).join('');
       inlineStrip.querySelectorAll('.inline-shape-btn').forEach(btn => {
         btn.addEventListener('click', () => {
