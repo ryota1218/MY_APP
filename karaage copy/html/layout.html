@@ -1,16 +1,80 @@
 <!-- Layout -->
-<div class="section-header">
-  <h1>画面レイアウト</h1>
-  <p>ワイヤーフレームをドラッグ＆ドロップで作成します</p>
+<div class="section-header editor-header">
+  <div class="editor-header-bar">
+    <div class="editor-header-group">
+      <button class="editor-header-btn" data-label="新規作成" aria-label="新規作成" data-action="clearAll"><i data-lucide="file-plus" class="editor-icon"></i></button>
+      <button class="editor-header-btn" data-label="保存" aria-label="保存"><i data-lucide="save" class="editor-icon"></i></button>
+      <button class="editor-header-btn" data-label="フォルダを開く" aria-label="フォルダを開く"><i data-lucide="folder-open" class="editor-icon"></i></button>
+      <div class="editor-header-sep"></div>
+    </div>
+    <div class="editor-header-group">
+      <button class="editor-header-btn" data-label="元に戻す" aria-label="元に戻す" data-action="undoLastAction"><i data-lucide="undo-2" class="editor-icon"></i></button>
+      <button class="editor-header-btn" data-label="やり直す" aria-label="やり直す"><i data-lucide="redo-2" class="editor-icon"></i></button>
+      <button class="editor-header-btn" data-label="コピー" aria-label="コピー"><i data-lucide="copy" class="editor-icon"></i></button>
+      <button class="editor-header-btn" data-label="貼り付け" aria-label="貼り付け"><i data-lucide="clipboard-paste" class="editor-icon"></i></button>
+      <div class="editor-header-sep"></div>
+    </div>
+    <div class="editor-header-group">
+      <button class="editor-header-btn" data-label="ズームイン" aria-label="ズームイン"><i data-lucide="zoom-in" class="editor-icon"></i></button>
+      <button class="editor-header-btn" data-label="ズームアウト" aria-label="ズームアウト"><i data-lucide="zoom-out" class="editor-icon"></i></button>
+      <button class="editor-header-btn" data-label="全体表示" aria-label="全体表示"><i data-lucide="maximize-2" class="editor-icon"></i></button>
+      <button class="editor-header-btn" data-label="グリッド表示" aria-label="グリッド表示"><i data-lucide="grid-3x3" class="editor-icon"></i></button>
+      <div class="editor-header-sep"></div>
+    </div>
+    <div class="editor-header-group">
+      <button class="editor-header-btn" data-label="PNGエクスポート" aria-label="PNGエクスポート" data-action="exportPNG"><i data-lucide="download" class="editor-icon"></i></button>
+      <button class="editor-header-btn" data-label="共有" aria-label="共有"><i data-lucide="share-2" class="editor-icon"></i></button>
+    </div>
+    <div class="editor-header-spacer"></div>
+    <div class="editor-header-group">
+      <button class="editor-header-btn" data-label="ヘルプ" aria-label="ヘルプ"><i data-lucide="help-circle" class="editor-icon"></i></button>
+      <button class="editor-header-btn" data-label="設定" aria-label="設定"><i data-lucide="settings" class="editor-icon"></i></button>
+    </div>
+  </div>
 </div>
-<div class="toolbar">
-  <span class="toolbar-title">レイアウトエディタ</span>
-  <button class="btn btn-sm btn-secondary" onclick="app.layout.clearAll()">🗑 クリア</button>
-  <button class="btn btn-sm btn-secondary" onclick="app.layout.undoLastAction()">↩ 一つ戻る</button>
-  <div class="toolbar-sep"></div>
-  <button class="btn btn-sm btn-primary" onclick="app.layout.exportPNG()">📥 エクスポート</button>
+<div class="toolbar layout-toolbar">
+  <div class="toolbar-left-group">
+    <button class="btn btn-sm btn-secondary sidebar-toggle-btn" data-action="toggleSidebar" title="サイドバー開閉">
+      <span style="color: white; font-size: 1.2rem; line-height: 1;">☰</span>
+    </button>
+    <button class="btn btn-sm btn-secondary" data-action="clearAll">クリア</button>
+    <div class="toolbar-sep"></div>
+  </div>
+
+  <!-- 下部バーから移動してきたキャンバス設定グループ -->
+  <div class="toolbar-config-group">
+    <div class="statusbar-group">
+      <button class="statusbar-preset active" data-preset="free" title="フリーサイズ">
+        <i data-lucide="maximize" class="statusbar-icon"></i>
+      </button>
+      <button class="statusbar-preset" data-preset="desktop" title="PC (1920×1080)">
+        <i data-lucide="monitor" class="statusbar-icon"></i>
+      </button>
+      <button class="statusbar-preset" data-preset="laptop" title="ノート (1366×768)">
+        <i data-lucide="laptop" class="statusbar-icon"></i>
+      </button>
+      <button class="statusbar-preset" data-preset="tablet" title="タブレット (768×1024)">
+        <i data-lucide="tablet" class="statusbar-icon"></i>
+      </button>
+      <button class="statusbar-preset" data-preset="mobile" title="スマホ (375×812)">
+        <i data-lucide="smartphone" class="statusbar-icon"></i>
+      </button>
+    </div>
+
+
+  </div>
+
+  <div class="toolbar-inline-shapes-group">
+    <div class="toolbar-inline-shapes" id="layout-inline-shapes"></div>
+    <button class="inline-shape-more-btn" id="layout-shape-add-btn" data-action="togglePaletteDropdown" title="すべてのUI要素を表示">
+      <i data-lucide="chevron-down" class="editor-icon"></i>
+    </button>
+    <!-- ▼ボタンから出るUI要素ドロップダウン -->
+    <div class="layout-palette-dropdown" id="layout-palette-dropdown"></div>
+  </div>
 </div>
-<div class="diagram-workspace">
-  <div class="diagram-palette" id="layout-palette"></div>
-  <div class="layout-canvas" id="layout-canvas"></div>
+<div class="diagram-workspace layout-workspace-wrap">
+  <div class="layout-canvas-container" id="layout-canvas-container">
+    <div class="layout-canvas" id="layout-canvas"></div>
+  </div>
 </div>
