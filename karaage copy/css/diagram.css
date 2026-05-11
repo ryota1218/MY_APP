@@ -266,7 +266,18 @@
   transition: var(--transition);
 }
 .palette-item:hover { border-color: var(--border-hover); background: rgba(124,58,237,0.08); }
-.palette-item .p-icon { font-size: 1.1rem; }
+.palette-item .p-icon { font-size: 1.1rem; display: flex; align-items: center; }
+.palette-icon {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2;
+  opacity: 1;
+  color: #ffffff;
+}
+.inline-shape-btn .palette-icon {
+  width: 20px;
+  height: 20px;
+}
 
 /* Overlay Palette */
 .diagram-overlay-palette {
@@ -471,6 +482,40 @@
 .inline-shape-icon {
   font-size: 1.25rem;
   line-height: 1;
+}
+
+/* ── Layout Toolbar ── */
+.layout-toolbar {
+  gap: 12px !important;
+  height: auto !important;
+  padding: 14px !important;
+}
+.layout-toolbar .btn {
+  font-size: 1rem !important;
+  padding: 9px 16px !important;
+  min-height: 42px !important;
+}
+.layout-toolbar .toolbar-sep {
+  height: 28px !important;
+}
+
+/* Layout Palette Dropdown (▼ボタンから出るUI要素一覧) */
+.layout-palette-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 80;
+  width: 220px;
+  padding: 10px;
+  background: rgba(17, 24, 39, 0.95);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow);
+}
+.layout-palette-dropdown.open {
+  display: block;
 }
 
 /* ── Editor Header Bar (Lucide Icons) ── */
