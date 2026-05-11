@@ -34,7 +34,7 @@
 
 /* ===== 左：タスク ===== */
 .gantt-tasks {
-  width: 220px;
+  width: 350px;
   border-right: 1px solid var(--border);
   overflow-y: auto;
   overflow-x: hidden;
@@ -44,7 +44,7 @@
 /* ヘッダー */
 .gantt-tasks-header {
   display: grid;
-  grid-template-columns: 1fr 70px 70px;
+  grid-template-columns: 24px 1fr 70px 70px;
   padding: 8px 10px;
   font-size: 0.7rem;
   font-weight: 600;
@@ -54,7 +54,7 @@
 /* 行 */
 .gantt-task-row {
   display: grid;
-  grid-template-columns: 1fr 70px 70px;
+  grid-template-columns: 24px 1fr 70px 70px;
   padding: 6px 10px;
   font-size: 0.75rem;
   align-items: center;
@@ -91,7 +91,7 @@
 
 /* 日付セル */
 .gantt-day {
-  min-width: 32px;
+  min-width: 36px;
   text-align: center;
   padding: 8px 0;
   font-size: 0.65rem;
@@ -202,4 +202,34 @@
 /* ===== バーを少し濃くして見やすく ===== */
 .gantt-bar {
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* ===== 選択状態 ===== */
+.gantt-task-row.selected {
+  background: #dbeafe;
+  border-left: 3px solid #3b82f6;
+}
+
+.gantt-task-row.selected .task-checkbox {
+  accent-color: #3b82f6;
+}
+
+/* ===== フォーム要素（モーダル内） ===== */
+.form-group {
+  margin-bottom: 12px;
+}
+.form-group label {
+  display: block;
+  font-size: 0.8rem;
+  color: #4b5563;
+  margin-bottom: 4px;
+}
+.form-input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background-color: #fff;
+  color: #1f2937;
 }

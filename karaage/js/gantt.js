@@ -19,6 +19,7 @@ class GanttTool {
   render() {
     this.renderTasks();
     this.renderTimeline();
+    this.updateCalculator();
   }
   getDateRange() {
     let min = '2099-12-31', max = '2000-01-01';
@@ -81,6 +82,39 @@ class GanttTool {
       </div>`;
     }).join('');
   }
+
+  updateCalculator() {
+    const tbody = document.getElementById('calculator-table-body');
+    if (!tbody || this.tasks.length === 0) return;
+
+    let minDate = this.tasks[0].start;
+    let maxDate = this.tasks[0].end;
+    this.tasks.forEach(t => {
+      if (t.start < minDate) minDate = t.start;
+      if (t.end > maxDate) maxDate = t.end;
+    });
+
+    const diffDays = Math.ceil((new Date(maxDate) - new Date(minDate)) / 86400000) + 1;
+
+    document.getElementById('project-duration').textContent = `${diffDays} 日間`;
+    document.getElementById('project-start').textContent = minDate;
+    document.getElementById('project-end').textContent = maxDate;
+    document.getElementById('project-count').textContent = `${this.tasks.length} 件`;
+
+    tbody.innerHTML = this.tasks.map(t => {
+      const dur = Math.ceil((new Date(t.end) - new Date(t.start)) / 86400000) + 1;
+      return `
+        <tr style="border-bottom: 1px solid #e5e7eb;">
+          <td style="padding: 12px 10px;">${t.name}</td>
+          <td style="padding: 12px 10px; text-align: center;">${t.phase ? 'フェーズ' : 'タスク'}</td>
+          <td style="padding: 12px 10px; text-align: center;">${t.start}</td>
+          <td style="padding: 12px 10px; text-align: center;">${t.end}</td>
+          <td style="padding: 12px 10px; text-align: center;">${dur}日</td>
+          <td style="padding: 12px 10px; text-align: center;">-</td>
+        </tr>`;
+    }).join('');
+  }
+
   addPhase() {
     showModal('フェーズ追加', `
       <div class="form-group"><label>フェーズ名</label><input class="form-input" id="gantt-phase-name"></div>
@@ -123,6 +157,34 @@ class GanttTool {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob); a.download = 'gantt_chart.csv'; a.click();
     showToast('CSVをエクスポートしました');
+  }
+}
+
+/* ===== App Controller ===== */
+class App {
+  constructor() {
+    this.gantt = new GanttTool();
+    this.initTabs();
+    this.initEvents();
+  }
+  initTabs() {
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const isCalc = tab.dataset.tab === 'calculator';
+        document.getElementById('edit-panel').style.display = isCalc ? 'none' : 'flex';
+        document.getElementById('edit-content').style.display = isCalc ? 'none' : 'flex';
+        document.getElementById('calculator-content').style.display = isCalc ? 'block' : 'none';
+        if (isCalc) this.gantt.updateCalculator();
+      });
+    });
+  }
+  initEvents() {
+    document.getElementById('add-phase-btn').onclick = () => this.gantt.addPhase();
+    document.getElementById('add-task-btn').onclick = () => this.gantt.addTask();
+    document.getElementById('export-csv-btn').onclick = () => this.gantt.exportCSV();
   }
 }
 
