@@ -412,7 +412,8 @@
 /* ── Inline Shape Strip ── */
 .toolbar-inline-shapes-group {
   position: relative;
-  flex: 1;
+  flex: 0 0 auto;
+  max-width: 392px;
   display: flex;
   align-items: center;
   min-width: 0;
