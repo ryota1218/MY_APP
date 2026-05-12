@@ -35,7 +35,9 @@
 </div>
 <div class="toolbar er-toolbar">
   <div class="toolbar-left-group">
-    <span class="toolbar-title">E-R図エディタ</span>
+    <div class="diagram-overlay-palette" id="er-palette" style="position: static; width: auto; padding: 0; background: none; border: none;">
+      <button type="button" class="palette-action-btn sidebar-toggle-btn" onclick="app.erdiagram.toggleSidebar()" title="サイドバー表示切替" style="width: 38px; margin-top: 0;">☰</button>
+    </div>
     <button class="btn btn-sm btn-secondary" onclick="app.erdiagram.addEntity()">＋ エンティティ追加</button>
     <button class="btn btn-sm btn-secondary" onclick="app.erdiagram.addRelation()">🔗 リレーション追加</button>
     <button class="btn btn-sm btn-secondary" onclick="app.erdiagram.clearAll()">🗑 クリア</button>

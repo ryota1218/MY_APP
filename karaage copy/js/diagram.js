@@ -54,101 +54,57 @@ const umlComponents = [
 const umlDiagramTypes = {
   class: {
     label: 'クラス図',
-    components: [
-      { icon:'<i data-lucide="box" class="node-lucide-icon"></i>', label:'クラス', color:'#7c3aed', nodeType:'class-box',
-        defaults: { stereotype:'', attributes:['-属性1 : 型'], methods:['+操作1() : 戻り値型'] } },
-      { icon:'<i data-lucide="diamond" class="node-lucide-icon"></i>', label:'インターフェース', color:'#3b82f6', nodeType:'class-box',
-        defaults: { stereotype:'«interface»', attributes:[], methods:['+操作1() : 戻り値型'] } },
-      { icon:'<i data-lucide="box" class="node-lucide-icon"></i>', label:'抽象クラス', color:'#8b5cf6', nodeType:'class-box',
-        defaults: { stereotype:'«abstract»', attributes:['-属性1 : 型'], methods:['+操作1() : 戻り値型'] } },
-      { icon:'<i data-lucide="list" class="node-lucide-icon"></i>', label:'列挙型', color:'#06b6d4', nodeType:'class-box',
-        defaults: { stereotype:'«enum»', attributes:['VALUE_1','VALUE_2','VALUE_3'], methods:[] } },
-      { icon:'<i data-lucide="folder" class="node-lucide-icon"></i>', label:'パッケージ', color:'#f59e0b' },
-      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
-    ],
+    get components() {
+      return window.BehaviorDiagramLibrary?.structure?.getComponents('class') || [];
+    }
   },
   object: {
     label: 'オブジェクト図',
-    components: [
-      { icon:'<i data-lucide="square" class="node-lucide-icon"></i>', label:'オブジェクト', color:'#14b8a6' },
-      { icon:'<i data-lucide="link-2" class="node-lucide-icon"></i>', label:'リンク', color:'#7c3aed' },
-      { icon:'<i data-lucide="box" class="node-lucide-icon"></i>', label:'クラス', color:'#3b82f6' },
-      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
-    ],
+    get components() {
+      return window.BehaviorDiagramLibrary?.structure?.getComponents('object') || [];
+    }
   },
   package: {
     label: 'パッケージ図',
-    components: [
-      { icon:'<i data-lucide="folder" class="node-lucide-icon"></i>', label:'パッケージ', color:'#06b6d4' },
-      { icon:'<i data-lucide="box" class="node-lucide-icon"></i>', label:'クラス', color:'#7c3aed' },
-      { icon:'<i data-lucide="diamond" class="node-lucide-icon"></i>', label:'インターフェース', color:'#3b82f6' },
-      { icon:'<i data-lucide="link" class="node-lucide-icon"></i>', label:'依存', color:'#f59e0b' },
-      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
-    ],
+    get components() {
+      return window.BehaviorDiagramLibrary?.structure?.getComponents('package') || [];
+    }
   },
   composite: {
     label: 'コンポジット構造図',
-    components: [
-      { icon:'<i data-lucide="box" class="node-lucide-icon"></i>', label:'クラス/コンポーネント', color:'#7c3aed' },
-      { icon:'<i data-lucide="plug" class="node-lucide-icon"></i>', label:'ポート', color:'#10b981' },
-      { icon:'<i data-lucide="square" class="node-lucide-icon"></i>', label:'パート', color:'#06b6d4' },
-      { icon:'<i data-lucide="diamond" class="node-lucide-icon"></i>', label:'インターフェース', color:'#3b82f6' },
-      { icon:'<i data-lucide="link-2" class="node-lucide-icon"></i>', label:'コネクタ', color:'#f59e0b' },
-      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
-    ],
+    get components() {
+      return window.BehaviorDiagramLibrary?.structure?.getComponents('composite') || [];
+    }
   },
   component: {
     label: 'コンポーネント図',
-    components: [
-      { icon:'<i data-lucide="square" class="node-lucide-icon"></i>', label:'コンポーネント', color:'#7c3aed' },
-      { icon:'<i data-lucide="diamond" class="node-lucide-icon"></i>', label:'インターフェース', color:'#3b82f6' },
-      { icon:'<i data-lucide="plug" class="node-lucide-icon"></i>', label:'ポート', color:'#10b981' },
-      { icon:'<i data-lucide="folder" class="node-lucide-icon"></i>', label:'パッケージ', color:'#06b6d4' },
-      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
-    ],
+    get components() {
+      return window.BehaviorDiagramLibrary?.structure?.getComponents('component') || [];
+    }
   },
   deployment: {
     label: '配置図',
-    components: [
-      { icon:'<i data-lucide="monitor" class="node-lucide-icon"></i>', label:'ノード', color:'#7c3aed' },
-      { icon:'<i data-lucide="smartphone" class="node-lucide-icon"></i>', label:'デバイス', color:'#a855f7' },
-      { icon:'<i data-lucide="cloud" class="node-lucide-icon"></i>', label:'実行環境', color:'#06b6d4' },
-      { icon:'<i data-lucide="square" class="node-lucide-icon"></i>', label:'コンポーネント', color:'#10b981' },
-      { icon:'<i data-lucide="hard-drive" class="node-lucide-icon"></i>', label:'成果物', color:'#f59e0b' },
-      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
-    ],
+    get components() {
+      return window.BehaviorDiagramLibrary?.structure?.getComponents('deployment') || [];
+    }
   },
   usecase: {
     label: 'ユースケース図',
-    components: [
-      { icon:'<i data-lucide="user" class="node-lucide-icon"></i>', label:'アクター', color:'#10b981' },
-      { icon:'<i data-lucide="circle" class="node-lucide-icon"></i>', label:'ユースケース', color:'#f59e0b' },
-      { icon:'<i data-lucide="rectangle-horizontal" class="node-lucide-icon"></i>', label:'システム境界', color:'#7c3aed' },
-      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
-    ],
+    get components() {
+      return window.BehaviorDiagramLibrary?.usecase?.getDefaultComponents?.() || [];
+    }
   },
   activity: {
     label: 'アクティビティ図',
-    components: [
-      { icon:'<i data-lucide="play" class="node-lucide-icon"></i>', label:'アクション', color:'#06b6d4' },
-      { icon:'<i data-lucide="circle" class="node-lucide-icon"></i>', label:'開始ノード', color:'#10b981' },
-      { icon:'<i data-lucide="circle-x" class="node-lucide-icon"></i>', label:'終了ノード', color:'#ef4444' },
-      { icon:'<i data-lucide="diamond" class="node-lucide-icon"></i>', label:'分岐/合流', color:'#f59e0b' },
-      { icon:'<i data-lucide="minus" class="node-lucide-icon"></i>', label:'フォーク/ジョイン', color:'#8b5cf6' },
-      { icon:'<i data-lucide="square" class="node-lucide-icon"></i>', label:'オブジェクトノード', color:'#7c3aed' },
-      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
-    ],
+    get components() {
+      return window.BehaviorDiagramLibrary?.activity?.getDefaultComponents?.() || [];
+    }
   },
   state: {
     label: 'ステートマシン図',
-    components: [
-      { icon:'<i data-lucide="git-branch" class="node-lucide-icon"></i>', label:'ステート', color:'#6366f1' },
-      { icon:'<i data-lucide="play-circle" class="node-lucide-icon"></i>', label:'初期状態', color:'#10b981' },
-      { icon:'<i data-lucide="stop-circle" class="node-lucide-icon"></i>', label:'終了状態', color:'#ef4444' },
-      { icon:'<i data-lucide="diamond" class="node-lucide-icon"></i>', label:'選択', color:'#f59e0b' },
-      { icon:'<i data-lucide="box" class="node-lucide-icon"></i>', label:'複合ステート', color:'#7c3aed' },
-      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
-    ],
+    get components() {
+      return window.BehaviorDiagramLibrary?.state?.getDefaultComponents?.() || [];
+    }
   },
   sequence: {
     label: 'シーケンス図',
@@ -694,6 +650,9 @@ class DiagramTool {
       icon: comp.icon,
       label: overrides.label || comp.label,
       color: comp.color,
+      behaviorType: comp.behaviorType || null,
+      width: overrides.width || comp.width || null,
+      height: overrides.height || comp.height || null,
       x,
       y,
       textColor: this.defaultTextStyle.color,
@@ -875,7 +834,20 @@ class DiagramTool {
     el.style.left = node.x + 'px';
     el.style.top = node.y + 'px';
 
-    if (node.nodeType === 'class-box') {
+    const behaviorPresentation =
+      window.BehaviorDiagramLibrary?.activity?.buildNodePresentation?.(node, this.escapeHtml.bind(this)) ||
+      window.BehaviorDiagramLibrary?.state?.buildNodePresentation?.(node, this.escapeHtml.bind(this)) ||
+      window.BehaviorDiagramLibrary?.usecase?.buildNodePresentation?.(node, this.escapeHtml.bind(this));
+    if (behaviorPresentation) {
+      el.className = behaviorPresentation.className;
+      const sizeStyle = [
+        behaviorPresentation.style,
+        node.width ? `width:${node.width}px;` : '',
+        node.height ? `height:${node.height}px;` : '',
+      ].join('');
+      el.style.cssText = `left:${node.x}px;top:${node.y}px;${sizeStyle}`;
+      el.innerHTML = behaviorPresentation.innerHTML;
+    } else if (node.nodeType === 'class-box') {
       // UMLクラス図の3コンパートメントノード
       el.className = 'diagram-node uml-class-box';
       el.style.borderColor = node.color + '80';
@@ -910,11 +882,49 @@ class DiagramTool {
       this.applyNodeTextStyle(node, labelEl);
     }
 
+    if (node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary') {
+      const resizeHandle = document.createElement('span');
+      resizeHandle.className = 'node-resize-handle';
+      resizeHandle.title = 'サイズ変更';
+      resizeHandle.style.cssText = 'position:absolute;right:3px;bottom:3px;width:14px;height:14px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;opacity:0.55;cursor:nwse-resize;';
+      el.appendChild(resizeHandle);
+    }
+
     // Drag
     let dragging = false, ox, oy;
     el.addEventListener('mousedown', e => {
       if (this.editingNodeId === node.id) return;
       if (e.target.classList.contains('node-port')) return;
+      if (e.target.classList.contains('node-resize-handle')) {
+        const startX = e.clientX;
+        const startY = e.clientY;
+        const startWidth = node.width || el.getBoundingClientRect().width;
+        const startHeight = node.height || el.getBoundingClientRect().height;
+        const minWidth = (node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary') ? 260 : 120;
+        const minHeight = (node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary') ? 180 : 80;
+        const onMouseMove = moveEvent => {
+          node.width = Math.max(minWidth, Math.round(startWidth + (moveEvent.clientX - startX)));
+          node.height = Math.max(minHeight, Math.round(startHeight + (moveEvent.clientY - startY)));
+          el.style.width = node.width + 'px';
+          el.style.height = node.height + 'px';
+          this.drawConnections();
+        };
+        const onMouseUp = () => {
+          this.pushUndoAction({
+            type: 'resizeNode',
+            nodeId: node.id,
+            width: startWidth,
+            height: startHeight,
+          });
+          document.removeEventListener('mousemove', onMouseMove);
+          document.removeEventListener('mouseup', onMouseUp);
+        };
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
       if (this.connectMode) {
         if (!this.connectingFrom) {
           this.connectingFrom = node;
@@ -1168,6 +1178,24 @@ class DiagramTool {
       node.y = action.y;
       el.style.left = `${node.x}px`;
       el.style.top = `${node.y}px`;
+      this.drawConnections();
+      return inverse;
+    }
+
+    if (action.type === 'resizeNode') {
+      const node = this.getNodeById(action.nodeId);
+      const el = node ? document.getElementById(node.id) : null;
+      if (!node || !el) return null;
+      const inverse = {
+        type: 'resizeNode',
+        nodeId: action.nodeId,
+        width: node.width,
+        height: node.height,
+      };
+      node.width = action.width;
+      node.height = action.height;
+      if (action.width) el.style.width = `${action.width}px`;
+      if (action.height) el.style.height = `${action.height}px`;
       this.drawConnections();
       return inverse;
     }
