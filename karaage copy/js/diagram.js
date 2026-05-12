@@ -38,16 +38,16 @@ const archComponents = [
   { icon:'<i data-lucide="layout-dashboard" class="node-lucide-icon"></i>', label:'管理画面', color:'#3b82f6' },
 ];
 const umlComponents = [
-  { icon:'📦', label:'クラス', color:'#7c3aed' },
-  { icon:'🔷', label:'インターフェース', color:'#3b82f6' },
-  { icon:'📂', label:'パッケージ', color:'#06b6d4' },
-  { icon:'👤', label:'アクター', color:'#10b981' },
-  { icon:'⭕', label:'ユースケース', color:'#f59e0b' },
-  { icon:'📜', label:'ノート', color:'#8b5cf6' },
-  { icon:'⬜', label:'オブジェクト', color:'#14b8a6' },
-  { icon:'🔄', label:'ステート', color:'#6366f1' },
-  { icon:'▶️', label:'アクティビティ', color:'#ec4899' },
-  { icon:'📨', label:'メッセージ', color:'#f97316' },
+  { icon:'<i data-lucide="box" class="node-lucide-icon"></i>', label:'クラス', color:'#7c3aed' },
+  { icon:'<i data-lucide="diamond" class="node-lucide-icon"></i>', label:'インターフェース', color:'#3b82f6' },
+  { icon:'<i data-lucide="folder" class="node-lucide-icon"></i>', label:'パッケージ', color:'#06b6d4' },
+  { icon:'<i data-lucide="user" class="node-lucide-icon"></i>', label:'アクター', color:'#10b981' },
+  { icon:'<i data-lucide="circle" class="node-lucide-icon"></i>', label:'ユースケース', color:'#f59e0b' },
+  { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#8b5cf6' },
+  { icon:'<i data-lucide="square" class="node-lucide-icon"></i>', label:'オブジェクト', color:'#14b8a6' },
+  { icon:'<i data-lucide="git-branch" class="node-lucide-icon"></i>', label:'ステート', color:'#6366f1' },
+  { icon:'<i data-lucide="play" class="node-lucide-icon"></i>', label:'アクティビティ', color:'#ec4899' },
+  { icon:'<i data-lucide="mail" class="node-lucide-icon"></i>', label:'メッセージ', color:'#f97316' },
 ];
 
 /* ===== UML Diagram Sub-Types ===== */
@@ -55,150 +55,165 @@ const umlDiagramTypes = {
   class: {
     label: 'クラス図',
     components: [
-      { icon:'📦', label:'クラス', color:'#7c3aed' },
-      { icon:'🔷', label:'インターフェース', color:'#3b82f6' },
-      { icon:'📦', label:'抽象クラス', color:'#8b5cf6' },
-      { icon:'📋', label:'列挙型', color:'#06b6d4' },
-      { icon:'📂', label:'パッケージ', color:'#f59e0b' },
-      { icon:'📜', label:'ノート', color:'#64748b' },
+      { icon:'<i data-lucide="box" class="node-lucide-icon"></i>', label:'クラス', color:'#7c3aed', nodeType:'class-box',
+        defaults: { stereotype:'', attributes:['-属性1 : 型'], methods:['+操作1() : 戻り値型'] } },
+      { icon:'<i data-lucide="diamond" class="node-lucide-icon"></i>', label:'インターフェース', color:'#3b82f6', nodeType:'class-box',
+        defaults: { stereotype:'«interface»', attributes:[], methods:['+操作1() : 戻り値型'] } },
+      { icon:'<i data-lucide="box" class="node-lucide-icon"></i>', label:'抽象クラス', color:'#8b5cf6', nodeType:'class-box',
+        defaults: { stereotype:'«abstract»', attributes:['-属性1 : 型'], methods:['+操作1() : 戻り値型'] } },
+      { icon:'<i data-lucide="list" class="node-lucide-icon"></i>', label:'列挙型', color:'#06b6d4', nodeType:'class-box',
+        defaults: { stereotype:'«enum»', attributes:['VALUE_1','VALUE_2','VALUE_3'], methods:[] } },
+      { icon:'<i data-lucide="folder" class="node-lucide-icon"></i>', label:'パッケージ', color:'#f59e0b' },
+      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
     ],
   },
   object: {
     label: 'オブジェクト図',
     components: [
-      { icon:'⬜', label:'オブジェクト', color:'#14b8a6' },
-      { icon:'🔗', label:'リンク', color:'#7c3aed' },
-      { icon:'📦', label:'クラス', color:'#3b82f6' },
-      { icon:'📜', label:'ノート', color:'#64748b' },
+      { icon:'<i data-lucide="square" class="node-lucide-icon"></i>', label:'オブジェクト', color:'#14b8a6' },
+      { icon:'<i data-lucide="link-2" class="node-lucide-icon"></i>', label:'リンク', color:'#7c3aed' },
+      { icon:'<i data-lucide="box" class="node-lucide-icon"></i>', label:'クラス', color:'#3b82f6' },
+      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
     ],
   },
   package: {
     label: 'パッケージ図',
     components: [
-      { icon:'📂', label:'パッケージ', color:'#06b6d4' },
-      { icon:'📦', label:'クラス', color:'#7c3aed' },
-      { icon:'🔷', label:'インターフェース', color:'#3b82f6' },
-      { icon:'📎', label:'依存', color:'#f59e0b' },
-      { icon:'📜', label:'ノート', color:'#64748b' },
+      { icon:'<i data-lucide="folder" class="node-lucide-icon"></i>', label:'パッケージ', color:'#06b6d4' },
+      { icon:'<i data-lucide="box" class="node-lucide-icon"></i>', label:'クラス', color:'#7c3aed' },
+      { icon:'<i data-lucide="diamond" class="node-lucide-icon"></i>', label:'インターフェース', color:'#3b82f6' },
+      { icon:'<i data-lucide="link" class="node-lucide-icon"></i>', label:'依存', color:'#f59e0b' },
+      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
     ],
   },
   composite: {
     label: 'コンポジット構造図',
     components: [
-      { icon:'📦', label:'クラス/コンポーネント', color:'#7c3aed' },
-      { icon:'🔌', label:'ポート', color:'#10b981' },
-      { icon:'🧩', label:'パート', color:'#06b6d4' },
-      { icon:'🔷', label:'インターフェース', color:'#3b82f6' },
-      { icon:'🔗', label:'コネクタ', color:'#f59e0b' },
-      { icon:'📜', label:'ノート', color:'#64748b' },
+      { icon:'<i data-lucide="box" class="node-lucide-icon"></i>', label:'クラス/コンポーネント', color:'#7c3aed' },
+      { icon:'<i data-lucide="plug" class="node-lucide-icon"></i>', label:'ポート', color:'#10b981' },
+      { icon:'<i data-lucide="square" class="node-lucide-icon"></i>', label:'パート', color:'#06b6d4' },
+      { icon:'<i data-lucide="diamond" class="node-lucide-icon"></i>', label:'インターフェース', color:'#3b82f6' },
+      { icon:'<i data-lucide="link-2" class="node-lucide-icon"></i>', label:'コネクタ', color:'#f59e0b' },
+      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
     ],
   },
   component: {
     label: 'コンポーネント図',
     components: [
-      { icon:'🧩', label:'コンポーネント', color:'#7c3aed' },
-      { icon:'🔷', label:'インターフェース', color:'#3b82f6' },
-      { icon:'🔌', label:'ポート', color:'#10b981' },
-      { icon:'📂', label:'パッケージ', color:'#06b6d4' },
-      { icon:'📜', label:'ノート', color:'#64748b' },
+      { icon:'<i data-lucide="square" class="node-lucide-icon"></i>', label:'コンポーネント', color:'#7c3aed' },
+      { icon:'<i data-lucide="diamond" class="node-lucide-icon"></i>', label:'インターフェース', color:'#3b82f6' },
+      { icon:'<i data-lucide="plug" class="node-lucide-icon"></i>', label:'ポート', color:'#10b981' },
+      { icon:'<i data-lucide="folder" class="node-lucide-icon"></i>', label:'パッケージ', color:'#06b6d4' },
+      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
     ],
   },
   deployment: {
     label: '配置図',
     components: [
-      { icon:'🖥️', label:'ノード', color:'#7c3aed' },
-      { icon:'📱', label:'デバイス', color:'#a855f7' },
-      { icon:'🌐', label:'実行環境', color:'#06b6d4' },
-      { icon:'🧩', label:'コンポーネント', color:'#10b981' },
-      { icon:'💾', label:'成果物', color:'#f59e0b' },
-      { icon:'📜', label:'ノート', color:'#64748b' },
+      { icon:'<i data-lucide="monitor" class="node-lucide-icon"></i>', label:'ノード', color:'#7c3aed' },
+      { icon:'<i data-lucide="smartphone" class="node-lucide-icon"></i>', label:'デバイス', color:'#a855f7' },
+      { icon:'<i data-lucide="cloud" class="node-lucide-icon"></i>', label:'実行環境', color:'#06b6d4' },
+      { icon:'<i data-lucide="square" class="node-lucide-icon"></i>', label:'コンポーネント', color:'#10b981' },
+      { icon:'<i data-lucide="hard-drive" class="node-lucide-icon"></i>', label:'成果物', color:'#f59e0b' },
+      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
     ],
   },
   usecase: {
     label: 'ユースケース図',
     components: [
-      { icon:'👤', label:'アクター', color:'#10b981' },
-      { icon:'⭕', label:'ユースケース', color:'#f59e0b' },
-      { icon:'🔲', label:'システム境界', color:'#7c3aed' },
-      { icon:'📜', label:'ノート', color:'#64748b' },
+      { icon:'<i data-lucide="user" class="node-lucide-icon"></i>', label:'アクター', color:'#10b981' },
+      { icon:'<i data-lucide="circle" class="node-lucide-icon"></i>', label:'ユースケース', color:'#f59e0b' },
+      { icon:'<i data-lucide="rectangle-horizontal" class="node-lucide-icon"></i>', label:'システム境界', color:'#7c3aed' },
+      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
     ],
   },
   activity: {
     label: 'アクティビティ図',
     components: [
-      { icon:'▶️', label:'アクション', color:'#06b6d4' },
-      { icon:'🔵', label:'開始ノード', color:'#10b981' },
-      { icon:'🔴', label:'終了ノード', color:'#ef4444' },
-      { icon:'◇', label:'分岐/合流', color:'#f59e0b' },
-      { icon:'═', label:'フォーク/ジョイン', color:'#8b5cf6' },
-      { icon:'📝', label:'オブジェクトノード', color:'#7c3aed' },
-      { icon:'📜', label:'ノート', color:'#64748b' },
+      { icon:'<i data-lucide="play" class="node-lucide-icon"></i>', label:'アクション', color:'#06b6d4' },
+      { icon:'<i data-lucide="circle" class="node-lucide-icon"></i>', label:'開始ノード', color:'#10b981' },
+      { icon:'<i data-lucide="circle-x" class="node-lucide-icon"></i>', label:'終了ノード', color:'#ef4444' },
+      { icon:'<i data-lucide="diamond" class="node-lucide-icon"></i>', label:'分岐/合流', color:'#f59e0b' },
+      { icon:'<i data-lucide="minus" class="node-lucide-icon"></i>', label:'フォーク/ジョイン', color:'#8b5cf6' },
+      { icon:'<i data-lucide="square" class="node-lucide-icon"></i>', label:'オブジェクトノード', color:'#7c3aed' },
+      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
     ],
   },
   state: {
     label: 'ステートマシン図',
     components: [
-      { icon:'🔄', label:'ステート', color:'#6366f1' },
-      { icon:'🔵', label:'初期状態', color:'#10b981' },
-      { icon:'🔴', label:'終了状態', color:'#ef4444' },
-      { icon:'◇', label:'選択', color:'#f59e0b' },
-      { icon:'📦', label:'複合ステート', color:'#7c3aed' },
-      { icon:'📜', label:'ノート', color:'#64748b' },
+      { icon:'<i data-lucide="git-branch" class="node-lucide-icon"></i>', label:'ステート', color:'#6366f1' },
+      { icon:'<i data-lucide="play-circle" class="node-lucide-icon"></i>', label:'初期状態', color:'#10b981' },
+      { icon:'<i data-lucide="stop-circle" class="node-lucide-icon"></i>', label:'終了状態', color:'#ef4444' },
+      { icon:'<i data-lucide="diamond" class="node-lucide-icon"></i>', label:'選択', color:'#f59e0b' },
+      { icon:'<i data-lucide="box" class="node-lucide-icon"></i>', label:'複合ステート', color:'#7c3aed' },
+      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
     ],
   },
   sequence: {
     label: 'シーケンス図',
     components: [
-      { icon:'👤', label:'ライフライン', color:'#7c3aed' },
-      { icon:'📨', label:'メッセージ', color:'#06b6d4' },
-      { icon:'↩️', label:'返信', color:'#10b981' },
-      { icon:'🔲', label:'フラグメント', color:'#f59e0b' },
-      { icon:'📜', label:'ノート', color:'#64748b' },
+      { icon:'<i data-lucide="user" class="node-lucide-icon"></i>', label:'ライフライン', color:'#7c3aed' },
+      { icon:'<i data-lucide="mail" class="node-lucide-icon"></i>', label:'メッセージ', color:'#06b6d4' },
+      { icon:'<i data-lucide="arrow-left" class="node-lucide-icon"></i>', label:'返信', color:'#10b981' },
+      { icon:'<i data-lucide="square" class="node-lucide-icon"></i>', label:'フラグメント', color:'#f59e0b' },
+      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
     ],
   },
   communication: {
     label: 'コミュニケーション図',
     components: [
-      { icon:'⬜', label:'オブジェクト', color:'#14b8a6' },
-      { icon:'📨', label:'メッセージ', color:'#06b6d4' },
-      { icon:'🔗', label:'リンク', color:'#7c3aed' },
-      { icon:'📜', label:'ノート', color:'#64748b' },
+      { icon:'<i data-lucide="square" class="node-lucide-icon"></i>', label:'オブジェクト', color:'#14b8a6' },
+      { icon:'<i data-lucide="mail" class="node-lucide-icon"></i>', label:'メッセージ', color:'#06b6d4' },
+      { icon:'<i data-lucide="link-2" class="node-lucide-icon"></i>', label:'リンク', color:'#7c3aed' },
+      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
     ],
   },
   timing: {
     label: 'タイミング図',
     components: [
-      { icon:'👤', label:'ライフライン', color:'#7c3aed' },
-      { icon:'🔄', label:'状態/条件', color:'#6366f1' },
-      { icon:'⏱️', label:'時間制約', color:'#f59e0b' },
-      { icon:'📨', label:'メッセージ', color:'#06b6d4' },
-      { icon:'📜', label:'ノート', color:'#64748b' },
+      { icon:'<i data-lucide="user" class="node-lucide-icon"></i>', label:'ライフライン', color:'#7c3aed' },
+      { icon:'<i data-lucide="git-branch" class="node-lucide-icon"></i>', label:'状態/条件', color:'#6366f1' },
+      { icon:'<i data-lucide="clock" class="node-lucide-icon"></i>', label:'時間制約', color:'#f59e0b' },
+      { icon:'<i data-lucide="mail" class="node-lucide-icon"></i>', label:'メッセージ', color:'#06b6d4' },
+      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
     ],
   },
   interaction: {
     label: '相互作用図',
     components: [
-      { icon:'🔲', label:'相互作用', color:'#7c3aed' },
-      { icon:'👤', label:'ライフライン', color:'#3b82f6' },
-      { icon:'📨', label:'メッセージ', color:'#06b6d4' },
-      { icon:'▶️', label:'制御フロー', color:'#10b981' },
-      { icon:'📜', label:'ノート', color:'#64748b' },
+      { icon:'<i data-lucide="square" class="node-lucide-icon"></i>', label:'相互作用', color:'#7c3aed' },
+      { icon:'<i data-lucide="user" class="node-lucide-icon"></i>', label:'ライフライン', color:'#3b82f6' },
+      { icon:'<i data-lucide="mail" class="node-lucide-icon"></i>', label:'メッセージ', color:'#06b6d4' },
+      { icon:'<i data-lucide="play" class="node-lucide-icon"></i>', label:'制御フロー', color:'#10b981' },
+      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
     ],
   },
 };
 const screenTransitionComponents = [
-  { icon:'🖥️', label:'画面', color:'#7c3aed' },
-  { icon:'🔵', label:'開始', color:'#10b981' },
-  { icon:'🔴', label:'終了', color:'#ef4444' },
-  { icon:'◇', label:'分岐', color:'#f59e0b' },
-  { icon:'📋', label:'フォーム', color:'#06b6d4' },
-  { icon:'🪟', label:'モーダル', color:'#8b5cf6' },
-  { icon:'📊', label:'ダッシュボード', color:'#14b8a6' },
-  { icon:'⚙️', label:'設定画面', color:'#6366f1' },
-  { icon:'🔔', label:'通知/アラート', color:'#ec4899' },
-  { icon:'🔐', label:'認証画面', color:'#ef4444' },
-  { icon:'📝', label:'入力画面', color:'#f97316' },
-  { icon:'📄', label:'一覧画面', color:'#64748b' },
+  { icon:'<i data-lucide="monitor" class="node-lucide-icon"></i>', label:'画面', color:'#7c3aed' },
+  { icon:'<i data-lucide="play-circle" class="node-lucide-icon"></i>', label:'開始', color:'#10b981' },
+  { icon:'<i data-lucide="stop-circle" class="node-lucide-icon"></i>', label:'終了', color:'#ef4444' },
+  { icon:'<i data-lucide="git-branch" class="node-lucide-icon"></i>', label:'分岐', color:'#f59e0b' },
+  { icon:'<i data-lucide="form" class="node-lucide-icon"></i>', label:'フォーム', color:'#06b6d4' },
+  { icon:'<i data-lucide="layers" class="node-lucide-icon"></i>', label:'モーダル', color:'#8b5cf6' },
+  { icon:'<i data-lucide="bar-chart-3" class="node-lucide-icon"></i>', label:'ダッシュボード', color:'#14b8a6' },
+  { icon:'<i data-lucide="settings" class="node-lucide-icon"></i>', label:'設定画面', color:'#6366f1' },
+  { icon:'<i data-lucide="bell" class="node-lucide-icon"></i>', label:'通知/アラート', color:'#ec4899' },
+  { icon:'<i data-lucide="lock" class="node-lucide-icon"></i>', label:'認証画面', color:'#ef4444' },
+  { icon:'<i data-lucide="edit-3" class="node-lucide-icon"></i>', label:'入力画面', color:'#f97316' },
+  { icon:'<i data-lucide="list" class="node-lucide-icon"></i>', label:'一覧画面', color:'#64748b' },
+];
+
+/* UMLクラス図の接続タイプ定義 */
+const UML_CONNECTION_TYPES = [
+  { key: 'association',  label: '関連',         icon: '━━' },
+  { key: 'aggregation',  label: '集約',         icon: '◇━' },
+  { key: 'composition',  label: 'コンポジット', icon: '◆━' },
+  { key: 'dependency',   label: '依存',         icon: '- -▸' },
+  { key: 'generalization',label: '汎化',         icon: '━▷' },
+  { key: 'realization',  label: '実現',         icon: '- -▷' },
+  { key: 'navigable',    label: '誘導可能性',   icon: '✕━▸' },
 ];
 
 class DiagramTool {
@@ -207,9 +222,9 @@ class DiagramTool {
     this.components = components;
     this.options = options;
     this.isDropdownPalette = this.options.paletteMode === 'dropdown';
-    // connection mode flag: explicitly initialize to boolean to avoid
-    // intermittent truthy/undefined states when UI sync happens.
+    this.umlType = this.options.umlType || null;
     this.connectMode = false;
+    this.activeConnType = 'association'; // デフォルト接続タイプ
     this.nodes = [];
     this.connections = [];
     this.selectedNode = null;
@@ -243,8 +258,6 @@ class DiagramTool {
     this.canvas = document.getElementById(prefix + '-canvas');
     this.svg = document.getElementById(prefix + '-svg');
 
-    // If the partial HTML hasn't been inserted yet, the canvas/svg may be null.
-    // Wait until they exist before initializing event handlers and controls.
     if (!this.canvas || !this.svg) {
       const tryInit = () => {
         this.canvas = document.getElementById(prefix + '-canvas');
@@ -264,8 +277,30 @@ class DiagramTool {
       this.initTextStyleControls();
       this.initPropertyPanel();
     }
+    this.applyUmlMode();
+  }
+
+  /** クラス図モード時に文字スタイルコントロールを非表示にする */
+  applyUmlMode() {
+    const section = this.canvas?.closest('.tool-section');
+    if (!section) return;
+    const styleControls = section.querySelector('.diagram-style-controls');
+    if (styleControls) {
+      styleControls.style.display = this.umlType === 'class' ? 'none' : '';
+    }
+    // セパレータも非表示
+    const sep = styleControls?.nextElementSibling;
+    if (sep && sep.classList.contains('toolbar-sep')) {
+      sep.style.display = this.umlType === 'class' ? 'none' : '';
+    }
   }
   initPalette() {
+    // 以前の接続タイプセレクタをクリーンアップ
+    const oldConnGroup = document.getElementById(this.prefix + '-conn-group');
+    if (oldConnGroup) oldConnGroup.remove();
+    const oldConnBtn = document.getElementById(this.prefix + '-connect-mode');
+    if (oldConnBtn) { oldConnBtn.style.display = ''; oldConnBtn.replaceWith(oldConnBtn.cloneNode(true)); }
+
     const palette = document.getElementById(this.prefix + '-palette');
     if (this.isDropdownPalette) {
       palette.innerHTML = `
@@ -331,20 +366,58 @@ class DiagramTool {
     }
 
     const connectButton = document.getElementById(this.prefix+'-connect-mode');
-    this.updateConnectButton = () => {
-      connectButton.classList.toggle('active', this.connectMode);
-      connectButton.textContent = `🔗 接続モード ${this.connectMode ? 'ON' : 'OFF'}`;
-      if (!this.isDropdownPalette) {
-        connectButton.style.background = this.connectMode ? 'rgba(124,58,237,0.2)' : '';
-      }
-    };
-    this.updateConnectButton();
-    connectButton.addEventListener('click', () => {
-      this.connectMode = !this.connectMode;
+
+    // クラス図モードの場合: 接続タイプセレクタを生成
+    if (this.umlType === 'class') {
+      connectButton.innerHTML = '';
+      connectButton.textContent = '';
+      connectButton.style.display = 'none';
+
+      // 接続タイプセレクタをパレット領域に追加
+      const connGroup = document.createElement('div');
+      connGroup.className = 'uml-conn-group';
+      connGroup.id = this.prefix + '-conn-group';
+      connGroup.innerHTML = `
+        <select class="uml-conn-select" id="${this.prefix}-conn-select">
+          ${UML_CONNECTION_TYPES.map(t => `<option value="${t.key}">${t.icon}  ${t.label}</option>`).join('')}
+        </select>
+        <button type="button" class="palette-action-btn" id="${this.prefix}-connect-toggle">🔗 接続</button>`;
+      connectButton.parentNode.insertBefore(connGroup, connectButton);
+
+      const connSelect = document.getElementById(this.prefix + '-conn-select');
+      const connToggle = document.getElementById(this.prefix + '-connect-toggle');
+      connSelect.addEventListener('change', () => {
+        this.activeConnType = connSelect.value;
+      });
+
+      this.updateConnectButton = () => {
+        connToggle.classList.toggle('active', this.connectMode);
+        connToggle.textContent = `🔗 接続 ${this.connectMode ? 'ON' : 'OFF'}`;
+      };
       this.updateConnectButton();
-      this.canvas.style.cursor = this.connectMode ? 'crosshair' : 'default';
-      showToast(this.connectMode ? '接続モード: ONー ノードをクリックして接続' : '接続モード: OFF');
-    });
+      connToggle.addEventListener('click', () => {
+        this.connectMode = !this.connectMode;
+        this.updateConnectButton();
+        this.canvas.style.cursor = this.connectMode ? 'crosshair' : 'default';
+        const typeDef = UML_CONNECTION_TYPES.find(t => t.key === this.activeConnType);
+        showToast(this.connectMode ? `接続モード: ON (${typeDef?.label || '関連'})` : '接続モード: OFF');
+      });
+    } else {
+      this.updateConnectButton = () => {
+        connectButton.classList.toggle('active', this.connectMode);
+        connectButton.textContent = `🔗 接続モード ${this.connectMode ? 'ON' : 'OFF'}`;
+        if (!this.isDropdownPalette) {
+          connectButton.style.background = this.connectMode ? 'rgba(124,58,237,0.2)' : '';
+        }
+      };
+      this.updateConnectButton();
+      connectButton.addEventListener('click', () => {
+        this.connectMode = !this.connectMode;
+        this.updateConnectButton();
+        this.canvas.style.cursor = this.connectMode ? 'crosshair' : 'default';
+        showToast(this.connectMode ? '接続モード: ONー ノードをクリックして接続' : '接続モード: OFF');
+      });
+    }
 
     // Sidebar toggle button
     const sidebarToggle = document.getElementById(this.prefix + '-sidebar-toggle');
@@ -482,10 +555,61 @@ class DiagramTool {
     const rgbToHex = (color) => {
       if (!color) return '#e5e7eb';
       if (color.startsWith('#') && color.length === 7) return color;
-      return color; // simplified, assuming hex is mostly used
+      return color;
     };
     setVal('textcolor', rgbToHex(node.textColor || this.defaultTextStyle.color));
     setVal('color', rgbToHex(node.color));
+
+    // --- クラスボックス専用フィールドの動的生成 ---
+    const panelBody = panel?.querySelector('.property-panel-body');
+    // 以前の動的フィールドを削除
+    panelBody?.querySelectorAll('.uml-class-prop-group').forEach(g => g.remove());
+
+    // class-box の場合: フォントサイズ・文字色フィールドを非表示にする
+    const fontsizeGroup = document.getElementById(this.prefix + '-prop-fontsize')?.closest('.property-group');
+    const textcolorGroup = document.getElementById(this.prefix + '-prop-textcolor')?.closest('.property-group');
+    if (fontsizeGroup) fontsizeGroup.style.display = node.nodeType === 'class-box' ? 'none' : '';
+    if (textcolorGroup) textcolorGroup.style.display = node.nodeType === 'class-box' ? 'none' : '';
+
+    if (node.nodeType === 'class-box' && panelBody) {
+      const deleteBtn = panelBody.querySelector('[data-action="deleteSelectedNode"]');
+
+      // ステレオタイプ
+      const stereoGroup = document.createElement('div');
+      stereoGroup.className = 'property-group uml-class-prop-group';
+      stereoGroup.innerHTML = `<label>ステレオタイプ</label>
+        <input type="text" class="property-input" value="${this.escapeHtml(node.stereotype || '')}" placeholder="例: «interface»">`;
+      panelBody.insertBefore(stereoGroup, deleteBtn);
+      stereoGroup.querySelector('input').addEventListener('input', e => {
+        if (!this.propertyPanelNode) return;
+        this.propertyPanelNode.stereotype = e.target.value;
+        this.updateNodeDOM(this.propertyPanelNode);
+      });
+
+      // 属性
+      const attrGroup = document.createElement('div');
+      attrGroup.className = 'property-group uml-class-prop-group';
+      attrGroup.innerHTML = `<label>属性 <span class="prop-hint">(1行1属性)</span></label>
+        <textarea class="property-input property-textarea" rows="4" placeholder="-属性名 : 型">${(node.attributes || []).join('\n')}</textarea>`;
+      panelBody.insertBefore(attrGroup, deleteBtn);
+      attrGroup.querySelector('textarea').addEventListener('input', e => {
+        if (!this.propertyPanelNode) return;
+        this.propertyPanelNode.attributes = e.target.value.split('\n').filter(l => l.trim() !== '');
+        this.updateNodeDOM(this.propertyPanelNode);
+      });
+
+      // 操作
+      const methodGroup = document.createElement('div');
+      methodGroup.className = 'property-group uml-class-prop-group';
+      methodGroup.innerHTML = `<label>操作 <span class="prop-hint">(1行1操作)</span></label>
+        <textarea class="property-input property-textarea" rows="4" placeholder="+操作名() : 戻り値型">${(node.methods || []).join('\n')}</textarea>`;
+      panelBody.insertBefore(methodGroup, deleteBtn);
+      methodGroup.querySelector('textarea').addEventListener('input', e => {
+        if (!this.propertyPanelNode) return;
+        this.propertyPanelNode.methods = e.target.value.split('\n').filter(l => l.trim() !== '');
+        this.updateNodeDOM(this.propertyPanelNode);
+      });
+    }
 
     // Focus and select the label input
     setTimeout(() => {
@@ -494,7 +618,7 @@ class DiagramTool {
         labelInput.focus({ preventScroll: true });
         labelInput.select();
       }
-    }, 300); // wait for panel animation to finish to prevent layout shift
+    }, 300);
   }
 
   closePropertyPanel() {
@@ -508,27 +632,79 @@ class DiagramTool {
     if (!el) return;
     el.style.left = node.x + 'px';
     el.style.top = node.y + 'px';
-    el.style.borderColor = (node.color || '#e5e7eb') + '60'; // with alpha
-    const labelEl = el.querySelector('.node-label');
-    if (labelEl) {
-      labelEl.textContent = node.label;
-      this.applyNodeTextStyle(node, labelEl);
+
+    if (node.nodeType === 'class-box') {
+      el.style.borderColor = (node.color || '#e5e7eb') + '80';
+      // クラス名
+      const labelEl = el.querySelector('.uml-class-name');
+      if (labelEl) labelEl.textContent = node.label;
+      // ステレオタイプ
+      const headerEl = el.querySelector('.uml-class-header');
+      if (headerEl) {
+        let stereoEl = headerEl.querySelector('.uml-class-stereotype');
+        if (node.stereotype) {
+          if (!stereoEl) {
+            stereoEl = document.createElement('div');
+            stereoEl.className = 'uml-class-stereotype';
+            headerEl.insertBefore(stereoEl, headerEl.firstChild);
+          }
+          stereoEl.textContent = node.stereotype;
+        } else if (stereoEl) {
+          stereoEl.remove();
+        }
+      }
+      // 属性セクション
+      const attrsEl = el.querySelector('.uml-class-attrs');
+      if (attrsEl) {
+        attrsEl.innerHTML = (node.attributes || []).map(a =>
+          `<div class="uml-class-row">${this.escapeHtml(a)}</div>`
+        ).join('') || '<div class="uml-class-row uml-class-empty"></div>';
+      }
+      // 操作セクション
+      const methodsEl = el.querySelector('.uml-class-methods');
+      if (methodsEl) {
+        methodsEl.innerHTML = (node.methods || []).map(m =>
+          `<div class="uml-class-row">${this.escapeHtml(m)}</div>`
+        ).join('') || '<div class="uml-class-row uml-class-empty"></div>';
+      }
+    } else {
+      el.style.borderColor = (node.color || '#e5e7eb') + '60';
+      const labelEl = el.querySelector('.node-label');
+      if (labelEl) {
+        labelEl.textContent = node.label;
+        this.applyNodeTextStyle(node, labelEl);
+      }
     }
     this.drawConnections();
   }
 
   addNode(comp, x, y, options = {}) {
+    // クラス図ノードの場合はフォームを表示
+    if (comp.nodeType === 'class-box') {
+      this.showClassBoxForm(comp, x, y, options);
+      return;
+    }
+    this._createNode(comp, x, y, options);
+  }
+
+  _createNode(comp, x, y, options = {}, overrides = {}) {
     const id = this.prefix + '_node_' + (this.nodeIdCounter++);
     const node = {
       id,
       icon: comp.icon,
-      label: comp.label,
+      label: overrides.label || comp.label,
       color: comp.color,
       x,
       y,
       textColor: this.defaultTextStyle.color,
       textSize: this.defaultTextStyle.fontSize,
     };
+    if (comp.nodeType === 'class-box') {
+      node.nodeType = 'class-box';
+      node.stereotype = overrides.stereotype ?? (comp.defaults?.stereotype || '');
+      node.attributes = overrides.attributes || (comp.defaults?.attributes ? [...comp.defaults.attributes] : []);
+      node.methods = overrides.methods || (comp.defaults?.methods ? [...comp.defaults.methods] : []);
+    }
     this.nodes.push(node);
     this.renderNode(node);
     this.pushUndoAction({
@@ -537,20 +713,203 @@ class DiagramTool {
       quickAddCounter: typeof options.quickAddCounterBefore === 'number' ? options.quickAddCounterBefore : this.quickAddCounter,
     });
   }
+
+  /** クラスボックス作成フォーム */
+  showClassBoxForm(comp, x, y, options) {
+    const d = comp.defaults || {};
+    const container = document.getElementById('modal-container');
+    if (!container) { this._createNode(comp, x, y, options); return; }
+
+    container.innerHTML = `
+    <div class="modal-overlay">
+      <div class="modal uml-class-modal">
+        <h2>${this.escapeHtml(comp.label)}を作成</h2>
+
+        <div class="form-group">
+          <label>クラス名</label>
+          <input type="text" class="form-input" id="uml-form-name" value="${this.escapeHtml(comp.label)}" autofocus>
+        </div>
+
+        <div class="form-group" id="uml-form-stereo-group" style="${d.stereotype ? '' : 'display:none'}">
+          <label>ステレオタイプ</label>
+          <input type="text" class="form-input" id="uml-form-stereo" value="${this.escapeHtml(d.stereotype || '')}">
+        </div>
+
+        <div class="form-group">
+          <label>属性 <span class="prop-hint">(名前と型を入力 → 可視性は左のボタンで選択)</span></label>
+          <div id="uml-form-attrs" class="uml-form-rows"></div>
+          <button type="button" class="btn btn-sm btn-secondary uml-form-add-btn" id="uml-form-add-attr">＋ 属性を追加</button>
+        </div>
+
+        <div class="form-group">
+          <label>操作 <span class="prop-hint">(名前と戻り値型を入力 → () は自動挿入)</span></label>
+          <div id="uml-form-methods" class="uml-form-rows"></div>
+          <button type="button" class="btn btn-sm btn-secondary uml-form-add-btn" id="uml-form-add-method">＋ 操作を追加</button>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-secondary" id="uml-form-cancel">キャンセル</button>
+          <button class="btn btn-primary" id="uml-form-confirm">作成</button>
+        </div>
+      </div>
+    </div>`;
+
+    const visibilityOptions = [
+      { symbol: '-', label: 'private' },
+      { symbol: '+', label: 'public' },
+      { symbol: '#', label: 'protected' },
+      { symbol: '~', label: 'package' },
+    ];
+
+    const createRow = (containerId, type) => {
+      const rowsContainer = container.querySelector('#' + containerId);
+      const row = document.createElement('div');
+      row.className = 'uml-form-row';
+
+      // 可視性ボタン
+      const visBtn = document.createElement('button');
+      visBtn.type = 'button';
+      visBtn.className = 'uml-form-vis-btn';
+      visBtn.dataset.vis = type === 'attr' ? '-' : '+';
+      visBtn.textContent = visBtn.dataset.vis;
+      visBtn.title = type === 'attr' ? 'private' : 'public';
+      visBtn.addEventListener('click', () => {
+        const currentIdx = visibilityOptions.findIndex(v => v.symbol === visBtn.dataset.vis);
+        const nextIdx = (currentIdx + 1) % visibilityOptions.length;
+        visBtn.dataset.vis = visibilityOptions[nextIdx].symbol;
+        visBtn.textContent = visibilityOptions[nextIdx].symbol;
+        visBtn.title = visibilityOptions[nextIdx].label;
+      });
+
+      // 名前入力
+      const nameInput = document.createElement('input');
+      nameInput.type = 'text';
+      nameInput.className = 'form-input uml-form-name-input';
+      nameInput.placeholder = type === 'attr' ? '属性名' : '操作名';
+
+      // 型入力
+      const typeInput = document.createElement('input');
+      typeInput.type = 'text';
+      typeInput.className = 'form-input uml-form-type-input';
+      typeInput.placeholder = type === 'attr' ? '型' : '戻り値型';
+
+      // 削除ボタン
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'uml-form-del-btn';
+      delBtn.textContent = '×';
+      delBtn.addEventListener('click', () => row.remove());
+
+      row.appendChild(visBtn);
+      row.appendChild(nameInput);
+      if (type === 'method') {
+        const parens = document.createElement('span');
+        parens.className = 'uml-form-parens';
+        parens.textContent = '()';
+        row.appendChild(parens);
+      }
+      const colon = document.createElement('span');
+      colon.className = 'uml-form-colon';
+      colon.textContent = ':';
+      row.appendChild(colon);
+      row.appendChild(typeInput);
+      row.appendChild(delBtn);
+      rowsContainer.appendChild(row);
+      nameInput.focus();
+    };
+
+    // 初期行を追加
+    createRow('uml-form-attrs', 'attr');
+    createRow('uml-form-methods', 'method');
+
+    // 追加ボタン
+    container.querySelector('#uml-form-add-attr').addEventListener('click', () => createRow('uml-form-attrs', 'attr'));
+    container.querySelector('#uml-form-add-method').addEventListener('click', () => createRow('uml-form-methods', 'method'));
+
+    // キャンセル
+    const close = () => container.innerHTML = '';
+    container.querySelector('#uml-form-cancel').addEventListener('click', close);
+    container.querySelector('.modal-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) close(); });
+
+    // 確定
+    container.querySelector('#uml-form-confirm').addEventListener('click', () => {
+      const name = container.querySelector('#uml-form-name').value.trim() || comp.label;
+      const stereo = container.querySelector('#uml-form-stereo')?.value.trim() || d.stereotype || '';
+
+      // 属性を収集
+      const attrs = [];
+      container.querySelectorAll('#uml-form-attrs .uml-form-row').forEach(row => {
+        const vis = row.querySelector('.uml-form-vis-btn').dataset.vis;
+        const attrName = row.querySelector('.uml-form-name-input').value.trim();
+        const attrType = row.querySelector('.uml-form-type-input').value.trim();
+        if (attrName) {
+          attrs.push(attrType ? `${vis}${attrName} : ${attrType}` : `${vis}${attrName}`);
+        }
+      });
+
+      // 操作を収集
+      const methods = [];
+      container.querySelectorAll('#uml-form-methods .uml-form-row').forEach(row => {
+        const vis = row.querySelector('.uml-form-vis-btn').dataset.vis;
+        const methodName = row.querySelector('.uml-form-name-input').value.trim();
+        const retType = row.querySelector('.uml-form-type-input').value.trim();
+        if (methodName) {
+          methods.push(retType ? `${vis}${methodName}() : ${retType}` : `${vis}${methodName}()`);
+        }
+      });
+
+      close();
+      this._createNode(comp, x, y, options, { label: name, stereotype: stereo, attributes: attrs, methods: methods });
+    });
+
+    // Enter キーで確定
+    container.querySelector('#uml-form-name').addEventListener('keydown', e => {
+      if (e.key === 'Enter') container.querySelector('#uml-form-confirm').click();
+    });
+    // フォーカスを名前入力へ
+    setTimeout(() => container.querySelector('#uml-form-name')?.select(), 100);
+  }
   renderNode(node) {
     const el = document.createElement('div');
-    el.className = 'diagram-node';
     el.id = node.id;
     el.style.left = node.x + 'px';
     el.style.top = node.y + 'px';
-    el.style.borderColor = node.color + '60';
-    el.innerHTML = `<span class="node-icon">${node.icon}</span><span class="node-label">${node.label}</span>
-      <span class="node-port port-top" data-port="top"></span>
-      <span class="node-port port-bottom" data-port="bottom"></span>
-      <span class="node-port port-left" data-port="left"></span>
-      <span class="node-port port-right" data-port="right"></span>`;
-    const labelEl = el.querySelector('.node-label');
-    this.applyNodeTextStyle(node, labelEl);
+
+    if (node.nodeType === 'class-box') {
+      // UMLクラス図の3コンパートメントノード
+      el.className = 'diagram-node uml-class-box';
+      el.style.borderColor = node.color + '80';
+      const stereo = node.stereotype ? `<div class="uml-class-stereotype">${node.stereotype}</div>` : '';
+      const attrsHtml = (node.attributes || []).map(a => `<div class="uml-class-row">${this.escapeHtml(a)}</div>`).join('');
+      const methodsHtml = (node.methods || []).map(m => `<div class="uml-class-row">${this.escapeHtml(m)}</div>`).join('');
+      el.innerHTML = `
+        <div class="uml-class-header" style="border-bottom-color:${node.color}40">
+          ${stereo}
+          <div class="uml-class-name node-label">${this.escapeHtml(node.label)}</div>
+        </div>
+        <div class="uml-class-section uml-class-attrs" style="border-bottom-color:${node.color}40">
+          ${attrsHtml || '<div class="uml-class-row uml-class-empty"></div>'}
+        </div>
+        <div class="uml-class-section uml-class-methods">
+          ${methodsHtml || '<div class="uml-class-row uml-class-empty"></div>'}
+        </div>
+        <span class="node-port port-top" data-port="top"></span>
+        <span class="node-port port-bottom" data-port="bottom"></span>
+        <span class="node-port port-left" data-port="left"></span>
+        <span class="node-port port-right" data-port="right"></span>`;
+    } else {
+      // 通常のノード
+      el.className = 'diagram-node';
+      el.style.borderColor = node.color + '60';
+      el.innerHTML = `<span class="node-icon">${node.icon}</span><span class="node-label">${node.label}</span>
+        <span class="node-port port-top" data-port="top"></span>
+        <span class="node-port port-bottom" data-port="bottom"></span>
+        <span class="node-port port-left" data-port="left"></span>
+        <span class="node-port port-right" data-port="right"></span>`;
+      const labelEl = el.querySelector('.node-label');
+      this.applyNodeTextStyle(node, labelEl);
+    }
+
     // Drag
     let dragging = false, ox, oy;
     el.addEventListener('mousedown', e => {
@@ -562,7 +921,7 @@ class DiagramTool {
           el.classList.add('selected');
           showToast('接続先ノードをクリックしてください');
         } else if (this.connectingFrom.id !== node.id) {
-          this.connections.push({ from: this.connectingFrom.id, to: node.id });
+          this.connections.push({ from: this.connectingFrom.id, to: node.id, connType: this.activeConnType || 'association' });
           this.drawConnections();
           document.getElementById(this.connectingFrom.id)?.classList.remove('selected');
           this.pushUndoAction({
@@ -608,14 +967,12 @@ class DiagramTool {
       document.addEventListener('mousemove', onMouseMove);
       document.addEventListener('mouseup', onMouseUp);
     });
-    // Double click to open property panel (or rename inline)
+    // Double click to open property panel
     el.addEventListener('dblclick', e => {
       e.preventDefault();
       e.stopPropagation();
       this.selectNode(node, el);
       this.openPropertyPanel(node);
-      // Inline rename fallback
-      // this.beginInlineRename(node, labelEl);
     });
     // Port click for connection
     el.querySelectorAll('.node-port').forEach(port => {
@@ -624,7 +981,6 @@ class DiagramTool {
         if (!this.connectingFrom) {
           this.connectingFrom = node;
           this.connectMode = true;
-          // keep UI in sync when connect mode is programmatically enabled
           if (typeof this.updateConnectButton === 'function') this.updateConnectButton();
           this.canvas.style.cursor = 'crosshair';
           showToast('接続モード: ONー ノードをクリックして接続');
@@ -636,6 +992,11 @@ class DiagramTool {
     if (window.lucide) {
       lucide.createIcons({ root: el });
     }
+  }
+  escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
   }
   beginInlineRename(node, labelEl) {
     if (!labelEl || this.editingNodeId === node.id) return;
@@ -1092,7 +1453,17 @@ class DiagramTool {
     return `#${toHex(match[1])}${toHex(match[2])}${toHex(match[3])}`;
   }
   drawConnections() {
-    this.svg.innerHTML = '<defs><marker id="arrow-'+this.prefix+'" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#7c3aed"/></marker></defs>';
+    const p = this.prefix;
+    // SVGマーカー定義（各接続タイプ用）
+    this.svg.innerHTML = `<defs>
+      <marker id="arrow-${p}" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#7c3aed"/></marker>
+      <marker id="arrow-open-${p}" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polyline points="0 0, 10 3.5, 0 7" fill="none" stroke="#7c3aed" stroke-width="1.5"/></marker>
+      <marker id="diamond-empty-${p}" markerWidth="14" markerHeight="10" refX="14" refY="5" orient="auto"><polygon points="0 5, 7 0, 14 5, 7 10" fill="none" stroke="#7c3aed" stroke-width="1.5"/></marker>
+      <marker id="diamond-fill-${p}" markerWidth="14" markerHeight="10" refX="14" refY="5" orient="auto"><polygon points="0 5, 7 0, 14 5, 7 10" fill="#7c3aed" stroke="#7c3aed" stroke-width="1"/></marker>
+      <marker id="triangle-empty-${p}" markerWidth="12" markerHeight="10" refX="12" refY="5" orient="auto"><polygon points="0 0, 12 5, 0 10" fill="none" stroke="#7c3aed" stroke-width="1.5"/></marker>
+      <marker id="x-mark-${p}" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto"><line x1="2" y1="2" x2="8" y2="8" stroke="#7c3aed" stroke-width="2"/><line x1="8" y1="2" x2="2" y2="8" stroke="#7c3aed" stroke-width="2"/></marker>
+    </defs>`;
+
     this.connections.forEach(conn => {
       const fromEl = document.getElementById(conn.from);
       const toEl = document.getElementById(conn.to);
@@ -1104,14 +1475,45 @@ class DiagramTool {
       const y1 = fr.top + fr.height/2 - cr.top;
       const x2 = tr.left + tr.width/2 - cr.left;
       const y2 = tr.top + tr.height/2 - cr.top;
-      const mx = (x1+x2)/2, my = (y1+y2)/2;
-      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-      path.setAttribute('d',`M${x1},${y1} Q${mx},${y1} ${mx},${my} Q${mx},${y2} ${x2},${y2}`);
-      path.setAttribute('fill','none');
+
+      const connType = conn.connType || 'association';
+      const path = document.createElementNS('http://www.w3.org/2000/svg','line');
+      path.setAttribute('x1', x1);
+      path.setAttribute('y1', y1);
+      path.setAttribute('x2', x2);
+      path.setAttribute('y2', y2);
       path.setAttribute('stroke','#7c3aed');
       path.setAttribute('stroke-width','2');
-      path.setAttribute('marker-end',`url(#arrow-${this.prefix})`);
-      path.setAttribute('opacity','0.7');
+      path.setAttribute('opacity','0.8');
+
+      switch (connType) {
+        case 'association':
+          // 実線のみ
+          break;
+        case 'aggregation':
+          path.setAttribute('marker-start', `url(#diamond-empty-${p})`);
+          break;
+        case 'composition':
+          path.setAttribute('marker-start', `url(#diamond-fill-${p})`);
+          break;
+        case 'dependency':
+          path.setAttribute('stroke-dasharray', '6 3');
+          path.setAttribute('marker-end', `url(#arrow-open-${p})`);
+          break;
+        case 'generalization':
+          path.setAttribute('marker-end', `url(#triangle-empty-${p})`);
+          break;
+        case 'realization':
+          path.setAttribute('stroke-dasharray', '6 3');
+          path.setAttribute('marker-end', `url(#triangle-empty-${p})`);
+          break;
+        case 'navigable':
+          path.setAttribute('marker-start', `url(#x-mark-${p})`);
+          path.setAttribute('marker-end', `url(#arrow-open-${p})`);
+          break;
+        default:
+          path.setAttribute('marker-end', `url(#arrow-${p})`);
+      }
       this.svg.appendChild(path);
     });
   }
@@ -1187,10 +1589,12 @@ class DiagramTool {
     a.href = URL.createObjectURL(blob); a.download = this.prefix+'_diagram.svg'; a.click();
     showToast('SVGをエクスポートしました');
   }
-  swapComponents(newComponents) {
+  swapComponents(newComponents, umlType) {
     if (!newComponents || !newComponents.length) return;
     this.components = newComponents;
+    this.umlType = umlType || null;
     this.quickAddCounter = 0;
     this.initPalette();
+    this.applyUmlMode();
   }
 }

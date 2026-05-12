@@ -8,6 +8,11 @@
 }
 .er-entity:hover { border-color: var(--accent2); }
 .er-entity.selected { border-color: var(--accent2); box-shadow: 0 0 20px rgba(6,182,212,0.2); }
+
+.er-class-modal {
+  min-width: 520px;
+}
+
 .er-entity-header {
   padding: 10px 14px; font-weight: 600; font-size: 0.85rem;
   background: linear-gradient(135deg, rgba(6,182,212,0.15), rgba(124,58,237,0.1));
@@ -21,3 +26,75 @@
 }
 .er-attr .attr-key { color: var(--warn); }
 .er-attr .attr-type { color: var(--accent2); margin-left: auto; font-size: 0.75rem; }
+
+/* ===== ER Entity Creation Form ===== */
+.er-form-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.er-form-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.er-form-key-btn {
+  width: 36px;
+  height: 32px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-glass);
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.er-form-key-btn:hover {
+  border-color: var(--accent2);
+}
+.er-form-key-btn.active {
+  background: rgba(6,182,212,0.15);
+  border-color: var(--accent2);
+  color: var(--accent2);
+}
+.er-form-key-btn.active.pk {
+  background: rgba(245,158,11,0.15);
+  border-color: var(--warn);
+  color: var(--warn);
+}
+.er-form-name-input {
+  flex: 1;
+  min-width: 0;
+}
+.er-form-type-select {
+  flex: 0.6;
+  min-width: 0;
+}
+.er-form-del-btn {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.er-form-del-btn:hover {
+  color: #f87171;
+}
+.er-form-add-btn {
+  margin-top: 4px;
+  width: 100%;
+  justify-content: center;
+  border: 1px dashed var(--border) !important;
+}

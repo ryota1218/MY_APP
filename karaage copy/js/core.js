@@ -118,9 +118,9 @@ class App {
 
         // Lazy init then swap components
         if (!this.uml) {
-          this.uml = new DiagramTool('uml', typeDef.components, { paletteMode: 'dropdown' });
+          this.uml = new DiagramTool('uml', typeDef.components, { paletteMode: 'dropdown', umlType: umlType });
         } else {
-          this.uml.swapComponents(typeDef.components);
+          this.uml.swapComponents(typeDef.components, umlType);
         }
         this.currentUmlType = umlType;
 
