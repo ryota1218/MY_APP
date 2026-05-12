@@ -484,18 +484,22 @@
   line-height: 1;
 }
 
-/* ── Layout Toolbar ── */
-.layout-toolbar {
+/* ── Layout & ER Toolbar ── */
+.layout-toolbar,
+.er-toolbar,
+.architecture-toolbar {
   gap: 12px !important;
   height: auto !important;
   padding: 14px !important;
 }
-.layout-toolbar .btn {
+.layout-toolbar .btn,
+.er-toolbar .btn {
   font-size: 1rem !important;
   padding: 9px 16px !important;
   min-height: 42px !important;
 }
-.layout-toolbar .toolbar-sep {
+.layout-toolbar .toolbar-sep,
+.er-toolbar .toolbar-sep {
   height: 28px !important;
 }
 
@@ -652,7 +656,183 @@
 .node-port.port-left { left: -6px; top: 50%; transform: translateY(-50%); }
 .node-port.port-right { right: -6px; top: 50%; transform: translateY(-50%); }
 
-/* Property Panel */
+/* ===== UML Class Box (3-compartment) ===== */
+.uml-class-box {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  min-width: 180px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.uml-class-box:hover { border-color: var(--accent); }
+.uml-class-box.selected { border-color: var(--accent); box-shadow: 0 0 20px rgba(124,58,237,0.3); }
+
+.uml-class-header {
+  padding: 8px 14px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.03);
+}
+.uml-class-stereotype {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-bottom: 2px;
+  letter-spacing: 0.5px;
+}
+.uml-class-name {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.uml-class-section {
+  padding: 6px 14px;
+  min-height: 24px;
+}
+.uml-class-attrs {
+  border-bottom: 1px solid var(--border);
+}
+.uml-class-row {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  padding: 2px 0;
+  font-family: 'Consolas', 'Menlo', 'Courier New', monospace;
+  white-space: nowrap;
+}
+.uml-class-empty {
+  min-height: 16px;
+}
+
+/* Property panel extras for class-box */
+.property-textarea {
+  resize: vertical;
+  min-height: 60px;
+  font-family: 'Consolas', 'Menlo', 'Courier New', monospace;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+.prop-hint {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+/* ===== UML Class Box Creation Form ===== */
+.uml-class-modal {
+  min-width: 480px;
+  max-width: 560px;
+}
+.uml-form-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.uml-form-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.uml-form-vis-btn {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-glass);
+  color: var(--accent-light);
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: 'Consolas', 'Menlo', monospace;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.uml-form-vis-btn:hover {
+  background: rgba(124,58,237,0.15);
+  border-color: var(--accent);
+}
+.uml-form-name-input {
+  flex: 1;
+  min-width: 0;
+}
+.uml-form-type-input {
+  flex: 0.7;
+  min-width: 0;
+}
+.uml-form-parens {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-family: 'Consolas', 'Menlo', monospace;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.uml-form-colon {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.uml-form-del-btn {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.uml-form-del-btn:hover {
+  background: rgba(239,68,68,0.15);
+  color: #f87171;
+  border-color: rgba(239,68,68,0.3);
+}
+.uml-form-add-btn {
+  margin-top: 4px;
+  width: 100%;
+  justify-content: center;
+  border-style: dashed;
+}
+
+/* ===== UML Connection Type Selector ===== */
+.uml-conn-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.uml-conn-select {
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-glass);
+  color: var(--text);
+  font-size: 0.8rem;
+  font-family: 'Consolas', 'Menlo', monospace;
+  cursor: pointer;
+  min-width: 140px;
+}
+.uml-conn-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(124,58,237,0.15);
+}
+.uml-conn-select option {
+  background: var(--bg-secondary);
+  color: var(--text);
+}
+
 .diagram-property-panel {
   position: absolute;
   top: 0;

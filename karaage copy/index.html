@@ -9,20 +9,20 @@
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
-  <button id="hamburger" class="hamburger" aria-label="メニュー">☰</button>
+  <button id="hamburger" class="hamburger" aria-label="メニュー"><i data-lucide="menu"></i></button>
   <!-- Sidebar -->
   <aside class="sidebar">
     <div class="logo">
-      <span class="logo-icon">▲</span>
+      <span class="logo-icon"><i data-lucide="triangle"></i></span>
       <span>UpStream</span>
     </div>
     <nav>
-      <a data-tool="dashboard" class="active"><span class="nav-icon">📊</span><span>ダッシュボード</span></a>
-      <a data-tool="proposal"><span class="nav-icon">💡</span><span>技術スタック提案</span></a>
-      <a data-tool="requirements"><span class="nav-icon">📋</span><span>要件定義書</span></a>
-      <a data-tool="architecture"><span class="nav-icon">🏗️</span><span>システム構成図</span></a>
+      <a data-tool="dashboard" class="active"><span class="nav-icon"><i data-lucide="bar-chart-3"></i></span><span>ダッシュボード</span></a>
+      <a data-tool="proposal"><span class="nav-icon"><i data-lucide="lightbulb"></i></span><span>技術スタック提案</span></a>
+      <a data-tool="requirements"><span class="nav-icon"><i data-lucide="clipboard-list"></i></span><span>要件定義書</span></a>
+      <a data-tool="architecture"><span class="nav-icon"><i data-lucide="boxes"></i></span><span>システム構成図</span></a>
       <div class="nav-has-submenu">
-        <a data-tool="uml" id="uml-nav-trigger"><span class="nav-icon">📐</span><span>UML図</span><span class="nav-arrow">▶</span></a>
+        <a data-tool="uml" id="uml-nav-trigger"><span class="nav-icon"><i data-lucide="share-2"></i></span><span>UML図</span><span class="nav-arrow">▶</span></a>
         <div class="nav-submenu" id="uml-submenu">
           <div class="nav-submenu-title">UML図の種類</div>
           <div class="nav-submenu-group">■構造図</div>
@@ -42,10 +42,10 @@
           <a data-tool="uml" data-uml-type="timing">タイミング図</a>
         </div>
       </div>
-      <a data-tool="screen-transition"><span class="nav-icon">🔄</span><span>画面遷移図</span></a>
-      <a data-tool="layout"><span class="nav-icon">📐</span><span>画面レイアウト</span></a>
-      <a data-tool="erdiagram"><span class="nav-icon">🗃️</span><span>E-R図</span></a>
-      <a data-tool="gantt"><span class="nav-icon">📅</span><span>ガントチャート</span></a>
+      <a data-tool="screen-transition"><span class="nav-icon"><i data-lucide="arrow-right-left"></i></span><span>画面遷移図</span></a>
+      <a data-tool="layout"><span class="nav-icon"><i data-lucide="layout"></i></span><span>画面レイアウト</span></a>
+      <a data-tool="erdiagram"><span class="nav-icon"><i data-lucide="database"></i></span><span>E-R図</span></a>
+      <a data-tool="gantt"><span class="nav-icon"><i data-lucide="calendar"></i></span><span>ガントチャート</span></a>
     </nav>
     <div class="sidebar-footer">UpStream v1.0 © 2026</div>
   </aside>
