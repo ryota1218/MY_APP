@@ -1,13 +1,15 @@
 /* Layout Builder */
 .layout-workspace-wrap {
   display: flex; justify-content: center; align-items: center;
-  height: calc(100vh - 200px); overflow: auto;
+  height: calc(100vh - 200px); overflow: hidden;
+  position: relative;
   background: var(--bg-darker, #0d1117);
   padding: 16px;
 }
 .layout-canvas-container {
   display: flex; justify-content: center; align-items: flex-start;
   flex: 1; height: 100%;
+  overflow: auto;
 }
 .layout-canvas {
   background: white; border-radius: var(--radius);
@@ -17,6 +19,11 @@
 }
 .layout-canvas.free-size {
   flex: 1; width: 100% !important; height: 100% !important;
+}
+
+/* Layout側は白キャンバス上に重なるため、プロパティパネルを不透明化して配色を統一 */
+#layout-property-panel {
+  background: linear-gradient(180deg, #101b36 0%, #0c1530 100%);
 }
 .layout-element {
   position: absolute; border: 2px dashed #cbd5e1;

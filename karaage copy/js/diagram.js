@@ -191,6 +191,9 @@ class DiagramTool {
     this.nodeIdCounter = 0;
     this.quickAddCounter = 0;
     this.defaultTextStyle = { fontSize: 14, color: '#e5e7eb' };
+    this.inlineShapeLimit = Number.isFinite(options.inlineShapeLimit)
+      ? Math.max(1, options.inlineShapeLimit)
+      : 8;
     this.selectedTextColor = '';
     this.textColorOptions = [
       { label: '自動', color: '' },
@@ -386,7 +389,8 @@ class DiagramTool {
     // Inline shape strip — show component icons directly in toolbar when space allows
     const inlineStrip = document.getElementById(this.prefix + '-inline-shapes');
     if (inlineStrip) {
-      inlineStrip.innerHTML = this.components.map((c, i) =>
+      const visibleComponents = this.components.slice(0, this.inlineShapeLimit);
+      inlineStrip.innerHTML = visibleComponents.map((c, i) =>
         `<button type="button" class="inline-shape-btn" draggable="true" data-idx="${i}" data-label="${c.label}" aria-label="${c.label}"><span class="inline-shape-icon">${c.icon}</span></button>`
       ).join('');
       inlineStrip.querySelectorAll('.inline-shape-btn').forEach(btn => {

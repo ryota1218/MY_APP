@@ -77,4 +77,46 @@
   <div class="layout-canvas-container" id="layout-canvas-container">
     <div class="layout-canvas" id="layout-canvas"></div>
   </div>
+
+  <div class="diagram-property-panel" id="layout-property-panel">
+    <div class="property-panel-header">
+      <span class="property-panel-title">プロパティ</span>
+      <button class="property-panel-close" data-action="closePropertyPanel"><i data-lucide="x" class="editor-icon"></i></button>
+    </div>
+    <div class="property-panel-body">
+      <div class="property-group">
+        <label>ラベル</label>
+        <input type="text" id="layout-prop-label" class="property-input">
+      </div>
+      <div class="property-group">
+        <label>X座標</label>
+        <input type="number" id="layout-prop-x" class="property-input">
+      </div>
+      <div class="property-group">
+        <label>Y座標</label>
+        <input type="number" id="layout-prop-y" class="property-input">
+      </div>
+      <div class="property-group">
+        <label>幅</label>
+        <input type="number" id="layout-prop-w" class="property-input" min="40">
+      </div>
+      <div class="property-group">
+        <label>高さ</label>
+        <input type="number" id="layout-prop-h" class="property-input" min="30">
+      </div>
+      <div class="property-group">
+        <label>フォントサイズ</label>
+        <input type="number" id="layout-prop-fontsize" class="property-input" min="10" max="72">
+      </div>
+      <div class="property-group">
+        <label>文字色</label>
+        <input type="color" id="layout-prop-textcolor" class="property-input color-input">
+      </div>
+      <div class="property-group">
+        <label>背景色</label>
+        <input type="color" id="layout-prop-bg" class="property-input color-input">
+      </div>
+      <button class="btn btn-sm btn-danger" data-action="deleteSelected" style="width: 100%; margin-top: 16px;">要素を削除</button>
+    </div>
+  </div>
 </div>
