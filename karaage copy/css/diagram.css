@@ -613,7 +613,33 @@
 }
 .diagram-canvas svg.connections {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  pointer-events: none; z-index: 1;
+  pointer-events: none; z-index: 20;
+}
+
+/* Connection Label */
+.diagram-conn-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  color: var(--text);
+  z-index: 21;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  user-select: none;
+}
+.diagram-conn-label:hover {
+  border-color: var(--accent);
+}
+.diagram-conn-label.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(124,58,237,0.3);
+}
+.diagram-conn-label.editing {
+  cursor: text;
 }
 
 /* Diagram Nodes */

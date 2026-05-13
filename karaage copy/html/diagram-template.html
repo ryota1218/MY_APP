@@ -122,7 +122,32 @@
         <label>ノード枠色</label>
         <input type="color" id="{{prefix}}-prop-color" class="property-input color-input">
       </div>
-      <button class="btn btn-sm btn-danger" data-action="deleteSelectedNode" style="width: 100%; margin-top: 16px;">ノードを削除</button>
-    </div>
+      <div class="property-group" id="{{prefix}}-prop-group-routing" style="display:none;">
+        <label>ルーティング</label>
+        <select id="{{prefix}}-prop-routing" class="property-input">
+          <option value="straight">直線</option>
+          <option value="orthogonal">直角 (Orthogonal)</option>
+          <option value="curve">曲線 (Curve)</option>
+        </select>
+      </div>
+      <div class="property-group" id="{{prefix}}-prop-group-conntype" style="display:none;">
+        <label>線の関係性 (UML)</label>
+        <select id="{{prefix}}-prop-conntype" class="property-input">
+          <option value="association">関連 (Association)</option>
+          <option value="dependency">依存 (Dependency)</option>
+          <option value="aggregation">集約 (Aggregation)</option>
+          <option value="composition">コンポジション (Composition)</option>
+          <option value="include">包含 (&lt;&lt;include&gt;&gt;)</option>
+          <option value="extend">拡張 (&lt;&lt;extend&gt;&gt;)</option>
+        </select>
+      </div>
+      <div class="property-group" id="{{prefix}}-prop-group-zindex">
+        <label>重なり順 (Z-Index)</label>
+        <div style="display:flex; gap: 8px;">
+          <button class="btn btn-sm btn-secondary" style="flex:1;" data-action="bringToFront">最前面へ</button>
+          <button class="btn btn-sm btn-secondary" style="flex:1;" data-action="sendToBack">最背面へ</button>
+        </div>
+      </div>
+      <button class="btn btn-sm btn-danger" data-action="deleteSelected" style="width: 100%; margin-top: 16px;">削除</button>
   </div>
 </div>

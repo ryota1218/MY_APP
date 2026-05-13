@@ -184,11 +184,13 @@ class DiagramTool {
     this.nodes = [];
     this.connections = [];
     this.selectedNode = null;
+    this.selectedConnection = null;
     this.connectingFrom = null;
     this.undoHistory = [];
     this.redoHistory = [];
     this.isApplyingUndo = false;
     this.nodeIdCounter = 0;
+    this.connIdCounter = 0;
     this.quickAddCounter = 0;
     this.defaultTextStyle = { fontSize: 14, color: '#e5e7eb' };
     this.inlineShapeLimit = Number.isFinite(options.inlineShapeLimit)
@@ -466,10 +468,10 @@ class DiagramTool {
       const isEditingField = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable);
       if (isEditingField) return;
       if (e.key !== 'Delete' && e.key !== 'Backspace') return;
-      console.debug('[DiagramTool] keydown', e.key, 'selectedNode=', this.selectedNode && this.selectedNode.id);
-      if (!this.selectedNode) return;
+      console.debug('[DiagramTool] keydown', e.key, 'selectedNode=', this.selectedNode?.id, 'selectedConn=', this.selectedConnection?.id);
+      if (!this.selectedNode && !this.selectedConnection) return;
       e.preventDefault();
-      this.deleteSelectedNode();
+      this.deleteSelected();
     });
   }
   
@@ -482,9 +484,13 @@ class DiagramTool {
       const el = document.getElementById(this.prefix + '-prop-' + suffix);
       if (el) {
         el.addEventListener('input', (e) => {
-          if (!this.propertyPanelNode) return;
-          this.propertyPanelNode[prop] = parser(e.target.value);
-          this.updateNodeDOM(this.propertyPanelNode);
+          if (this.propertyPanelNode) {
+            this.propertyPanelNode[prop] = parser(e.target.value);
+            this.updateNodeDOM(this.propertyPanelNode);
+          } else if (this.propertyPanelConn) {
+            this.propertyPanelConn[prop] = parser(e.target.value);
+            this.drawConnections();
+          }
         });
       }
     };
@@ -494,31 +500,52 @@ class DiagramTool {
     bindInput('fontsize', 'textSize', Number);
     bindInput('textcolor', 'textColor');
     bindInput('color', 'color');
+    bindInput('routing', 'routing');
   }
 
-  openPropertyPanel(node) {
+  openPropertyPanel(node, conn = null) {
     this.propertyPanelNode = node;
+    this.propertyPanelConn = conn;
     const panel = document.getElementById(this.prefix + '-property-panel');
     if (panel) panel.classList.add('open');
+
+    const isConn = !!conn;
+    const isNode = !!node;
+
+    // Show/hide groups based on selection
+    ['x','y','fontsize','textcolor','color'].forEach(k => {
+      const g = document.getElementById(this.prefix + '-prop-' + k)?.closest('.property-group');
+      if (g) g.style.display = isNode ? '' : 'none';
+    });
+    const routingGroup = document.getElementById(this.prefix + '-prop-group-routing');
+    if (routingGroup) routingGroup.style.display = isConn ? '' : 'none';
+    const zindexGroup = document.getElementById(this.prefix + '-prop-group-zindex');
+    if (zindexGroup) zindexGroup.style.display = isNode ? '' : 'none';
 
     // Populate fields
     const setVal = (suffix, val) => {
       const el = document.getElementById(this.prefix + '-prop-' + suffix);
       if (el) el.value = val;
     };
-    setVal('label', node.label);
-    setVal('x', node.x);
-    setVal('y', node.y);
-    setVal('fontsize', node.textSize || this.defaultTextStyle.fontSize);
-    
-    // color input needs #rrggbb format
-    const rgbToHex = (color) => {
-      if (!color) return '#e5e7eb';
-      if (color.startsWith('#') && color.length === 7) return color;
-      return color;
-    };
-    setVal('textcolor', rgbToHex(node.textColor || this.defaultTextStyle.color));
-    setVal('color', rgbToHex(node.color));
+
+    if (isNode) {
+      setVal('label', node.label);
+      setVal('x', node.x);
+      setVal('y', node.y);
+      setVal('fontsize', node.textSize || this.defaultTextStyle.fontSize);
+      
+      // color input needs #rrggbb format
+      const rgbToHex = (color) => {
+        if (!color) return '#e5e7eb';
+        if (color.startsWith('#') && color.length === 7) return color;
+        return color;
+      };
+      setVal('textcolor', rgbToHex(node.textColor || this.defaultTextStyle.color));
+      setVal('color', rgbToHex(node.color));
+    } else if (isConn) {
+      setVal('label', conn.label || '');
+      setVal('routing', conn.routing || 'straight');
+    }
 
     // --- クラスボックス専用フィールドの動的生成 ---
     const panelBody = panel?.querySelector('.property-panel-body');
@@ -532,7 +559,7 @@ class DiagramTool {
     if (textcolorGroup) textcolorGroup.style.display = node.nodeType === 'class-box' ? 'none' : '';
 
     if (node.nodeType === 'class-box' && panelBody) {
-      const deleteBtn = panelBody.querySelector('[data-action="deleteSelectedNode"]');
+      const deleteBtn = panelBody.querySelector('[data-action="deleteSelected"]');
 
       // ステレオタイプ
       const stereoGroup = document.createElement('div');
@@ -592,6 +619,7 @@ class DiagramTool {
     if (!el) return;
     el.style.left = node.x + 'px';
     el.style.top = node.y + 'px';
+    el.style.zIndex = node.zIndex || 10;
 
     if (node.nodeType === 'class-box') {
       el.style.borderColor = (node.color || '#e5e7eb') + '80';
@@ -659,6 +687,7 @@ class DiagramTool {
       height: overrides.height || comp.height || null,
       x,
       y,
+      zIndex: 10,
       textColor: this.defaultTextStyle.color,
       textSize: this.defaultTextStyle.fontSize,
     };
@@ -837,6 +866,7 @@ class DiagramTool {
     el.id = node.id;
     el.style.left = node.x + 'px';
     el.style.top = node.y + 'px';
+    el.style.zIndex = node.zIndex || 10;
 
     const behaviorPresentation =
       window.BehaviorDiagramLibrary?.activity?.buildNodePresentation?.(node, this.escapeHtml.bind(this)) ||
@@ -849,7 +879,7 @@ class DiagramTool {
         node.width ? `width:${node.width}px;` : '',
         node.height ? `height:${node.height}px;` : '',
       ].join('');
-      el.style.cssText = `left:${node.x}px;top:${node.y}px;${sizeStyle}`;
+      el.style.cssText = `left:${node.x}px;top:${node.y}px;z-index:${node.zIndex || 10};${sizeStyle}`;
       el.innerHTML = behaviorPresentation.innerHTML;
     } else if (node.nodeType === 'class-box') {
       // UMLクラス図の3コンパートメントノード
@@ -930,12 +960,24 @@ class DiagramTool {
         return;
       }
       if (this.connectMode) {
+        if (node.behaviorType === 'systemBoundary') {
+          showToast('システム境界には接続できません');
+          return;
+        }
         if (!this.connectingFrom) {
           this.connectingFrom = node;
           el.classList.add('selected');
           showToast('接続先ノードをクリックしてください');
         } else if (this.connectingFrom.id !== node.id) {
-          this.connections.push({ from: this.connectingFrom.id, to: node.id, connType: this.activeConnType || 'association' });
+          const newConn = {
+            id: this.prefix + '_conn_' + (this.connIdCounter++),
+            from: this.connectingFrom.id,
+            to: node.id,
+            connType: this.activeConnType || 'association',
+            routing: 'straight',
+            label: ''
+          };
+          this.connections.push(newConn);
           this.drawConnections();
           document.getElementById(this.connectingFrom.id)?.classList.remove('selected');
           this.pushUndoAction({
@@ -992,6 +1034,10 @@ class DiagramTool {
     el.querySelectorAll('.node-port').forEach(port => {
       port.addEventListener('mousedown', e => {
         e.stopPropagation();
+        if (node.behaviorType === 'systemBoundary') {
+          showToast('システム境界には接続できません');
+          return;
+        }
         if (!this.connectingFrom) {
           this.connectingFrom = node;
           this.connectMode = true;
@@ -1062,6 +1108,12 @@ class DiagramTool {
     labelEl.addEventListener('blur', onBlur);
     labelEl.addEventListener('keydown', onKeyDown);
   }
+  selectConnection(conn) {
+    this.deselectAll();
+    this.selectedConnection = conn;
+    this.drawConnections();
+    this.openPropertyPanel(null, conn);
+  }
   selectNode(node, el) {
     this.deselectAll();
     this.selectedNode = node;
@@ -1070,7 +1122,10 @@ class DiagramTool {
   }
   deselectAll() {
     this.selectedNode = null;
+    this.selectedConnection = null;
     this.canvas.querySelectorAll('.diagram-node').forEach(n => n.classList.remove('selected'));
+    this.canvas.querySelectorAll('.diagram-conn-label').forEach(n => n.classList.remove('selected'));
+    this.drawConnections();
   }
   pushUndoAction(action) {
     if (this.isApplyingUndo || !action) return;
@@ -1304,15 +1359,30 @@ class DiagramTool {
       this.isApplyingUndo = false;
     }
   }
-  deleteSelectedNode() {
-    const node = this.selectedNode;
-    if (!node) {
-      console.debug('[DiagramTool] deleteSelectedNode called but no selection');
-      showToast('削除する図形を選択してください');
+  deleteSelected() {
+    if (this.selectedConnection) {
+      const conn = this.selectedConnection;
+      this.connections = this.connections.filter(c => c.id !== conn.id);
+      this.pushUndoAction({
+        type: 'removeConnection',
+        from: conn.from,
+        to: conn.to,
+        connType: conn.connType,
+        routing: conn.routing,
+        label: conn.label
+      });
+      this.deselectAll();
+      this.drawConnections();
+      showToast('選択した線を削除しました');
       return;
     }
 
-    console.debug('[DiagramTool] deleting node', node.id);
+    const node = this.selectedNode;
+    if (!node) {
+      showToast('削除する図形または線を選択してください');
+      return;
+    }
+
     const snapshotNode = { ...node };
     const snapshotConnections = this.connections
       .filter(conn => conn.from === node.id || conn.to === node.id)
@@ -1326,6 +1396,20 @@ class DiagramTool {
     this.deselectAll();
     this.drawConnections();
     showToast('選択した図形を削除しました');
+  }
+
+  bringToFront() {
+    if (!this.selectedNode) return;
+    const maxZ = Math.max(...this.nodes.map(n => n.zIndex || 10));
+    this.selectedNode.zIndex = maxZ + 1;
+    this.updateNodeDOM(this.selectedNode);
+  }
+
+  sendToBack() {
+    if (!this.selectedNode) return;
+    const minZ = Math.min(...this.nodes.map(n => n.zIndex || 10));
+    this.selectedNode.zIndex = Math.max(1, minZ - 1);
+    this.updateNodeDOM(this.selectedNode);
   }
   initTextStyleControls() {
     this.fontSizeControl = document.getElementById(this.prefix + '-font-size');
@@ -1496,27 +1580,89 @@ class DiagramTool {
       <marker id="x-mark-${p}" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto"><line x1="2" y1="2" x2="8" y2="8" stroke="#7c3aed" stroke-width="2"/><line x1="8" y1="2" x2="2" y2="8" stroke="#7c3aed" stroke-width="2"/></marker>
     </defs>`;
 
+    this.canvas.querySelectorAll('.diagram-conn-label').forEach(el => el.remove());
+
     this.connections.forEach(conn => {
+      if (!conn.id) conn.id = this.prefix + '_conn_' + (this.connIdCounter++);
       const fromEl = document.getElementById(conn.from);
       const toEl = document.getElementById(conn.to);
       if (!fromEl || !toEl) return;
       const cr = this.canvas.getBoundingClientRect();
       const fr = fromEl.getBoundingClientRect();
       const tr = toEl.getBoundingClientRect();
-      const x1 = fr.left + fr.width/2 - cr.left;
-      const y1 = fr.top + fr.height/2 - cr.top;
-      const x2 = tr.left + tr.width/2 - cr.left;
-      const y2 = tr.top + tr.height/2 - cr.top;
+      const cx1 = fr.left + fr.width/2 - cr.left;
+      const cy1 = fr.top + fr.height/2 - cr.top;
+      const cx2 = tr.left + tr.width/2 - cr.left;
+      const cy2 = tr.top + tr.height/2 - cr.top;
+
+      let x1 = cx1, y1 = cy1, x2 = cx2, y2 = cy2;
+      const isHorizontal = Math.abs(cx2 - cx1) > Math.abs(cy2 - cy1);
+
+      if (isHorizontal) {
+        if (cx1 < cx2) {
+          x1 = cx1 + fr.width/2; // from right
+          x2 = cx2 - tr.width/2; // to left
+        } else {
+          x1 = cx1 - fr.width/2; // from left
+          x2 = cx2 + tr.width/2; // to right
+        }
+      } else {
+        if (cy1 < cy2) {
+          y1 = cy1 + fr.height/2; // from bottom
+          y2 = cy2 - tr.height/2; // to top
+        } else {
+          y1 = cy1 - fr.height/2; // from top
+          y2 = cy2 + tr.height/2; // to bottom
+        }
+      }
+
+      let dStr = '';
+      let midX, midY;
+      const routing = conn.routing || 'straight';
+      if (routing === 'orthogonal') {
+        if (isHorizontal) {
+          const hx = x1 + (x2 - x1) / 2;
+          dStr = `M ${x1} ${y1} L ${hx} ${y1} L ${hx} ${y2} L ${x2} ${y2}`;
+          midX = hx;
+          midY = y1 + (y2 - y1) / 2;
+        } else {
+          const hy = y1 + (y2 - y1) / 2;
+          dStr = `M ${x1} ${y1} L ${x1} ${hy} L ${x2} ${hy} L ${x2} ${y2}`;
+          midX = x1 + (x2 - x1) / 2;
+          midY = hy;
+        }
+      } else if (routing === 'curve') {
+        if (isHorizontal) {
+          const hx = x1 + (x2 - x1) / 2;
+          dStr = `M ${x1} ${y1} C ${hx} ${y1}, ${hx} ${y2}, ${x2} ${y2}`;
+          midX = hx;
+          midY = y1 + (y2 - y1) / 2;
+        } else {
+          const hy = y1 + (y2 - y1) / 2;
+          dStr = `M ${x1} ${y1} C ${x1} ${hy}, ${x2} ${hy}, ${x2} ${y2}`;
+          midX = x1 + (x2 - x1) / 2;
+          midY = hy;
+        }
+      } else {
+        dStr = `M ${x1} ${y1} L ${x2} ${y2}`;
+        midX = (x1 + x2) / 2;
+        midY = (y1 + y2) / 2;
+      }
 
       const connType = conn.connType || 'association';
-      const path = document.createElementNS('http://www.w3.org/2000/svg','line');
-      path.setAttribute('x1', x1);
-      path.setAttribute('y1', y1);
-      path.setAttribute('x2', x2);
-      path.setAttribute('y2', y2);
-      path.setAttribute('stroke','#7c3aed');
-      path.setAttribute('stroke-width','2');
-      path.setAttribute('opacity','0.8');
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d', dStr);
+      const isSelected = this.selectedConnection === conn;
+      path.setAttribute('stroke', isSelected ? '#f59e0b' : '#7c3aed');
+      path.setAttribute('stroke-width', isSelected ? '3' : '2');
+      path.setAttribute('fill', 'none');
+      path.setAttribute('pointer-events', 'visibleStroke');
+      path.setAttribute('opacity', '0.8');
+      path.style.cursor = 'pointer';
+      path.addEventListener('mousedown', e => {
+        e.stopPropagation();
+        this.selectConnection(conn);
+      });
 
       switch (connType) {
         case 'association':
@@ -1547,6 +1693,19 @@ class DiagramTool {
           path.setAttribute('marker-end', `url(#arrow-${p})`);
       }
       this.svg.appendChild(path);
+
+      if (conn.label) {
+        const labelDiv = document.createElement('div');
+        labelDiv.className = 'diagram-conn-label' + (isSelected ? ' selected' : '');
+        labelDiv.textContent = conn.label;
+        labelDiv.style.left = midX + 'px';
+        labelDiv.style.top = midY + 'px';
+        labelDiv.addEventListener('mousedown', e => {
+          e.stopPropagation();
+          this.selectConnection(conn);
+        });
+        this.canvas.appendChild(labelDiv);
+      }
     });
   }
   clearAll() {

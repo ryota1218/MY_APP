@@ -4,6 +4,7 @@
     { icon:'<i data-lucide="user" class="node-lucide-icon"></i>', label:'アクター', color:'#10b981', behaviorType:'actor' },
     { icon:'<i data-lucide="circle" class="node-lucide-icon"></i>', label:'ユースケース', color:'#f59e0b', behaviorType:'usecase' },
     { icon:'<i data-lucide="rectangle-horizontal" class="node-lucide-icon"></i>', label:'システム境界', color:'#7c3aed', behaviorType:'systemBoundary' },
+    { icon:'<i data-lucide="folder" class="node-lucide-icon"></i>', label:'パッケージ', color:'#3b82f6', behaviorType:'package' },
     { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b', behaviorType:'usecaseNote' },
   ];
 
@@ -11,6 +12,7 @@
     actor:           { kind: 'actor', width: '60px', height: '80px' },
     usecase:         { kind: 'ellipse', minWidth: '140px', minHeight: '80px' },
     systemBoundary:  { kind: 'systemBox', minWidth: '320px', minHeight: '240px' },
+    package:         { kind: 'packageBox', minWidth: '240px', minHeight: '180px' },
     usecaseNote:     { kind: 'card', minWidth: '140px' },
   };
 
@@ -99,6 +101,31 @@
             <span class="node-label" style="font-weight:700;white-space:nowrap;">${label}</span>
           </div>
           <div style="flex:1;"></div>
+          ${ports}`,
+      };
+    }
+
+    if (variant.kind === 'packageBox') {
+      return {
+        className: 'diagram-node usecase-node usecase-node-package',
+        style: buildNodeStyleString({
+          ...baseStyle,
+          'min-width': variant.minWidth,
+          'min-height': variant.minHeight,
+          padding: '0',
+          display: 'flex',
+          'flex-direction': 'column',
+          'border-radius': '4px',
+          'box-sizing': 'border-box',
+          'background': 'transparent',
+          'border': 'none',
+        }),
+        innerHTML: `
+          <div style="align-self:flex-start;padding:6px 16px 6px 12px;background:var(--bg-secondary);border:2px solid ${borderColor};border-bottom:none;border-radius:6px 6px 0 0;display:flex;align-items:center;gap:6px;position:relative;z-index:2;">
+             <span class="node-icon">${icon}</span>
+             <span class="node-label" style="font-weight:700;">${label}</span>
+          </div>
+          <div style="flex:1;border:2px solid ${borderColor};background:var(--bg-secondary);border-radius:0 6px 6px 6px;margin-top:-2px;position:relative;z-index:1;"></div>
           ${ports}`,
       };
     }
