@@ -54,101 +54,57 @@ const umlComponents = [
 const umlDiagramTypes = {
   class: {
     label: 'クラス図',
-    components: [
-      { icon:'<i data-lucide="box" class="node-lucide-icon"></i>', label:'クラス', color:'#7c3aed', nodeType:'class-box',
-        defaults: { stereotype:'', attributes:['-属性1 : 型'], methods:['+操作1() : 戻り値型'] } },
-      { icon:'<i data-lucide="diamond" class="node-lucide-icon"></i>', label:'インターフェース', color:'#3b82f6', nodeType:'class-box',
-        defaults: { stereotype:'«interface»', attributes:[], methods:['+操作1() : 戻り値型'] } },
-      { icon:'<i data-lucide="box" class="node-lucide-icon"></i>', label:'抽象クラス', color:'#8b5cf6', nodeType:'class-box',
-        defaults: { stereotype:'«abstract»', attributes:['-属性1 : 型'], methods:['+操作1() : 戻り値型'] } },
-      { icon:'<i data-lucide="list" class="node-lucide-icon"></i>', label:'列挙型', color:'#06b6d4', nodeType:'class-box',
-        defaults: { stereotype:'«enum»', attributes:['VALUE_1','VALUE_2','VALUE_3'], methods:[] } },
-      { icon:'<i data-lucide="folder" class="node-lucide-icon"></i>', label:'パッケージ', color:'#f59e0b' },
-      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
-    ],
+    get components() {
+      return window.BehaviorDiagramLibrary?.structure?.getComponents('class') || [];
+    }
   },
   object: {
     label: 'オブジェクト図',
-    components: [
-      { icon:'<i data-lucide="square" class="node-lucide-icon"></i>', label:'オブジェクト', color:'#14b8a6' },
-      { icon:'<i data-lucide="link-2" class="node-lucide-icon"></i>', label:'リンク', color:'#7c3aed' },
-      { icon:'<i data-lucide="box" class="node-lucide-icon"></i>', label:'クラス', color:'#3b82f6' },
-      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
-    ],
+    get components() {
+      return window.BehaviorDiagramLibrary?.structure?.getComponents('object') || [];
+    }
   },
   package: {
     label: 'パッケージ図',
-    components: [
-      { icon:'<i data-lucide="folder" class="node-lucide-icon"></i>', label:'パッケージ', color:'#06b6d4' },
-      { icon:'<i data-lucide="box" class="node-lucide-icon"></i>', label:'クラス', color:'#7c3aed' },
-      { icon:'<i data-lucide="diamond" class="node-lucide-icon"></i>', label:'インターフェース', color:'#3b82f6' },
-      { icon:'<i data-lucide="link" class="node-lucide-icon"></i>', label:'依存', color:'#f59e0b' },
-      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
-    ],
+    get components() {
+      return window.BehaviorDiagramLibrary?.structure?.getComponents('package') || [];
+    }
   },
   composite: {
     label: 'コンポジット構造図',
-    components: [
-      { icon:'<i data-lucide="box" class="node-lucide-icon"></i>', label:'クラス/コンポーネント', color:'#7c3aed' },
-      { icon:'<i data-lucide="plug" class="node-lucide-icon"></i>', label:'ポート', color:'#10b981' },
-      { icon:'<i data-lucide="square" class="node-lucide-icon"></i>', label:'パート', color:'#06b6d4' },
-      { icon:'<i data-lucide="diamond" class="node-lucide-icon"></i>', label:'インターフェース', color:'#3b82f6' },
-      { icon:'<i data-lucide="link-2" class="node-lucide-icon"></i>', label:'コネクタ', color:'#f59e0b' },
-      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
-    ],
+    get components() {
+      return window.BehaviorDiagramLibrary?.structure?.getComponents('composite') || [];
+    }
   },
   component: {
     label: 'コンポーネント図',
-    components: [
-      { icon:'<i data-lucide="square" class="node-lucide-icon"></i>', label:'コンポーネント', color:'#7c3aed' },
-      { icon:'<i data-lucide="diamond" class="node-lucide-icon"></i>', label:'インターフェース', color:'#3b82f6' },
-      { icon:'<i data-lucide="plug" class="node-lucide-icon"></i>', label:'ポート', color:'#10b981' },
-      { icon:'<i data-lucide="folder" class="node-lucide-icon"></i>', label:'パッケージ', color:'#06b6d4' },
-      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
-    ],
+    get components() {
+      return window.BehaviorDiagramLibrary?.structure?.getComponents('component') || [];
+    }
   },
   deployment: {
     label: '配置図',
-    components: [
-      { icon:'<i data-lucide="monitor" class="node-lucide-icon"></i>', label:'ノード', color:'#7c3aed' },
-      { icon:'<i data-lucide="smartphone" class="node-lucide-icon"></i>', label:'デバイス', color:'#a855f7' },
-      { icon:'<i data-lucide="cloud" class="node-lucide-icon"></i>', label:'実行環境', color:'#06b6d4' },
-      { icon:'<i data-lucide="square" class="node-lucide-icon"></i>', label:'コンポーネント', color:'#10b981' },
-      { icon:'<i data-lucide="hard-drive" class="node-lucide-icon"></i>', label:'成果物', color:'#f59e0b' },
-      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
-    ],
+    get components() {
+      return window.BehaviorDiagramLibrary?.structure?.getComponents('deployment') || [];
+    }
   },
   usecase: {
     label: 'ユースケース図',
-    components: [
-      { icon:'<i data-lucide="user" class="node-lucide-icon"></i>', label:'アクター', color:'#10b981' },
-      { icon:'<i data-lucide="circle" class="node-lucide-icon"></i>', label:'ユースケース', color:'#f59e0b' },
-      { icon:'<i data-lucide="rectangle-horizontal" class="node-lucide-icon"></i>', label:'システム境界', color:'#7c3aed' },
-      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
-    ],
+    get components() {
+      return window.BehaviorDiagramLibrary?.usecase?.getDefaultComponents?.() || [];
+    }
   },
   activity: {
     label: 'アクティビティ図',
-    components: [
-      { icon:'<i data-lucide="play" class="node-lucide-icon"></i>', label:'アクション', color:'#06b6d4' },
-      { icon:'<i data-lucide="circle" class="node-lucide-icon"></i>', label:'開始ノード', color:'#10b981' },
-      { icon:'<i data-lucide="circle-x" class="node-lucide-icon"></i>', label:'終了ノード', color:'#ef4444' },
-      { icon:'<i data-lucide="diamond" class="node-lucide-icon"></i>', label:'分岐/合流', color:'#f59e0b' },
-      { icon:'<i data-lucide="minus" class="node-lucide-icon"></i>', label:'フォーク/ジョイン', color:'#8b5cf6' },
-      { icon:'<i data-lucide="square" class="node-lucide-icon"></i>', label:'オブジェクトノード', color:'#7c3aed' },
-      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
-    ],
+    get components() {
+      return window.BehaviorDiagramLibrary?.activity?.getDefaultComponents?.() || [];
+    }
   },
   state: {
     label: 'ステートマシン図',
-    components: [
-      { icon:'<i data-lucide="git-branch" class="node-lucide-icon"></i>', label:'ステート', color:'#6366f1' },
-      { icon:'<i data-lucide="play-circle" class="node-lucide-icon"></i>', label:'初期状態', color:'#10b981' },
-      { icon:'<i data-lucide="stop-circle" class="node-lucide-icon"></i>', label:'終了状態', color:'#ef4444' },
-      { icon:'<i data-lucide="diamond" class="node-lucide-icon"></i>', label:'選択', color:'#f59e0b' },
-      { icon:'<i data-lucide="box" class="node-lucide-icon"></i>', label:'複合ステート', color:'#7c3aed' },
-      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
-    ],
+    get components() {
+      return window.BehaviorDiagramLibrary?.state?.getDefaultComponents?.() || [];
+    }
   },
   sequence: {
     label: 'シーケンス図',
@@ -228,11 +184,13 @@ class DiagramTool {
     this.nodes = [];
     this.connections = [];
     this.selectedNode = null;
+    this.selectedConnection = null;
     this.connectingFrom = null;
     this.undoHistory = [];
     this.redoHistory = [];
     this.isApplyingUndo = false;
     this.nodeIdCounter = 0;
+    this.connIdCounter = 0;
     this.quickAddCounter = 0;
     this.defaultTextStyle = { fontSize: 14, color: '#e5e7eb' };
     this.inlineShapeLimit = Number.isFinite(options.inlineShapeLimit)
@@ -510,10 +468,10 @@ class DiagramTool {
       const isEditingField = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable);
       if (isEditingField) return;
       if (e.key !== 'Delete' && e.key !== 'Backspace') return;
-      console.debug('[DiagramTool] keydown', e.key, 'selectedNode=', this.selectedNode && this.selectedNode.id);
-      if (!this.selectedNode) return;
+      console.debug('[DiagramTool] keydown', e.key, 'selectedNode=', this.selectedNode?.id, 'selectedConn=', this.selectedConnection?.id);
+      if (!this.selectedNode && !this.selectedConnection) return;
       e.preventDefault();
-      this.deleteSelectedNode();
+      this.deleteSelected();
     });
   }
   
@@ -526,9 +484,13 @@ class DiagramTool {
       const el = document.getElementById(this.prefix + '-prop-' + suffix);
       if (el) {
         el.addEventListener('input', (e) => {
-          if (!this.propertyPanelNode) return;
-          this.propertyPanelNode[prop] = parser(e.target.value);
-          this.updateNodeDOM(this.propertyPanelNode);
+          if (this.propertyPanelNode) {
+            this.propertyPanelNode[prop] = parser(e.target.value);
+            this.updateNodeDOM(this.propertyPanelNode);
+          } else if (this.propertyPanelConn) {
+            this.propertyPanelConn[prop] = parser(e.target.value);
+            this.drawConnections();
+          }
         });
       }
     };
@@ -536,6 +498,7 @@ class DiagramTool {
     bindInput('x', 'x', Number);
     bindInput('y', 'y', Number);
     bindInput('fontsize', 'textSize', Number);
+<<<<<<< HEAD
 
     // プロパティパネルのカラーピッカー初期化
     this.initPropertyPanelColorPicker('textcolor', 'textColor');
@@ -662,18 +625,44 @@ class DiagramTool {
       const activeOption = isAuto ? menuEl.querySelector('.diagram-color-auto-row') : menuEl.querySelector(`.diagram-color-option[data-color="${color}"]`);
       textEl.textContent = activeOption?.dataset.label || (isAuto ? '自動' : color);
     }
+=======
+    bindInput('textcolor', 'textColor');
+    bindInput('color', 'color');
+    bindInput('routing', 'routing');
+    bindInput('multFrom', 'multiplicityFrom');
+    bindInput('multTo', 'multiplicityTo');
+>>>>>>> fe0d4749f43173238aad88a48d21d4e980fa6c21
   }
 
-  openPropertyPanel(node) {
+  openPropertyPanel(node, conn = null) {
     this.propertyPanelNode = node;
+    this.propertyPanelConn = conn;
     const panel = document.getElementById(this.prefix + '-property-panel');
     if (panel) panel.classList.add('open');
+
+    const isConn = !!conn;
+    const isNode = !!node;
+
+    // Show/hide groups based on selection
+    ['x','y','fontsize','textcolor','color'].forEach(k => {
+      const g = document.getElementById(this.prefix + '-prop-' + k)?.closest('.property-group');
+      if (g) g.style.display = isNode ? '' : 'none';
+    });
+    const routingGroup = document.getElementById(this.prefix + '-prop-group-routing');
+    if (routingGroup) routingGroup.style.display = isConn ? '' : 'none';
+    const multFromGroup = document.getElementById(this.prefix + '-prop-group-multFrom');
+    if (multFromGroup) multFromGroup.style.display = isConn ? '' : 'none';
+    const multToGroup = document.getElementById(this.prefix + '-prop-group-multTo');
+    if (multToGroup) multToGroup.style.display = isConn ? '' : 'none';
+    const zindexGroup = document.getElementById(this.prefix + '-prop-group-zindex');
+    if (zindexGroup) zindexGroup.style.display = isNode ? '' : 'none';
 
     // Populate fields
     const setVal = (suffix, val) => {
       const el = document.getElementById(this.prefix + '-prop-' + suffix);
       if (el) el.value = val;
     };
+<<<<<<< HEAD
     setVal('label', node.label);
     setVal('x', node.x);
     setVal('y', node.y);
@@ -682,6 +671,29 @@ class DiagramTool {
     // カラーボタンの表示を更新
     this.refreshPropertyPanelColorButton('textcolor', 'textColor');
     this.refreshPropertyPanelColorButton('color', 'color');
+=======
+
+    if (isNode) {
+      setVal('label', node.label);
+      setVal('x', node.x);
+      setVal('y', node.y);
+      setVal('fontsize', node.textSize || this.defaultTextStyle.fontSize);
+      
+      // color input needs #rrggbb format
+      const rgbToHex = (color) => {
+        if (!color) return '#e5e7eb';
+        if (color.startsWith('#') && color.length === 7) return color;
+        return color;
+      };
+      setVal('textcolor', rgbToHex(node.textColor || this.defaultTextStyle.color));
+      setVal('color', rgbToHex(node.color));
+    } else if (isConn) {
+      setVal('label', conn.label || '');
+      setVal('routing', conn.routing || 'straight');
+      setVal('multFrom', conn.multiplicityFrom || '');
+      setVal('multTo', conn.multiplicityTo || '');
+    }
+>>>>>>> fe0d4749f43173238aad88a48d21d4e980fa6c21
 
     // --- クラスボックス専用フィールドの動的生成 ---
     const panelBody = panel?.querySelector('.property-panel-body');
@@ -695,7 +707,7 @@ class DiagramTool {
     if (textcolorGroup) textcolorGroup.style.display = node.nodeType === 'class-box' ? 'none' : '';
 
     if (node.nodeType === 'class-box' && panelBody) {
-      const deleteBtn = panelBody.querySelector('[data-action="deleteSelectedNode"]');
+      const deleteBtn = panelBody.querySelector('[data-action="deleteSelected"]');
 
       // ステレオタイプ
       const stereoGroup = document.createElement('div');
@@ -755,6 +767,7 @@ class DiagramTool {
     if (!el) return;
     el.style.left = node.x + 'px';
     el.style.top = node.y + 'px';
+    el.style.zIndex = node.zIndex || 10;
 
     if (node.nodeType === 'class-box') {
       el.style.borderColor = (node.color || '#e5e7eb') + '80';
@@ -817,8 +830,12 @@ class DiagramTool {
       icon: comp.icon,
       label: overrides.label || comp.label,
       color: comp.color,
+      behaviorType: comp.behaviorType || null,
+      width: overrides.width || comp.width || null,
+      height: overrides.height || comp.height || null,
       x,
       y,
+      zIndex: 10,
       textColor: this.defaultTextStyle.color,
       textSize: this.defaultTextStyle.fontSize,
     };
@@ -997,8 +1014,22 @@ class DiagramTool {
     el.id = node.id;
     el.style.left = node.x + 'px';
     el.style.top = node.y + 'px';
+    el.style.zIndex = node.zIndex || 10;
 
-    if (node.nodeType === 'class-box') {
+    const behaviorPresentation =
+      window.BehaviorDiagramLibrary?.activity?.buildNodePresentation?.(node, this.escapeHtml.bind(this)) ||
+      window.BehaviorDiagramLibrary?.state?.buildNodePresentation?.(node, this.escapeHtml.bind(this)) ||
+      window.BehaviorDiagramLibrary?.usecase?.buildNodePresentation?.(node, this.escapeHtml.bind(this));
+    if (behaviorPresentation) {
+      el.className = behaviorPresentation.className;
+      const sizeStyle = [
+        behaviorPresentation.style,
+        node.width ? `width:${node.width}px;` : '',
+        node.height ? `height:${node.height}px;` : '',
+      ].join('');
+      el.style.cssText = `left:${node.x}px;top:${node.y}px;z-index:${node.zIndex || 10};${sizeStyle}`;
+      el.innerHTML = behaviorPresentation.innerHTML;
+    } else if (node.nodeType === 'class-box') {
       // UMLクラス図の3コンパートメントノード
       el.className = 'diagram-node uml-class-box';
       el.style.borderColor = node.color + '80';
@@ -1033,18 +1064,70 @@ class DiagramTool {
       this.applyNodeTextStyle(node, labelEl);
     }
 
+    if (node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary') {
+      const resizeHandle = document.createElement('span');
+      resizeHandle.className = 'node-resize-handle';
+      resizeHandle.title = 'サイズ変更';
+      resizeHandle.style.cssText = 'position:absolute;right:3px;bottom:3px;width:14px;height:14px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;opacity:0.55;cursor:nwse-resize;';
+      el.appendChild(resizeHandle);
+    }
+
     // Drag
     let dragging = false, ox, oy;
     el.addEventListener('mousedown', e => {
       if (this.editingNodeId === node.id) return;
       if (e.target.classList.contains('node-port')) return;
+      if (e.target.classList.contains('node-resize-handle')) {
+        const startX = e.clientX;
+        const startY = e.clientY;
+        const startWidth = node.width || el.getBoundingClientRect().width;
+        const startHeight = node.height || el.getBoundingClientRect().height;
+        const minWidth = (node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary') ? 260 : 120;
+        const minHeight = (node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary') ? 180 : 80;
+        const onMouseMove = moveEvent => {
+          node.width = Math.max(minWidth, Math.round(startWidth + (moveEvent.clientX - startX)));
+          node.height = Math.max(minHeight, Math.round(startHeight + (moveEvent.clientY - startY)));
+          el.style.width = node.width + 'px';
+          el.style.height = node.height + 'px';
+          this.drawConnections();
+        };
+        const onMouseUp = () => {
+          this.pushUndoAction({
+            type: 'resizeNode',
+            nodeId: node.id,
+            width: startWidth,
+            height: startHeight,
+          });
+          document.removeEventListener('mousemove', onMouseMove);
+          document.removeEventListener('mouseup', onMouseUp);
+        };
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
       if (this.connectMode) {
+        if (node.behaviorType === 'systemBoundary') {
+          showToast('システム境界には接続できません');
+          return;
+        }
         if (!this.connectingFrom) {
           this.connectingFrom = node;
           el.classList.add('selected');
           showToast('接続先ノードをクリックしてください');
         } else if (this.connectingFrom.id !== node.id) {
-          this.connections.push({ from: this.connectingFrom.id, to: node.id, connType: this.activeConnType || 'association' });
+          const newConn = {
+            id: this.prefix + '_conn_' + (this.connIdCounter++),
+            from: this.connectingFrom.id,
+            to: node.id,
+            connType: this.activeConnType || 'association',
+            routing: 'straight',
+            label: '',
+            multiplicityFrom: '',
+            multiplicityTo: '',
+          };
+          this.connections.push(newConn);
           this.drawConnections();
           document.getElementById(this.connectingFrom.id)?.classList.remove('selected');
           this.pushUndoAction({
@@ -1063,6 +1146,20 @@ class DiagramTool {
       ox = e.clientX - node.x;
       oy = e.clientY - node.y;
       e.preventDefault();
+      // Nesting: コンテナノードの場合、内部の子ノードを特定
+      const isContainer = node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary';
+      let childSnapshots = [];
+      if (isContainer) {
+        const containerRect = el.getBoundingClientRect();
+        childSnapshots = this.nodes.filter(n => {
+          if (n.id === node.id) return false;
+          const childEl = document.getElementById(n.id);
+          if (!childEl) return false;
+          const cr = childEl.getBoundingClientRect();
+          return cr.left >= containerRect.left && cr.right <= containerRect.right &&
+                 cr.top >= containerRect.top && cr.bottom <= containerRect.bottom;
+        }).map(n => ({ node: n, offsetX: n.x - node.x, offsetY: n.y - node.y }));
+      }
       const onMouseMove = e => {
         if (!dragging) return;
         const nextX = e.clientX - ox;
@@ -1072,6 +1169,18 @@ class DiagramTool {
         node.y = nextY;
         el.style.left = node.x + 'px';
         el.style.top = node.y + 'px';
+        // Nesting: 子ノードも一緒に移動
+        if (isContainer) {
+          childSnapshots.forEach(({ node: child, offsetX, offsetY }) => {
+            child.x = node.x + offsetX;
+            child.y = node.y + offsetY;
+            const childEl = document.getElementById(child.id);
+            if (childEl) {
+              childEl.style.left = child.x + 'px';
+              childEl.style.top = child.y + 'px';
+            }
+          });
+        }
         this.drawConnections();
       };
       const onMouseUp = () => {
@@ -1101,6 +1210,10 @@ class DiagramTool {
     el.querySelectorAll('.node-port').forEach(port => {
       port.addEventListener('mousedown', e => {
         e.stopPropagation();
+        if (node.behaviorType === 'systemBoundary') {
+          showToast('システム境界には接続できません');
+          return;
+        }
         if (!this.connectingFrom) {
           this.connectingFrom = node;
           this.connectMode = true;
@@ -1171,6 +1284,12 @@ class DiagramTool {
     labelEl.addEventListener('blur', onBlur);
     labelEl.addEventListener('keydown', onKeyDown);
   }
+  selectConnection(conn) {
+    this.deselectAll();
+    this.selectedConnection = conn;
+    this.drawConnections();
+    this.openPropertyPanel(null, conn);
+  }
   selectNode(node, el) {
     this.deselectAll();
     this.selectedNode = node;
@@ -1179,7 +1298,10 @@ class DiagramTool {
   }
   deselectAll() {
     this.selectedNode = null;
+    this.selectedConnection = null;
     this.canvas.querySelectorAll('.diagram-node').forEach(n => n.classList.remove('selected'));
+    this.canvas.querySelectorAll('.diagram-conn-label').forEach(n => n.classList.remove('selected'));
+    this.drawConnections();
   }
   pushUndoAction(action) {
     if (this.isApplyingUndo || !action) return;
@@ -1295,6 +1417,24 @@ class DiagramTool {
       return inverse;
     }
 
+    if (action.type === 'resizeNode') {
+      const node = this.getNodeById(action.nodeId);
+      const el = node ? document.getElementById(node.id) : null;
+      if (!node || !el) return null;
+      const inverse = {
+        type: 'resizeNode',
+        nodeId: action.nodeId,
+        width: node.width,
+        height: node.height,
+      };
+      node.width = action.width;
+      node.height = action.height;
+      if (action.width) el.style.width = `${action.width}px`;
+      if (action.height) el.style.height = `${action.height}px`;
+      this.drawConnections();
+      return inverse;
+    }
+
     if (action.type === 'removeConnection') {
       const beforeCount = this.connections.length;
       this.connections = this.connections.filter(conn => !(conn.from === action.from && conn.to === action.to));
@@ -1395,15 +1535,30 @@ class DiagramTool {
       this.isApplyingUndo = false;
     }
   }
-  deleteSelectedNode() {
-    const node = this.selectedNode;
-    if (!node) {
-      console.debug('[DiagramTool] deleteSelectedNode called but no selection');
-      showToast('削除する図形を選択してください');
+  deleteSelected() {
+    if (this.selectedConnection) {
+      const conn = this.selectedConnection;
+      this.connections = this.connections.filter(c => c.id !== conn.id);
+      this.pushUndoAction({
+        type: 'removeConnection',
+        from: conn.from,
+        to: conn.to,
+        connType: conn.connType,
+        routing: conn.routing,
+        label: conn.label
+      });
+      this.deselectAll();
+      this.drawConnections();
+      showToast('選択した線を削除しました');
       return;
     }
 
-    console.debug('[DiagramTool] deleting node', node.id);
+    const node = this.selectedNode;
+    if (!node) {
+      showToast('削除する図形または線を選択してください');
+      return;
+    }
+
     const snapshotNode = { ...node };
     const snapshotConnections = this.connections
       .filter(conn => conn.from === node.id || conn.to === node.id)
@@ -1417,6 +1572,20 @@ class DiagramTool {
     this.deselectAll();
     this.drawConnections();
     showToast('選択した図形を削除しました');
+  }
+
+  bringToFront() {
+    if (!this.selectedNode) return;
+    const maxZ = Math.max(...this.nodes.map(n => n.zIndex || 10));
+    this.selectedNode.zIndex = maxZ + 1;
+    this.updateNodeDOM(this.selectedNode);
+  }
+
+  sendToBack() {
+    if (!this.selectedNode) return;
+    const minZ = Math.min(...this.nodes.map(n => n.zIndex || 10));
+    this.selectedNode.zIndex = Math.max(1, minZ - 1);
+    this.updateNodeDOM(this.selectedNode);
   }
   initTextStyleControls() {
     this.fontSizeControl = document.getElementById(this.prefix + '-font-size');
@@ -1784,27 +1953,232 @@ class DiagramTool {
       <marker id="x-mark-${p}" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto"><line x1="2" y1="2" x2="8" y2="8" stroke="#7c3aed" stroke-width="2"/><line x1="8" y1="2" x2="2" y2="8" stroke="#7c3aed" stroke-width="2"/></marker>
     </defs>`;
 
+    this.canvas.querySelectorAll('.diagram-conn-label, .diagram-conn-multiplicity').forEach(el => el.remove());
+
     this.connections.forEach(conn => {
+      if (!conn.id) conn.id = this.prefix + '_conn_' + (this.connIdCounter++);
       const fromEl = document.getElementById(conn.from);
       const toEl = document.getElementById(conn.to);
       if (!fromEl || !toEl) return;
       const cr = this.canvas.getBoundingClientRect();
       const fr = fromEl.getBoundingClientRect();
       const tr = toEl.getBoundingClientRect();
-      const x1 = fr.left + fr.width/2 - cr.left;
-      const y1 = fr.top + fr.height/2 - cr.top;
-      const x2 = tr.left + tr.width/2 - cr.left;
-      const y2 = tr.top + tr.height/2 - cr.top;
+      const cx1 = fr.left + fr.width/2 - cr.left;
+      const cy1 = fr.top + fr.height/2 - cr.top;
+      const cx2 = tr.left + tr.width/2 - cr.left;
+      const cy2 = tr.top + tr.height/2 - cr.top;
+
+      let x1 = cx1, y1 = cy1, x2 = cx2, y2 = cy2;
+      const isHorizontal = Math.abs(cx2 - cx1) > Math.abs(cy2 - cy1);
+
+      if (isHorizontal) {
+        if (cx1 < cx2) {
+          x1 = cx1 + fr.width/2; // from right
+          x2 = cx2 - tr.width/2; // to left
+        } else {
+          x1 = cx1 - fr.width/2; // from left
+          x2 = cx2 + tr.width/2; // to right
+        }
+      } else {
+        if (cy1 < cy2) {
+          y1 = cy1 + fr.height/2; // from bottom
+          y2 = cy2 - tr.height/2; // to top
+        } else {
+          y1 = cy1 - fr.height/2; // from top
+          y2 = cy2 + tr.height/2; // to bottom
+        }
+      }
+
+      let dStr = '';
+      let midX, midY;
+      const routing = conn.routing || 'straight';
+
+      if (routing === 'orthogonal') {
+        // 障害物回避 直交ルーティング
+        const PAD = 15; // ノードからの迂回余白
+        const STUB = 10; // ノードから出る際の直進距離
+        
+        // 接続元・先以外の全ノードの矩形を収集
+        const obstacles = [];
+        this.nodes.forEach(n => {
+          if (n.id === conn.from || n.id === conn.to) return;
+          const nEl = document.getElementById(n.id);
+          if (!nEl) return;
+          const nr = nEl.getBoundingClientRect();
+          obstacles.push({
+            left:   nr.left - cr.left - PAD,
+            right:  nr.left - cr.left + nr.width + PAD,
+            top:    nr.top - cr.top - PAD,
+            bottom: nr.top - cr.top + nr.height + PAD,
+          });
+        });
+
+        // 線分が矩形に衝突するか判定
+        const segHitsRect = (ax, ay, bx, by, r) => {
+          if (ay === by) { // 水平
+            const minX = Math.min(ax, bx), maxX = Math.max(ax, bx);
+            return ay > r.top && ay < r.bottom && maxX > r.left && minX < r.right;
+          }
+          if (ax === bx) { // 垂直
+            const minY = Math.min(ay, by), maxY = Math.max(ay, by);
+            return ax > r.left && ax < r.right && maxY > r.top && minY < r.bottom;
+          }
+          return false;
+        };
+
+        // 経路セグメント群が障害物にヒットした数を返す
+        const getHitsCount = (segments) => {
+          let count = 0;
+          for (const obs of obstacles) {
+            for (const seg of segments) {
+              if (segHitsRect(seg[0], seg[1], seg[2], seg[3], obs)) {
+                count++;
+                break;
+              }
+            }
+          }
+          return count;
+        };
+
+        const toSegments = (wp) => {
+          const segs = [];
+          for (let i = 0; i < wp.length - 1; i++) {
+            segs.push([wp[i][0], wp[i][1], wp[i+1][0], wp[i+1][1]]);
+          }
+          return segs;
+        };
+
+        // スタブ（直進区間）の終点を計算
+        let s1x = x1, s1y = y1, s2x = x2, s2y = y2;
+        if (isHorizontal) {
+          const dir1 = cx1 < cx2 ? 1 : -1;
+          const dir2 = cx1 < cx2 ? -1 : 1;
+          s1x += dir1 * STUB;
+          s2x += dir2 * STUB;
+        } else {
+          const dir1 = cy1 < cy2 ? 1 : -1;
+          const dir2 = cy1 < cy2 ? -1 : 1;
+          s1y += dir1 * STUB;
+          s2y += dir2 * STUB;
+        }
+
+        // 基本パスの生成
+        const createPath = (start, end, horizontalFirst) => {
+          const [x1_s, y1_s] = start;
+          const [x2_s, y2_s] = end;
+          const res = [[x1, y1], start];
+          if (horizontalFirst) {
+            const hx = x1_s + (x2_s - x1_s) / 2;
+            res.push([hx, y1_s], [hx, y2_s]);
+          } else {
+            const hy = y1_s + (y2_s - y1_s) / 2;
+            res.push([x1_s, hy], [x2_s, hy]);
+          }
+          res.push(end, [x2, y2]);
+          return res;
+        };
+
+        let waypoints = createPath([s1x, s1y], [s2x, s2y], isHorizontal);
+        let bestHits = getHitsCount(toSegments(waypoints));
+
+        if (obstacles.length > 0 && bestHits > 0) {
+          const hitObstacles = obstacles.filter(obs => {
+            for (const seg of toSegments(waypoints)) {
+              if (segHitsRect(seg[0], seg[1], seg[2], seg[3], obs)) return true;
+            }
+            return false;
+          });
+
+          let bestPath = waypoints;
+
+          // 候補1: L字に近いパスや別軸のZ字を試す
+          const altCandidates = [
+            createPath([s1x, s1y], [s2x, s2y], !isHorizontal),
+            [[x1,y1], [s1x, s1y], [s2x, s1y], [s2x, s2y], [x2,y2]], // L字1ベース
+            [[x1,y1], [s1x, s1y], [s1x, s2y], [s2x, s2y], [x2,y2]]  // L字2ベース
+          ];
+
+          for (const alt of altCandidates) {
+            const hits = getHitsCount(toSegments(alt));
+            if (hits < bestHits) {
+              bestHits = hits;
+              bestPath = alt;
+            }
+            if (bestHits === 0) break;
+          }
+
+          // 候補2: 迂回
+          if (bestHits > 0) {
+            for (const obs of hitObstacles) {
+              const detours = [];
+              if (isHorizontal) {
+                detours.push([[x1,y1], [s1x,y1], [s1x,obs.top], [s2x,obs.top], [s2x,y2], [x2,y2]]);
+                detours.push([[x1,y1], [s1x,y1], [s1x,obs.bottom], [s2x,obs.bottom], [s2x,y2], [x2,y2]]);
+              } else {
+                detours.push([[x1,y1], [x1,s1y], [obs.left,s1y], [obs.left,s2y], [x2,s2y], [x2,y2]]);
+                detours.push([[x1,y1], [x1,s1y], [obs.right,s1y], [obs.right,s2y], [x2,s2y], [x2,y2]]);
+              }
+              for (const dp of detours) {
+                const hits = getHitsCount(toSegments(dp));
+                if (hits < bestHits) {
+                  bestHits = hits;
+                  bestPath = dp;
+                }
+                if (bestHits === 0) break;
+              }
+              if (bestHits === 0) break;
+            }
+          }
+          waypoints = bestPath;
+        }
+
+        dStr = 'M ' + waypoints.map(wp => `${wp[0]} ${wp[1]}`).join(' L ');
+        const midIdx = Math.floor(waypoints.length / 2);
+        const p1 = waypoints[midIdx - 1], p2 = waypoints[midIdx];
+        midX = (p1[0] + p2[0]) / 2;
+        midY = (p1[1] + p2[1]) / 2;
+
+      } else if (routing === 'curve') {
+        if (isHorizontal) {
+          const hx = x1 + (x2 - x1) / 2;
+          dStr = `M ${x1} ${y1} C ${hx} ${y1}, ${hx} ${y2}, ${x2} ${y2}`;
+          midX = hx;
+          midY = y1 + (y2 - y1) / 2;
+        } else {
+          const hy = y1 + (y2 - y1) / 2;
+          dStr = `M ${x1} ${y1} C ${x1} ${hy}, ${x2} ${hy}, ${x2} ${y2}`;
+          midX = x1 + (x2 - x1) / 2;
+          midY = hy;
+        }
+      } else {
+        if (conn.manualMid) {
+          // 手動で動かされた中点がある場合、折れ線にする
+          const mx = conn.manualMid.x;
+          const my = conn.manualMid.y;
+          dStr = `M ${x1} ${y1} L ${mx} ${my} L ${x2} ${y2}`;
+          midX = mx;
+          midY = my;
+        } else {
+          dStr = `M ${x1} ${y1} L ${x2} ${y2}`;
+          midX = (x1 + x2) / 2;
+          midY = (y1 + y2) / 2;
+        }
+      }
 
       const connType = conn.connType || 'association';
-      const path = document.createElementNS('http://www.w3.org/2000/svg','line');
-      path.setAttribute('x1', x1);
-      path.setAttribute('y1', y1);
-      path.setAttribute('x2', x2);
-      path.setAttribute('y2', y2);
-      path.setAttribute('stroke','#7c3aed');
-      path.setAttribute('stroke-width','2');
-      path.setAttribute('opacity','0.8');
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d', dStr);
+      const isSelected = this.selectedConnection === conn;
+      path.setAttribute('stroke', isSelected ? '#f59e0b' : '#7c3aed');
+      path.setAttribute('stroke-width', isSelected ? '3' : '2');
+      path.setAttribute('fill', 'none');
+      path.setAttribute('pointer-events', 'visibleStroke');
+      path.setAttribute('opacity', '0.8');
+      path.style.cursor = 'pointer';
+      path.addEventListener('mousedown', e => {
+        e.stopPropagation();
+        this.selectConnection(conn);
+      });
 
       switch (connType) {
         case 'association':
@@ -1835,6 +2209,80 @@ class DiagramTool {
           path.setAttribute('marker-end', `url(#arrow-${p})`);
       }
       this.svg.appendChild(path);
+
+      if (conn.label) {
+        const labelDiv = document.createElement('div');
+        labelDiv.className = 'diagram-conn-label' + (isSelected ? ' selected' : '');
+        labelDiv.textContent = conn.label;
+        labelDiv.style.left = midX + 'px';
+        labelDiv.style.top = midY + 'px';
+        labelDiv.addEventListener('mousedown', e => {
+          e.stopPropagation();
+          this.selectConnection(conn);
+        });
+        this.canvas.appendChild(labelDiv);
+      }
+
+      // 中点ドラッグハンドル (選択中のみ表示)
+      if (isSelected && routing === 'straight') {
+        const handle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        handle.setAttribute('cx', midX);
+        handle.setAttribute('cy', midY);
+        handle.setAttribute('r', '6');
+        handle.setAttribute('fill', '#f59e0b');
+        handle.setAttribute('stroke', '#fff');
+        handle.setAttribute('stroke-width', '2');
+        handle.style.cursor = 'move';
+        
+        let hDragging = false;
+        handle.addEventListener('mousedown', e => {
+          e.stopPropagation();
+          e.preventDefault();
+          hDragging = true;
+          
+          const onMouseMove = me => {
+            if (!hDragging) return;
+            const rect = this.canvas.getBoundingClientRect();
+            conn.manualMid = {
+              x: me.clientX - rect.left,
+              y: me.clientY - rect.top
+            };
+            this.drawConnections();
+          };
+          
+          const onMouseUp = () => {
+            hDragging = false;
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+          };
+          
+          document.addEventListener('mousemove', onMouseMove);
+          document.addEventListener('mouseup', onMouseUp);
+        });
+        this.svg.appendChild(handle);
+      }
+
+      // 多重度ラベル (multiplicityFrom / multiplicityTo)
+      const multOffset = 18;
+      if (conn.multiplicityFrom) {
+        const mfDiv = document.createElement('div');
+        mfDiv.className = 'diagram-conn-multiplicity';
+        mfDiv.textContent = conn.multiplicityFrom;
+        // fromノード側の端点付近にオフセット配置
+        const angle = Math.atan2(y2 - y1, x2 - x1);
+        mfDiv.style.left = (x1 + Math.cos(angle) * 20 + Math.sin(angle) * multOffset) + 'px';
+        mfDiv.style.top = (y1 + Math.sin(angle) * 20 - Math.cos(angle) * multOffset) + 'px';
+        this.canvas.appendChild(mfDiv);
+      }
+      if (conn.multiplicityTo) {
+        const mtDiv = document.createElement('div');
+        mtDiv.className = 'diagram-conn-multiplicity';
+        mtDiv.textContent = conn.multiplicityTo;
+        const angle = Math.atan2(y1 - y2, x1 - x2);
+        mtDiv.style.left = (x2 + Math.cos(angle) * 20 + Math.sin(angle) * multOffset) + 'px';
+        mtDiv.style.top = (y2 + Math.sin(angle) * 20 - Math.cos(angle) * multOffset) + 'px';
+        this.canvas.appendChild(mtDiv);
+      }
     });
   }
   clearAll() {

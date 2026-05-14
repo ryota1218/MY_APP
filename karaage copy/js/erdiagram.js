@@ -75,6 +75,10 @@ class ERDiagramTool {
   copy() { if(this.selectedEntity) showToast('エンティティをコピーしました'); }
   paste() { showToast('貼り付けは未実装です'); }
 
+  toggleSidebar() {
+    document.body.classList.toggle('sidebar-collapsed');
+  }
+
   toggleNameView() {
     this.viewMode = this.viewMode === 'logical' ? 'physical' : 'logical';
     const btn = document.getElementById('er-toggle-name-btn');
