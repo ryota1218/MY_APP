@@ -69,10 +69,10 @@
               <div style="font-size: 11px; color: #666; margin-bottom: 6px; font-weight: 500;">カスタムカラー</div>
               <div style="display: flex; gap: 8px; margin-bottom: 8px;">
                 <div id="{{prefix}}-color-gradient" style="flex: 1; height: 120px; background: linear-gradient(to bottom, hsl(0, 100%, 100%) 0%, hsl(0, 100%, 50%) 50%, hsl(0, 100%, 0%) 100%); border: 1px solid #ddd; border-radius: 4px; cursor: crosshair; position: relative; touch-action: none; user-select: none; overflow: hidden;">
-                  <div id="{{prefix}}-color-gradient-marker" style="position: absolute; width: 12px; height: 12px; border: 2px solid #fff; border-radius: 999px; box-shadow: 0 0 0 1px rgba(0,0,0,0.35); transform: translate(-50%, -50%); pointer-events: none; left: 100%; top: 50%;"></div>
+                  <div id="{{prefix}}-color-gradient-marker" style="position: absolute; width: 14px; height: 14px; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1px rgba(0,0,0,0.35); transform: translate(-50%, -50%); pointer-events: none; left: 50%; top: 50%;"></div>
                 </div>
                 <div id="{{prefix}}-color-hue" style="width: 20px; height: 120px; background: linear-gradient(to bottom, hsl(0, 100%, 50%), hsl(60, 100%, 50%), hsl(120, 100%, 50%), hsl(180, 100%, 50%), hsl(240, 100%, 50%), hsl(300, 100%, 50%), hsl(360, 100%, 50%)); border: 1px solid #ddd; border-radius: 4px; cursor: pointer; touch-action: none; user-select: none; position: relative; overflow: hidden;">
-                  <div id="{{prefix}}-color-hue-marker" style="position: absolute; left: 50%; width: 16px; height: 8px; border: 2px solid #fff; border-radius: 999px; box-shadow: 0 0 0 1px rgba(0,0,0,0.35); transform: translate(-50%, -50%); pointer-events: none; top: 0%; background: rgba(255,255,255,0.12);"></div>
+                  <div id="{{prefix}}-color-hue-marker" style="position: absolute; left: 50%; width: 16px; height: 4px; background: #fff; border-radius: 999px; box-shadow: 0 0 0 1px rgba(0,0,0,0.35); transform: translate(-50%, -50%); pointer-events: none; top: 0%;"></div>
                 </div>
               </div>
               <div style="display: flex; gap: 8px;">
@@ -179,40 +179,7 @@
           </div>
         </details>
       </div>
-      <div class="property-group" id="{{prefix}}-prop-group-routing" style="display:none;">
-        <label>ルーティング</label>
-        <select id="{{prefix}}-prop-routing" class="property-input">
-          <option value="straight">直線</option>
-          <option value="orthogonal">直角 (Orthogonal)</option>
-          <option value="curve">曲線 (Curve)</option>
-        </select>
-      </div>
-      <div class="property-group" id="{{prefix}}-prop-group-multFrom" style="display:none;">
-        <label>多重度 (接続元)</label>
-        <input type="text" id="{{prefix}}-prop-multFrom" class="property-input" placeholder="例: 1, 0..1, *, 1..*">
-      </div>
-      <div class="property-group" id="{{prefix}}-prop-group-multTo" style="display:none;">
-        <label>多重度 (接続先)</label>
-        <input type="text" id="{{prefix}}-prop-multTo" class="property-input" placeholder="例: 0..*, 1, *">
-      </div>
-      <div class="property-group" id="{{prefix}}-prop-group-conntype" style="display:none;">
-        <label>線の関係性 (UML)</label>
-        <select id="{{prefix}}-prop-conntype" class="property-input">
-          <option value="association">関連 (Association)</option>
-          <option value="dependency">依存 (Dependency)</option>
-          <option value="aggregation">集約 (Aggregation)</option>
-          <option value="composition">コンポジション (Composition)</option>
-          <option value="include">包含 (&lt;&lt;include&gt;&gt;)</option>
-          <option value="extend">拡張 (&lt;&lt;extend&gt;&gt;)</option>
-        </select>
-      </div>
-      <div class="property-group" id="{{prefix}}-prop-group-zindex">
-        <label>重なり順 (Z-Index)</label>
-        <div style="display:flex; gap: 8px;">
-          <button class="btn btn-sm btn-secondary" style="flex:1;" data-action="bringToFront">最前面へ</button>
-          <button class="btn btn-sm btn-secondary" style="flex:1;" data-action="sendToBack">最背面へ</button>
-        </div>
-      </div>
-      <button class="btn btn-sm btn-danger" data-action="deleteSelected" style="width: 100%; margin-top: 16px;">削除</button>
+      <button class="btn btn-sm btn-danger" data-action="deleteSelectedNode" style="width: 100%; margin-top: 16px;">ノードを削除</button>
+    </div>
   </div>
 </div>
