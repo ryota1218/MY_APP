@@ -130,6 +130,14 @@
           <option value="curve">曲線 (Curve)</option>
         </select>
       </div>
+      <div class="property-group" id="{{prefix}}-prop-group-multFrom" style="display:none;">
+        <label>多重度 (接続元)</label>
+        <input type="text" id="{{prefix}}-prop-multFrom" class="property-input" placeholder="例: 1, 0..1, *, 1..*">
+      </div>
+      <div class="property-group" id="{{prefix}}-prop-group-multTo" style="display:none;">
+        <label>多重度 (接続先)</label>
+        <input type="text" id="{{prefix}}-prop-multTo" class="property-input" placeholder="例: 0..*, 1, *">
+      </div>
       <div class="property-group" id="{{prefix}}-prop-group-conntype" style="display:none;">
         <label>線の関係性 (UML)</label>
         <select id="{{prefix}}-prop-conntype" class="property-input">

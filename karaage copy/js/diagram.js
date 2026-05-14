@@ -501,6 +501,8 @@ class DiagramTool {
     bindInput('textcolor', 'textColor');
     bindInput('color', 'color');
     bindInput('routing', 'routing');
+    bindInput('multFrom', 'multiplicityFrom');
+    bindInput('multTo', 'multiplicityTo');
   }
 
   openPropertyPanel(node, conn = null) {
@@ -519,6 +521,10 @@ class DiagramTool {
     });
     const routingGroup = document.getElementById(this.prefix + '-prop-group-routing');
     if (routingGroup) routingGroup.style.display = isConn ? '' : 'none';
+    const multFromGroup = document.getElementById(this.prefix + '-prop-group-multFrom');
+    if (multFromGroup) multFromGroup.style.display = isConn ? '' : 'none';
+    const multToGroup = document.getElementById(this.prefix + '-prop-group-multTo');
+    if (multToGroup) multToGroup.style.display = isConn ? '' : 'none';
     const zindexGroup = document.getElementById(this.prefix + '-prop-group-zindex');
     if (zindexGroup) zindexGroup.style.display = isNode ? '' : 'none';
 
@@ -545,6 +551,8 @@ class DiagramTool {
     } else if (isConn) {
       setVal('label', conn.label || '');
       setVal('routing', conn.routing || 'straight');
+      setVal('multFrom', conn.multiplicityFrom || '');
+      setVal('multTo', conn.multiplicityTo || '');
     }
 
     // --- クラスボックス専用フィールドの動的生成 ---
@@ -975,7 +983,9 @@ class DiagramTool {
             to: node.id,
             connType: this.activeConnType || 'association',
             routing: 'straight',
-            label: ''
+            label: '',
+            multiplicityFrom: '',
+            multiplicityTo: '',
           };
           this.connections.push(newConn);
           this.drawConnections();
@@ -996,6 +1006,20 @@ class DiagramTool {
       ox = e.clientX - node.x;
       oy = e.clientY - node.y;
       e.preventDefault();
+      // Nesting: コンテナノードの場合、内部の子ノードを特定
+      const isContainer = node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary';
+      let childSnapshots = [];
+      if (isContainer) {
+        const containerRect = el.getBoundingClientRect();
+        childSnapshots = this.nodes.filter(n => {
+          if (n.id === node.id) return false;
+          const childEl = document.getElementById(n.id);
+          if (!childEl) return false;
+          const cr = childEl.getBoundingClientRect();
+          return cr.left >= containerRect.left && cr.right <= containerRect.right &&
+                 cr.top >= containerRect.top && cr.bottom <= containerRect.bottom;
+        }).map(n => ({ node: n, offsetX: n.x - node.x, offsetY: n.y - node.y }));
+      }
       const onMouseMove = e => {
         if (!dragging) return;
         const nextX = e.clientX - ox;
@@ -1005,6 +1029,18 @@ class DiagramTool {
         node.y = nextY;
         el.style.left = node.x + 'px';
         el.style.top = node.y + 'px';
+        // Nesting: 子ノードも一緒に移動
+        if (isContainer) {
+          childSnapshots.forEach(({ node: child, offsetX, offsetY }) => {
+            child.x = node.x + offsetX;
+            child.y = node.y + offsetY;
+            const childEl = document.getElementById(child.id);
+            if (childEl) {
+              childEl.style.left = child.x + 'px';
+              childEl.style.top = child.y + 'px';
+            }
+          });
+        }
         this.drawConnections();
       };
       const onMouseUp = () => {
@@ -1580,7 +1616,7 @@ class DiagramTool {
       <marker id="x-mark-${p}" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto"><line x1="2" y1="2" x2="8" y2="8" stroke="#7c3aed" stroke-width="2"/><line x1="8" y1="2" x2="2" y2="8" stroke="#7c3aed" stroke-width="2"/></marker>
     </defs>`;
 
-    this.canvas.querySelectorAll('.diagram-conn-label').forEach(el => el.remove());
+    this.canvas.querySelectorAll('.diagram-conn-label, .diagram-conn-multiplicity').forEach(el => el.remove());
 
     this.connections.forEach(conn => {
       if (!conn.id) conn.id = this.prefix + '_conn_' + (this.connIdCounter++);
@@ -1619,18 +1655,152 @@ class DiagramTool {
       let dStr = '';
       let midX, midY;
       const routing = conn.routing || 'straight';
+
       if (routing === 'orthogonal') {
+        // 障害物回避 直交ルーティング
+        const PAD = 15; // ノードからの迂回余白
+        const STUB = 10; // ノードから出る際の直進距離
+        
+        // 接続元・先以外の全ノードの矩形を収集
+        const obstacles = [];
+        this.nodes.forEach(n => {
+          if (n.id === conn.from || n.id === conn.to) return;
+          const nEl = document.getElementById(n.id);
+          if (!nEl) return;
+          const nr = nEl.getBoundingClientRect();
+          obstacles.push({
+            left:   nr.left - cr.left - PAD,
+            right:  nr.left - cr.left + nr.width + PAD,
+            top:    nr.top - cr.top - PAD,
+            bottom: nr.top - cr.top + nr.height + PAD,
+          });
+        });
+
+        // 線分が矩形に衝突するか判定
+        const segHitsRect = (ax, ay, bx, by, r) => {
+          if (ay === by) { // 水平
+            const minX = Math.min(ax, bx), maxX = Math.max(ax, bx);
+            return ay > r.top && ay < r.bottom && maxX > r.left && minX < r.right;
+          }
+          if (ax === bx) { // 垂直
+            const minY = Math.min(ay, by), maxY = Math.max(ay, by);
+            return ax > r.left && ax < r.right && maxY > r.top && minY < r.bottom;
+          }
+          return false;
+        };
+
+        // 経路セグメント群が障害物にヒットした数を返す
+        const getHitsCount = (segments) => {
+          let count = 0;
+          for (const obs of obstacles) {
+            for (const seg of segments) {
+              if (segHitsRect(seg[0], seg[1], seg[2], seg[3], obs)) {
+                count++;
+                break;
+              }
+            }
+          }
+          return count;
+        };
+
+        const toSegments = (wp) => {
+          const segs = [];
+          for (let i = 0; i < wp.length - 1; i++) {
+            segs.push([wp[i][0], wp[i][1], wp[i+1][0], wp[i+1][1]]);
+          }
+          return segs;
+        };
+
+        // スタブ（直進区間）の終点を計算
+        let s1x = x1, s1y = y1, s2x = x2, s2y = y2;
         if (isHorizontal) {
-          const hx = x1 + (x2 - x1) / 2;
-          dStr = `M ${x1} ${y1} L ${hx} ${y1} L ${hx} ${y2} L ${x2} ${y2}`;
-          midX = hx;
-          midY = y1 + (y2 - y1) / 2;
+          const dir1 = cx1 < cx2 ? 1 : -1;
+          const dir2 = cx1 < cx2 ? -1 : 1;
+          s1x += dir1 * STUB;
+          s2x += dir2 * STUB;
         } else {
-          const hy = y1 + (y2 - y1) / 2;
-          dStr = `M ${x1} ${y1} L ${x1} ${hy} L ${x2} ${hy} L ${x2} ${y2}`;
-          midX = x1 + (x2 - x1) / 2;
-          midY = hy;
+          const dir1 = cy1 < cy2 ? 1 : -1;
+          const dir2 = cy1 < cy2 ? -1 : 1;
+          s1y += dir1 * STUB;
+          s2y += dir2 * STUB;
         }
+
+        // 基本パスの生成
+        const createPath = (start, end, horizontalFirst) => {
+          const [x1_s, y1_s] = start;
+          const [x2_s, y2_s] = end;
+          const res = [[x1, y1], start];
+          if (horizontalFirst) {
+            const hx = x1_s + (x2_s - x1_s) / 2;
+            res.push([hx, y1_s], [hx, y2_s]);
+          } else {
+            const hy = y1_s + (y2_s - y1_s) / 2;
+            res.push([x1_s, hy], [x2_s, hy]);
+          }
+          res.push(end, [x2, y2]);
+          return res;
+        };
+
+        let waypoints = createPath([s1x, s1y], [s2x, s2y], isHorizontal);
+        let bestHits = getHitsCount(toSegments(waypoints));
+
+        if (obstacles.length > 0 && bestHits > 0) {
+          const hitObstacles = obstacles.filter(obs => {
+            for (const seg of toSegments(waypoints)) {
+              if (segHitsRect(seg[0], seg[1], seg[2], seg[3], obs)) return true;
+            }
+            return false;
+          });
+
+          let bestPath = waypoints;
+
+          // 候補1: L字に近いパスや別軸のZ字を試す
+          const altCandidates = [
+            createPath([s1x, s1y], [s2x, s2y], !isHorizontal),
+            [[x1,y1], [s1x, s1y], [s2x, s1y], [s2x, s2y], [x2,y2]], // L字1ベース
+            [[x1,y1], [s1x, s1y], [s1x, s2y], [s2x, s2y], [x2,y2]]  // L字2ベース
+          ];
+
+          for (const alt of altCandidates) {
+            const hits = getHitsCount(toSegments(alt));
+            if (hits < bestHits) {
+              bestHits = hits;
+              bestPath = alt;
+            }
+            if (bestHits === 0) break;
+          }
+
+          // 候補2: 迂回
+          if (bestHits > 0) {
+            for (const obs of hitObstacles) {
+              const detours = [];
+              if (isHorizontal) {
+                detours.push([[x1,y1], [s1x,y1], [s1x,obs.top], [s2x,obs.top], [s2x,y2], [x2,y2]]);
+                detours.push([[x1,y1], [s1x,y1], [s1x,obs.bottom], [s2x,obs.bottom], [s2x,y2], [x2,y2]]);
+              } else {
+                detours.push([[x1,y1], [x1,s1y], [obs.left,s1y], [obs.left,s2y], [x2,s2y], [x2,y2]]);
+                detours.push([[x1,y1], [x1,s1y], [obs.right,s1y], [obs.right,s2y], [x2,s2y], [x2,y2]]);
+              }
+              for (const dp of detours) {
+                const hits = getHitsCount(toSegments(dp));
+                if (hits < bestHits) {
+                  bestHits = hits;
+                  bestPath = dp;
+                }
+                if (bestHits === 0) break;
+              }
+              if (bestHits === 0) break;
+            }
+          }
+          waypoints = bestPath;
+        }
+
+        dStr = 'M ' + waypoints.map(wp => `${wp[0]} ${wp[1]}`).join(' L ');
+        const midIdx = Math.floor(waypoints.length / 2);
+        const p1 = waypoints[midIdx - 1], p2 = waypoints[midIdx];
+        midX = (p1[0] + p2[0]) / 2;
+        midY = (p1[1] + p2[1]) / 2;
+
       } else if (routing === 'curve') {
         if (isHorizontal) {
           const hx = x1 + (x2 - x1) / 2;
@@ -1644,9 +1814,18 @@ class DiagramTool {
           midY = hy;
         }
       } else {
-        dStr = `M ${x1} ${y1} L ${x2} ${y2}`;
-        midX = (x1 + x2) / 2;
-        midY = (y1 + y2) / 2;
+        if (conn.manualMid) {
+          // 手動で動かされた中点がある場合、折れ線にする
+          const mx = conn.manualMid.x;
+          const my = conn.manualMid.y;
+          dStr = `M ${x1} ${y1} L ${mx} ${my} L ${x2} ${y2}`;
+          midX = mx;
+          midY = my;
+        } else {
+          dStr = `M ${x1} ${y1} L ${x2} ${y2}`;
+          midX = (x1 + x2) / 2;
+          midY = (y1 + y2) / 2;
+        }
       }
 
       const connType = conn.connType || 'association';
@@ -1705,6 +1884,67 @@ class DiagramTool {
           this.selectConnection(conn);
         });
         this.canvas.appendChild(labelDiv);
+      }
+
+      // 中点ドラッグハンドル (選択中のみ表示)
+      if (isSelected && routing === 'straight') {
+        const handle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        handle.setAttribute('cx', midX);
+        handle.setAttribute('cy', midY);
+        handle.setAttribute('r', '6');
+        handle.setAttribute('fill', '#f59e0b');
+        handle.setAttribute('stroke', '#fff');
+        handle.setAttribute('stroke-width', '2');
+        handle.style.cursor = 'move';
+        
+        let hDragging = false;
+        handle.addEventListener('mousedown', e => {
+          e.stopPropagation();
+          e.preventDefault();
+          hDragging = true;
+          
+          const onMouseMove = me => {
+            if (!hDragging) return;
+            const rect = this.canvas.getBoundingClientRect();
+            conn.manualMid = {
+              x: me.clientX - rect.left,
+              y: me.clientY - rect.top
+            };
+            this.drawConnections();
+          };
+          
+          const onMouseUp = () => {
+            hDragging = false;
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+          };
+          
+          document.addEventListener('mousemove', onMouseMove);
+          document.addEventListener('mouseup', onMouseUp);
+        });
+        this.svg.appendChild(handle);
+      }
+
+      // 多重度ラベル (multiplicityFrom / multiplicityTo)
+      const multOffset = 18;
+      if (conn.multiplicityFrom) {
+        const mfDiv = document.createElement('div');
+        mfDiv.className = 'diagram-conn-multiplicity';
+        mfDiv.textContent = conn.multiplicityFrom;
+        // fromノード側の端点付近にオフセット配置
+        const angle = Math.atan2(y2 - y1, x2 - x1);
+        mfDiv.style.left = (x1 + Math.cos(angle) * 20 + Math.sin(angle) * multOffset) + 'px';
+        mfDiv.style.top = (y1 + Math.sin(angle) * 20 - Math.cos(angle) * multOffset) + 'px';
+        this.canvas.appendChild(mfDiv);
+      }
+      if (conn.multiplicityTo) {
+        const mtDiv = document.createElement('div');
+        mtDiv.className = 'diagram-conn-multiplicity';
+        mtDiv.textContent = conn.multiplicityTo;
+        const angle = Math.atan2(y1 - y2, x1 - x2);
+        mtDiv.style.left = (x2 + Math.cos(angle) * 20 + Math.sin(angle) * multOffset) + 'px';
+        mtDiv.style.top = (y2 + Math.sin(angle) * 20 - Math.cos(angle) * multOffset) + 'px';
+        this.canvas.appendChild(mtDiv);
       }
     });
   }
