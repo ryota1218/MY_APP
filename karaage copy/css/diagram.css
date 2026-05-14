@@ -612,8 +612,58 @@
   background-size: 24px 24px;
 }
 .diagram-canvas svg.connections {
-  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  pointer-events: none; z-index: 1;
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none; /* 背景は透過 */
+  z-index: 21; /* ノード(10)より上にする */
+}
+svg.connections path,
+svg.connections circle {
+  pointer-events: all; /* 線とハンドルは反応させる */
+}
+
+/* Connection Label */
+.diagram-conn-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  color: var(--text);
+  z-index: 21;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  user-select: none;
+}
+.diagram-conn-label:hover {
+  border-color: var(--accent);
+}
+.diagram-conn-label.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(124,58,237,0.3);
+}
+.diagram-conn-label.editing {
+  cursor: text;
+}
+
+/* Multiplicity labels at connection endpoints */
+.diagram-conn-multiplicity {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background: rgba(17, 24, 39, 0.85);
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #a78bfa;
+  z-index: 22;
+  pointer-events: none;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
 }
 
 /* Diagram Nodes */

@@ -249,6 +249,23 @@
       };
     }
 
+    if (variant.kind === 'history') {
+      const mark = variant.depth || 'H';
+      return {
+        className: 'diagram-node behavior-node behavior-node-round behavior-node-history',
+        style: buildNodeStyleString({
+          ...baseStyle,
+          'min-width': '80px',
+          padding: '12px 14px',
+          display: 'flex',
+          'flex-direction': 'column',
+          'align-items': 'center',
+          gap: '8px',
+        }),
+        innerHTML: `<div class="behavior-node-round-mark" style="width:42px;height:42px;border-radius:50%;border:2px solid ${node.color};background:${node.color}20;display:grid;place-items:center;"><span style="font-weight:700;font-size:1.1rem;color:${node.color};">${mark}</span></div><span class="node-label">${label}</span>${ports}`,
+      };
+    }
+
     if (variant.kind === 'bar') {
       return {
         className: 'diagram-node behavior-node behavior-node-bar',
