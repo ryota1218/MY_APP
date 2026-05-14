@@ -536,8 +536,132 @@ class DiagramTool {
     bindInput('x', 'x', Number);
     bindInput('y', 'y', Number);
     bindInput('fontsize', 'textSize', Number);
-    bindInput('textcolor', 'textColor');
-    bindInput('color', 'color');
+
+    // プロパティパネルのカラーピッカー初期化
+    this.initPropertyPanelColorPicker('textcolor', 'textColor');
+    this.initPropertyPanelColorPicker('color', 'color');
+  }
+
+  initPropertyPanelColorPicker(suffix, nodeProp) {
+    const pickerEl = document.getElementById(this.prefix + '-prop-' + suffix + '-picker');
+    const menuEl = document.getElementById(this.prefix + '-prop-' + suffix + '-menu');
+    const themeRowEl = document.getElementById(this.prefix + '-prop-' + suffix + '-theme-row');
+    const shadeGridEl = document.getElementById(this.prefix + '-prop-' + suffix + '-shade-grid');
+    const standardRowEl = document.getElementById(this.prefix + '-prop-' + suffix + '-standard-row');
+    const otherBtn = document.getElementById(this.prefix + '-prop-' + suffix + '-other-btn');
+    const sampleEl = document.getElementById(this.prefix + '-prop-' + suffix + '-sample');
+    const textEl = document.getElementById(this.prefix + '-prop-' + suffix + '-text');
+
+    if (!pickerEl || !menuEl) return;
+
+    // カラーパレット構築
+    const themeColors = [
+      { label:'黒', color:'#111111', shades:['#f3f4f6','#d1d5db','#6b7280','#111111'] },
+      { label:'赤', color:'#ef4444', shades:['#fee2e2','#fca5a5','#ef4444','#991b1b'] },
+      { label:'灰', color:'#9ca3af', shades:['#f3f4f6','#d1d5db','#9ca3af','#4b5563'] },
+      { label:'青', color:'#3b82f6', shades:['#dbeafe','#93c5fd','#3b82f6','#1d4ed8'] },
+      { label:'水色', color:'#60a5fa', shades:['#dbeafe','#bfdbfe','#60a5fa','#2563eb'] },
+      { label:'橙', color:'#f97316', shades:['#ffedd5','#fdba74','#f97316','#c2410c'] },
+      { label:'銀', color:'#a3a3a3', shades:['#f5f5f5','#e5e7eb','#a3a3a3','#525252'] },
+      { label:'黄', color:'#facc15', shades:['#fef9c3','#fde68a','#facc15','#ca8a04'] },
+      { label:'青系', color:'#60a5fa', shades:['#eff6ff','#dbeafe','#60a5fa','#1d4ed8'] },
+      { label:'緑', color:'#84cc16', shades:['#ecfccb','#bef264','#84cc16','#3f6212'] },
+    ];
+    const standardColors = ['#dc2626','#ff0000','#f59e0b','#ffea00','#84cc16','#10b981','#06b6d4','#0284c7','#1d4ed8','#7c3aed'];
+
+    if (themeRowEl) {
+      themeRowEl.innerHTML = themeColors.map(item => `
+        <button type="button" class="diagram-color-option" data-color="${item.color}" data-label="${item.label}">
+          <span class="diagram-color-option-swatch" style="background:${item.color}"></span>
+        </button>
+      `).join('');
+    }
+
+    if (shadeGridEl) {
+      shadeGridEl.innerHTML = themeColors.map(item => `
+        <div class="diagram-color-shade-column" data-label="${item.label}">
+          ${item.shades.map((shade, index) => `<button type="button" class="diagram-color-shade-option" data-color="${shade}" data-label="${item.label} ${index + 1}" style="background:${shade}"></button>`).join('')}
+        </div>
+      `).join('');
+    }
+
+    if (standardRowEl) {
+      standardRowEl.innerHTML = standardColors.map((color, index) => `
+        <button type="button" class="diagram-color-option" data-color="${color}" data-label="標準 ${index + 1}">
+          <span class="diagram-color-option-swatch" style="background:${color}"></span>
+        </button>
+      `).join('');
+    }
+
+    // カラー選択イベント
+    menuEl.addEventListener('click', e => {
+      const option = e.target.closest('[data-color]');
+      if (!option) return;
+      const selectedColor = option.dataset.color || '';
+      if (!this.propertyPanelNode) return;
+      this.propertyPanelNode[nodeProp] = selectedColor;
+      this.updateNodeDOM(this.propertyPanelNode);
+      this.refreshPropertyPanelColorButton(suffix, nodeProp);
+      pickerEl.open = false;
+    });
+
+    // その他の色ボタン
+    if (otherBtn) {
+      // 個別にnativeColorInputを保持
+      const inputId = this.prefix + '-native-' + suffix;
+      let nativeColorInput = document.getElementById(inputId);
+      
+      if (!nativeColorInput) {
+        nativeColorInput = document.createElement('input');
+        nativeColorInput.id = inputId;
+        nativeColorInput.type = 'color';
+        nativeColorInput.value = '#e5e7eb';
+        nativeColorInput.style.display = 'none';
+        document.body.appendChild(nativeColorInput);
+      }
+      
+      otherBtn.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        nativeColorInput.value = this.propertyPanelNode && this.propertyPanelNode[nodeProp] ? this.propertyPanelNode[nodeProp] : '#e5e7eb';
+        nativeColorInput.click();
+      });
+      
+      nativeColorInput.addEventListener('change', () => {
+        const selectedColor = nativeColorInput.value;
+        if (!this.propertyPanelNode) return;
+        this.propertyPanelNode[nodeProp] = selectedColor;
+        this.updateNodeDOM(this.propertyPanelNode);
+        this.refreshPropertyPanelColorButton(suffix, nodeProp);
+        pickerEl.open = false;
+      });
+    }
+
+    // 外部クリックで閉じる
+    document.addEventListener('click', e => {
+      if (!pickerEl.contains(e.target)) {
+        pickerEl.open = false;
+      }
+    });
+  }
+
+  refreshPropertyPanelColorButton(suffix, nodeProp) {
+    const sampleEl = document.getElementById(this.prefix + '-prop-' + suffix + '-sample');
+    const textEl = document.getElementById(this.prefix + '-prop-' + suffix + '-text');
+    const menuEl = document.getElementById(this.prefix + '-prop-' + suffix + '-menu');
+
+    if (!this.propertyPanelNode || !sampleEl || !textEl) return;
+
+    const color = this.propertyPanelNode[nodeProp] || '';
+    const isAuto = !color;
+    const displayColor = isAuto ? '#e5e7eb' : color;
+
+    sampleEl.style.background = displayColor;
+    
+    if (menuEl) {
+      const activeOption = isAuto ? menuEl.querySelector('.diagram-color-auto-row') : menuEl.querySelector(`.diagram-color-option[data-color="${color}"]`);
+      textEl.textContent = activeOption?.dataset.label || (isAuto ? '自動' : color);
+    }
   }
 
   openPropertyPanel(node) {
@@ -555,14 +679,9 @@ class DiagramTool {
     setVal('y', node.y);
     setVal('fontsize', node.textSize || this.defaultTextStyle.fontSize);
     
-    // color input needs #rrggbb format
-    const rgbToHex = (color) => {
-      if (!color) return '#e5e7eb';
-      if (color.startsWith('#') && color.length === 7) return color;
-      return color;
-    };
-    setVal('textcolor', rgbToHex(node.textColor || this.defaultTextStyle.color));
-    setVal('color', rgbToHex(node.color));
+    // カラーボタンの表示を更新
+    this.refreshPropertyPanelColorButton('textcolor', 'textColor');
+    this.refreshPropertyPanelColorButton('color', 'color');
 
     // --- クラスボックス専用フィールドの動的生成 ---
     const panelBody = panel?.querySelector('.property-panel-body');
@@ -1344,21 +1463,159 @@ class DiagramTool {
       }
       this.textColorPicker.open = false;
     });
+
+    // カスタムカラーピッカーの初期化
+    this.customColorGradient = document.getElementById(this.prefix + '-color-gradient');
+    this.customColorGradientMarker = document.getElementById(this.prefix + '-color-gradient-marker');
+    this.customColorHue = document.getElementById(this.prefix + '-color-hue');
+    this.customColorHueMarker = document.getElementById(this.prefix + '-color-hue-marker');
+    this.customColorHex = document.getElementById(this.prefix + '-color-hex');
+    this.customColorPreview = document.getElementById(this.prefix + '-color-preview');
+
+    if (this.customColorGradient && this.customColorHue && this.customColorHex && this.customColorPreview) {
+      this.customColorState = this.customColorState || {
+        hue: 0,
+        saturation: 100,
+        lightness: 50,
+        dragState: null,
+        activeControl: null,
+      };
+
+      const syncCustomColorUI = () => {
+        const state = this.customColorState;
+        this.customColorGradient.style.background = `linear-gradient(to bottom, hsl(${state.hue}, 100%, 100%) 0%, hsl(${state.hue}, 100%, 50%) 50%, hsl(${state.hue}, 100%, 0%) 100%)`;
+        const hexColor = this.hslToHex(state.hue, state.saturation, state.lightness);
+        this.customColorHex.value = hexColor;
+        this.customColorPreview.style.background = hexColor;
+        if (this.customColorGradientMarker) {
+          this.customColorGradientMarker.style.left = `${state.saturation}%`;
+          this.customColorGradientMarker.style.top = `${100 - state.lightness}%`;
+        }
+        if (this.customColorHueMarker) {
+          this.customColorHueMarker.style.top = `${Math.max(0, Math.min(100, (state.hue / 360) * 100))}%`;
+        }
+        return hexColor;
+      };
+
+      const applyCustomColor = () => {
+        const hexColor = syncCustomColorUI();
+        this.setTextColor(hexColor);
+        applyCurrent();
+        return hexColor;
+      };
+
+      const updateStateFromHex = (hex) => {
+        const rgb = this.hexToRgb(hex);
+        if (!rgb) return false;
+        const hsl = this.rgbToHsl(rgb.r, rgb.g, rgb.b);
+        this.customColorState.hue = hsl.h;
+        this.customColorState.saturation = hsl.s;
+        this.customColorState.lightness = hsl.l;
+        syncCustomColorUI();
+        return true;
+      };
+
+      this.syncCustomColorPickerFromHex = (hex) => updateStateFromHex(hex);
+      updateStateFromHex(this.selectedTextColor || this.defaultTextStyle.color);
+
+      const beginDrag = (control) => {
+        const node = this.selectedNode;
+        this.customColorState.dragState = node ? { textSize: node.textSize, textColor: node.textColor } : null;
+        this.customColorState.activeControl = control;
+      };
+
+      const finishDrag = () => {
+        const state = this.customColorState.dragState;
+        const node = this.selectedNode;
+        if (state && node && (node.textSize !== state.textSize || node.textColor !== state.textColor)) {
+          this.pushUndoAction({
+            type: 'styleNode',
+            nodeId: node.id,
+            textSize: state.textSize,
+            textColor: state.textColor,
+          });
+        }
+        this.customColorState.dragState = null;
+        this.customColorState.activeControl = null;
+      };
+
+      const updateFromGradientPoint = (clientX, clientY) => {
+        const rect = this.customColorGradient.getBoundingClientRect();
+        const x = Math.max(0, Math.min(rect.width, clientX - rect.left));
+        const y = Math.max(0, Math.min(rect.height, clientY - rect.top));
+        this.customColorState.saturation = Math.round((x / rect.width) * 100);
+        this.customColorState.lightness = Math.round(100 - (y / rect.height) * 100);
+        applyCustomColor();
+      };
+
+      const updateFromHuePoint = (clientY) => {
+        const rect = this.customColorHue.getBoundingClientRect();
+        const y = Math.max(0, Math.min(rect.height, clientY - rect.top));
+        const percentage = Math.max(0, Math.min(1, y / rect.height));
+        this.customColorState.hue = Math.round(percentage * 360);
+        syncCustomColorUI();
+        applyCustomColor();
+      };
+
+      const onPointerMove = (event) => {
+        if (this.customColorState.activeControl === 'gradient') {
+          updateFromGradientPoint(event.clientX, event.clientY);
+        } else if (this.customColorState.activeControl === 'hue') {
+          updateFromHuePoint(event.clientY);
+        }
+      };
+
+      const endPointerDrag = () => {
+        finishDrag();
+        document.removeEventListener('pointermove', onPointerMove);
+        document.removeEventListener('pointerup', endPointerDrag);
+        document.removeEventListener('pointercancel', endPointerDrag);
+      };
+
+      const startPointerDrag = (control, event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        beginDrag(control);
+        if (control === 'gradient') {
+          updateFromGradientPoint(event.clientX, event.clientY);
+        } else {
+          updateFromHuePoint(event.clientY);
+        }
+        document.addEventListener('pointermove', onPointerMove);
+        document.addEventListener('pointerup', endPointerDrag, { once: true });
+        document.addEventListener('pointercancel', endPointerDrag, { once: true });
+      };
+
+      this.customColorGradient.addEventListener('pointerdown', e => startPointerDrag('gradient', e));
+      this.customColorHue.addEventListener('pointerdown', e => startPointerDrag('hue', e));
+
+      this.customColorHex.addEventListener('input', (e) => {
+        let hex = e.target.value.trim();
+        if (!hex.startsWith('#')) hex = '#' + hex;
+        if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) return;
+        if (updateStateFromHex(hex)) {
+          this.setTextColor(hex);
+          applyCurrent();
+        }
+      });
+    }
     if (this.otherColorButton) {
-      this.nativeColorInput = document.createElement('input');
-      this.nativeColorInput.type = 'color';
-      this.nativeColorInput.value = '#e5e7eb';
-      this.nativeColorInput.style.position = 'fixed';
-      this.nativeColorInput.style.left = '-9999px';
-      this.nativeColorInput.style.opacity = '0';
-      document.body.appendChild(this.nativeColorInput);
-      this.otherColorButton.addEventListener('click', e => {
+      const nativeColorInput = document.createElement('input');
+      nativeColorInput.type = 'color';
+      nativeColorInput.value = '#e5e7eb';
+      nativeColorInput.style.display = 'none';
+      document.body.appendChild(nativeColorInput);
+      
+      this.otherColorButton.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        this.nativeColorInput.click();
-      });
-      this.nativeColorInput.addEventListener('input', () => {
-        const selectedColor = this.nativeColorInput.value;
+        e.stopImmediatePropagation();
+        nativeColorInput.value = this.selectedTextColor || '#e5e7eb';
+        nativeColorInput.click();
+      }, true);
+      
+      nativeColorInput.addEventListener('change', () => {
+        const selectedColor = nativeColorInput.value;
         const node = this.selectedNode;
         const previousState = node ? { textSize: node.textSize, textColor: node.textColor } : null;
         this.setTextColor(selectedColor);
@@ -1396,6 +1653,65 @@ class DiagramTool {
     this.textColorSample.style.background = activeColor;
     this.textColorText.textContent = activeOption?.dataset.label || (isAuto ? '自動' : color);
     this.setTextColor(isAuto ? '' : color);
+    if (typeof this.syncCustomColorPickerFromHex === 'function') {
+      this.syncCustomColorPickerFromHex(activeColor);
+    }
+  }
+  hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : null;
+  }
+  rgbToHex(r, g, b) {
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  }
+  rgbToHsl(r, g, b) {
+    r /= 255;
+    g /= 255;
+    b /= 255;
+
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    let h = 0;
+    let s = 0;
+    const l = (max + min) / 2;
+
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r:
+          h = (g - b) / d + (g < b ? 6 : 0);
+          break;
+        case g:
+          h = (b - r) / d + 2;
+          break;
+        default:
+          h = (r - g) / d + 4;
+          break;
+      }
+      h *= 60;
+    }
+
+    return {
+      h: Math.round(h),
+      s: Math.round(s * 100),
+      l: Math.round(l * 100),
+    };
+  }
+  hslToHex(h, s, l) {
+    s /= 100;
+    l /= 100;
+    const k = n => (n + h / 30) % 12;
+    const a = s * Math.min(l, 1 - l);
+    const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+    const r = Math.round(255 * f(0));
+    const g = Math.round(255 * f(8));
+    const b = Math.round(255 * f(4));
+    return this.rgbToHex(r, g, b);
   }
   buildColorPalette() {
     if (!this.themeRow || !this.shadeGrid || !this.standardRow) return;
@@ -1522,6 +1838,9 @@ class DiagramTool {
     });
   }
   clearAll() {
+    if (!confirm('キャンバスをクリアします。よろしいですか？')) {
+      return;
+    }
     const snapshot = this.captureSnapshot();
     this.nodes = []; this.connections = []; this.nodeIdCounter = 0;
     this.quickAddCounter = 0;

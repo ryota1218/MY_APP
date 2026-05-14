@@ -664,6 +664,9 @@ class ERDiagramTool {
     });
   }
   clearAll() {
+    if (!confirm('E-R図をクリアします。よろしいですか？')) {
+      return;
+    }
     const snapshot = {
       entities: this.entities.map(entity => ({ ...entity, attrs: entity.attrs.map(attr => ({ ...attr })) })),
       relations: this.relations.map(rel => ({ ...rel })),

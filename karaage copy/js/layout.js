@@ -211,6 +211,21 @@ class LayoutTool {
     bindInput('fontsize', (el, value) => { el.fontSize = Math.max(10, Number(value) || 14); });
     bindInput('textcolor', (el, value) => { el.textColor = value; });
     bindInput('bg', (el, value) => { el.bg = value; });
+    bindInput('zindex', (el, value) => { el.zIndex = Math.max(0, Number(value) || 0); });
+
+    // Z順序ボタンのイベントリスナー
+    const forwardBtn = document.getElementById('layout-zindex-forward');
+    const backwardBtn = document.getElementById('layout-zindex-backward');
+    if (forwardBtn) {
+      forwardBtn.addEventListener('click', () => {
+        if (this.propertyPanelEl) this.moveForward(this.propertyPanelEl);
+      });
+    }
+    if (backwardBtn) {
+      backwardBtn.addEventListener('click', () => {
+        if (this.propertyPanelEl) this.moveBackward(this.propertyPanelEl);
+      });
+    }
   }
   openPropertyPanel(el) {
     this.propertyPanelEl = el;
@@ -241,6 +256,7 @@ class LayoutTool {
     setVal('fontsize', Math.round(el.fontSize || 14));
     setVal('textcolor', this.normalizeHexColor(el.textColor || '#64748b'));
     setVal('bg', this.normalizeHexColor(el.bg || '#f1f5f9'));
+    setVal('zindex', el.zIndex || 0);
 
     const bgInput = document.getElementById('layout-prop-bg');
     if (bgInput) bgInput.disabled = !!el.imageUrl;
@@ -289,6 +305,7 @@ class LayoutTool {
     div.style.color = el.textColor || '#64748b';
     div.style.fontSize = (el.fontSize || 13) + 'px';
     div.style.border = borderStyle;
+    div.style.zIndex = el.zIndex || 0;
     div.style.background = el.imageUrl ? 'transparent' : (el.bg || 'transparent');
 
     if (el.imageUrl) {
@@ -334,6 +351,7 @@ class LayoutTool {
       bg: item.bg || 'transparent',
       textColor: item.textColor || '#64748b',
       fontSize: item.fontSize || 14,
+      zIndex: this.elements.length,
       imageUrl: item.imageUrl || null,
     };
     this.elements.push(el);
@@ -353,7 +371,8 @@ class LayoutTool {
     if (el.imageUrl) borderStyle = 'none';
     
     const fontSize = el.fontSize || 14;
-    div.style.cssText = `left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;background:${el.bg};color:${el.textColor};border:${borderStyle};font-size:${fontSize}px`;
+    const zIndex = el.zIndex || 0;
+    div.style.cssText = `left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;background:${el.bg};color:${el.textColor};border:${borderStyle};font-size:${fontSize}px;z-index:${zIndex}`;
     
     if (el.imageUrl) {
       div.style.backgroundImage = `url(${el.imageUrl})`;
@@ -456,6 +475,58 @@ class LayoutTool {
     this.selectedEl = null;
     this.canvas.querySelectorAll('.layout-element').forEach(e => e.classList.remove('selected'));
   }
+  moveForward(el) {
+    if (!el) return;
+    const currentZ = el.zIndex || 0;
+    // 1段階上のZ順序を持つ要素を探す
+    const nextElement = this.elements.find(e => e.zIndex === currentZ + 1);
+    
+    if (nextElement) {
+      // 入れ替え
+      const oldZ = el.zIndex;
+      el.zIndex = nextElement.zIndex;
+      nextElement.zIndex = oldZ;
+      
+      this.updateElementDOM(el);
+      this.updateElementDOM(nextElement);
+    }
+    
+    this.syncPropertyPanel(el);
+    this.pushUndoAction({
+      type: 'changeZIndex',
+      elementId: el.id,
+      oldZIndex: (el.zIndex === currentZ + 1) ? currentZ : el.zIndex,
+    });
+  }
+  moveBackward(el) {
+    if (!el) return;
+    const currentZ = el.zIndex || 0;
+    
+    if (currentZ === 0) {
+      showToast('これ以上背面に移動できません');
+      return;
+    }
+    
+    // 1段階下のZ順序を持つ要素を探す
+    const prevElement = this.elements.find(e => e.zIndex === currentZ - 1);
+    
+    if (prevElement) {
+      // 入れ替え
+      const oldZ = el.zIndex;
+      el.zIndex = prevElement.zIndex;
+      prevElement.zIndex = oldZ;
+      
+      this.updateElementDOM(el);
+      this.updateElementDOM(prevElement);
+    }
+    
+    this.syncPropertyPanel(el);
+    this.pushUndoAction({
+      type: 'changeZIndex',
+      elementId: el.id,
+      oldZIndex: (el.zIndex === currentZ - 1) ? currentZ : el.zIndex,
+    });
+  }
   deleteSelected() {
     if (!this.selectedEl) return;
     const el = this.selectedEl;
@@ -544,6 +615,19 @@ class LayoutTool {
         return;
       }
 
+      if (action.type === 'changeZIndex') {
+        const element = this.getElementById(action.elementId);
+        if (element) {
+          element.zIndex = action.oldZIndex;
+          this.updateElementDOM(element);
+          if (this.propertyPanelEl && this.propertyPanelEl.id === element.id) {
+            this.syncPropertyPanel(element);
+          }
+        }
+        showToast('一つ戻しました');
+        return;
+      }
+
       if (action.type === 'clearAll') {
         this.restoreSnapshot(action.snapshot);
         showToast('一つ戻しました');
@@ -563,6 +647,9 @@ class LayoutTool {
     }
   }
   clearAll() {
+    if (!confirm('キャンバスをクリアします。よろしいですか？')) {
+      return;
+    }
     const snapshot = {
       elements: this.elements.map(element => ({ ...element })),
       elemIdCounter: this.elemIdCounter,

@@ -64,15 +64,28 @@
               <span>自動</span>
             </button>
             <div class="diagram-color-divider"></div>
+            <!-- カスタムカラーピッカーセクション -->
+            <div style="padding: 12px; background: #f8f9fa; border-radius: 4px; margin-bottom: 12px;">
+              <div style="font-size: 11px; color: #666; margin-bottom: 6px; font-weight: 500;">カスタムカラー</div>
+              <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                <div id="{{prefix}}-color-gradient" style="flex: 1; height: 120px; background: linear-gradient(to bottom, hsl(0, 100%, 100%) 0%, hsl(0, 100%, 50%) 50%, hsl(0, 100%, 0%) 100%); border: 1px solid #ddd; border-radius: 4px; cursor: crosshair; position: relative; touch-action: none; user-select: none; overflow: hidden;">
+                  <div id="{{prefix}}-color-gradient-marker" style="position: absolute; width: 12px; height: 12px; border: 2px solid #fff; border-radius: 999px; box-shadow: 0 0 0 1px rgba(0,0,0,0.35); transform: translate(-50%, -50%); pointer-events: none; left: 100%; top: 50%;"></div>
+                </div>
+                <div id="{{prefix}}-color-hue" style="width: 20px; height: 120px; background: linear-gradient(to bottom, hsl(0, 100%, 50%), hsl(60, 100%, 50%), hsl(120, 100%, 50%), hsl(180, 100%, 50%), hsl(240, 100%, 50%), hsl(300, 100%, 50%), hsl(360, 100%, 50%)); border: 1px solid #ddd; border-radius: 4px; cursor: pointer; touch-action: none; user-select: none; position: relative; overflow: hidden;">
+                  <div id="{{prefix}}-color-hue-marker" style="position: absolute; left: 50%; width: 16px; height: 8px; border: 2px solid #fff; border-radius: 999px; box-shadow: 0 0 0 1px rgba(0,0,0,0.35); transform: translate(-50%, -50%); pointer-events: none; top: 0%; background: rgba(255,255,255,0.12);"></div>
+                </div>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <input type="text" id="{{prefix}}-color-hex" placeholder="#000000" maxlength="7" style="flex: 1; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; font-family: monospace;">
+                <div id="{{prefix}}-color-preview" style="width: 40px; height: 32px; background: #000000; border: 1px solid #ddd; border-radius: 4px;"></div>
+              </div>
+            </div>
+            <div class="diagram-color-divider"></div>
             <div class="diagram-color-group-label">テーマの色</div>
             <div class="diagram-color-theme-row" id="{{prefix}}-theme-row"></div>
             <div class="diagram-color-shade-grid" id="{{prefix}}-shade-grid"></div>
             <div class="diagram-color-group-label">標準の色</div>
             <div class="diagram-color-standard-row" id="{{prefix}}-standard-row"></div>
-            <button type="button" class="diagram-color-other-btn" id="{{prefix}}-other-color-btn">
-              <span class="diagram-color-other-icon">🎨</span>
-              <span>その他の色(M)...</span>
-            </button>
           </div>
         </details>
       </label>
@@ -116,11 +129,55 @@
       </div>
       <div class="property-group">
         <label>文字色</label>
-        <input type="color" id="{{prefix}}-prop-textcolor" class="property-input color-input">
+        <details class="diagram-color-picker" id="{{prefix}}-prop-textcolor-picker">
+          <summary class="diagram-color-button" id="{{prefix}}-prop-textcolor-btn">
+            <span class="diagram-color-sample" id="{{prefix}}-prop-textcolor-sample"></span>
+            <span class="diagram-color-text" id="{{prefix}}-prop-textcolor-text">自動</span>
+            <span class="diagram-color-caret">▾</span>
+          </summary>
+          <div class="diagram-color-menu" id="{{prefix}}-prop-textcolor-menu" aria-label="文字色の選択">
+            <button type="button" class="diagram-color-auto-row diagram-color-option" data-color="" data-label="自動">
+              <span class="diagram-color-option-swatch diagram-color-option-auto"></span>
+              <span>自動</span>
+            </button>
+            <div class="diagram-color-divider"></div>
+            <div class="diagram-color-group-label">テーマの色</div>
+            <div class="diagram-color-theme-row" id="{{prefix}}-prop-textcolor-theme-row"></div>
+            <div class="diagram-color-shade-grid" id="{{prefix}}-prop-textcolor-shade-grid"></div>
+            <div class="diagram-color-group-label">標準の色</div>
+            <div class="diagram-color-standard-row" id="{{prefix}}-prop-textcolor-standard-row"></div>
+            <button type="button" class="diagram-color-other-btn" id="{{prefix}}-prop-textcolor-other-btn">
+              <span class="diagram-color-other-icon">🎨</span>
+              <span>その他の色(M)...</span>
+            </button>
+          </div>
+        </details>
       </div>
       <div class="property-group">
         <label>ノード枠色</label>
-        <input type="color" id="{{prefix}}-prop-color" class="property-input color-input">
+        <details class="diagram-color-picker" id="{{prefix}}-prop-color-picker">
+          <summary class="diagram-color-button" id="{{prefix}}-prop-color-btn">
+            <span class="diagram-color-sample" id="{{prefix}}-prop-color-sample"></span>
+            <span class="diagram-color-text" id="{{prefix}}-prop-color-text">自動</span>
+            <span class="diagram-color-caret">▾</span>
+          </summary>
+          <div class="diagram-color-menu" id="{{prefix}}-prop-color-menu" aria-label="ノード枠色の選択">
+            <button type="button" class="diagram-color-auto-row diagram-color-option" data-color="" data-label="自動">
+              <span class="diagram-color-option-swatch diagram-color-option-auto"></span>
+              <span>自動</span>
+            </button>
+            <div class="diagram-color-divider"></div>
+            <div class="diagram-color-group-label">テーマの色</div>
+            <div class="diagram-color-theme-row" id="{{prefix}}-prop-color-theme-row"></div>
+            <div class="diagram-color-shade-grid" id="{{prefix}}-prop-color-shade-grid"></div>
+            <div class="diagram-color-group-label">標準の色</div>
+            <div class="diagram-color-standard-row" id="{{prefix}}-prop-color-standard-row"></div>
+            <button type="button" class="diagram-color-other-btn" id="{{prefix}}-prop-color-other-btn">
+              <span class="diagram-color-other-icon">🎨</span>
+              <span>その他の色(M)...</span>
+            </button>
+          </div>
+        </details>
       </div>
       <button class="btn btn-sm btn-danger" data-action="deleteSelectedNode" style="width: 100%; margin-top: 16px;">ノードを削除</button>
     </div>
