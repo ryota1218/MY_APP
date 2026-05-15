@@ -130,6 +130,36 @@
           <option value="curve">曲線 (Curve)</option>
         </select>
       </div>
+      <div class="property-group" id="{{prefix}}-prop-group-linestyle" style="display:none;">
+        <label>線の種類</label>
+        <select id="{{prefix}}-prop-linestyle" class="property-input">
+          <option value="solid">実線</option>
+          <option value="dashed">点線</option>
+        </select>
+      </div>
+      <div class="property-group" id="{{prefix}}-prop-group-fragment" style="display:none;">
+        <label>フラグメント種類</label>
+        <select id="{{prefix}}-prop-fragtype" class="property-input">
+          <option value="alt">alt (条件分岐)</option>
+          <option value="opt">opt (任意実行)</option>
+          <option value="loop">loop (繰り返し)</option>
+          <option value="break">break (中断)</option>
+          <option value="par">par (並列実行)</option>
+          <option value="critical">critical (排他制御)</option>
+          <option value="ref">ref (参照)</option>
+        </select>
+        <label style="margin-top: 8px; display: block;">詳細ラベル</label>
+        <input type="text" id="{{prefix}}-prop-fraglabel" class="property-input" placeholder="例: [score > 80]">
+      </div>
+      <div class="property-group" id="{{prefix}}-prop-group-timing" style="display:none;">
+        <label>状態/値</label>
+        <select id="{{prefix}}-prop-timingval" class="property-input">
+          <option value="High">High (ON)</option>
+          <option value="Low">Low (OFF)</option>
+          <option value="Other">その他...</option>
+        </select>
+        <input type="text" id="{{prefix}}-prop-timingtext" class="property-input" style="margin-top:4px;" placeholder="その他の値を入力">
+      </div>
       <div class="property-group" id="{{prefix}}-prop-group-multFrom" style="display:none;">
         <label>多重度 (接続元)</label>
         <input type="text" id="{{prefix}}-prop-multFrom" class="property-input" placeholder="例: 1, 0..1, *, 1..*">

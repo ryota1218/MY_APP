@@ -108,13 +108,9 @@ const umlDiagramTypes = {
   },
   sequence: {
     label: 'シーケンス図',
-    components: [
-      { icon:'<i data-lucide="user" class="node-lucide-icon"></i>', label:'ライフライン', color:'#7c3aed' },
-      { icon:'<i data-lucide="mail" class="node-lucide-icon"></i>', label:'メッセージ', color:'#06b6d4' },
-      { icon:'<i data-lucide="arrow-left" class="node-lucide-icon"></i>', label:'返信', color:'#10b981' },
-      { icon:'<i data-lucide="square" class="node-lucide-icon"></i>', label:'フラグメント', color:'#f59e0b' },
-      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
-    ],
+    get components() {
+      return window.SequenceDiagramLibrary?.getDefaultComponents?.() || [];
+    }
   },
   communication: {
     label: 'コミュニケーション図',
@@ -127,13 +123,9 @@ const umlDiagramTypes = {
   },
   timing: {
     label: 'タイミング図',
-    components: [
-      { icon:'<i data-lucide="user" class="node-lucide-icon"></i>', label:'ライフライン', color:'#7c3aed' },
-      { icon:'<i data-lucide="git-branch" class="node-lucide-icon"></i>', label:'状態/条件', color:'#6366f1' },
-      { icon:'<i data-lucide="clock" class="node-lucide-icon"></i>', label:'時間制約', color:'#f59e0b' },
-      { icon:'<i data-lucide="mail" class="node-lucide-icon"></i>', label:'メッセージ', color:'#06b6d4' },
-      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
-    ],
+    get components() {
+      return window.TimingDiagramLibrary?.getDefaultComponents?.() || [];
+    }
   },
   interaction: {
     label: '相互作用図',
@@ -216,6 +208,13 @@ class DiagramTool {
       { label: '紺青', color: '#1d4ed8' },
       { label: 'バイオレット', color: '#7c3aed' },
     ];
+
+    this.timingConfig = {
+      axes: [],
+      0: { name: 'Object A', states: ['State 5', 'State 4', 'State 3', 'State 2', 'State 1'] },
+      1: { name: 'Object B', states: ['State 5', 'State 4', 'State 3', 'State 2', 'State 1'] }
+    };
+
     this.canvas = document.getElementById(prefix + '-canvas');
     this.svg = document.getElementById(prefix + '-svg');
 
@@ -253,6 +252,145 @@ class DiagramTool {
     const sep = styleControls?.nextElementSibling;
     if (sep && sep.classList.contains('toolbar-sep')) {
       sep.style.display = this.umlType === 'class' ? 'none' : '';
+    }
+
+    // タイミング図の場合のみ上下二分割のガイドとドットオーバーレイを表示
+    if (this.canvas) {
+      const isTiming = this.umlType === 'timing';
+      this.canvas.classList.toggle('timing-split-view', isTiming);
+      
+      // 既存のオーバーレイを一旦削除して最新の状態に更新
+      this.canvas.querySelector('.timing-dots-overlay')?.remove();
+      this.canvas.querySelector('.timing-labels-overlay')?.remove();
+      this.canvas.querySelector('.timing-time-axis')?.remove();
+      this.canvas.querySelector('.timing-wave-svg')?.remove();
+      
+      if (isTiming) {
+        // ドットオーバーレイの生成（DOM要素として個別の点を配置）
+        const dotsOverlay = document.createElement('div');
+        dotsOverlay.className = 'timing-dots-overlay';
+        
+        // SVGレイヤー（波形線の描画用）
+        let waveSvg = this.canvas.querySelector('.timing-wave-svg');
+        if (!waveSvg) {
+          waveSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          waveSvg.classList.add('timing-wave-svg');
+          this.canvas.appendChild(waveSvg);
+        }
+        
+        // 50列 × 12行のグリッドに点を配置
+        const cols = 50;
+        const rows = 12;
+        for (let row = 1; row < rows; row++) {
+          // 0行目と6行目（エリア境界）はスキップ
+          if (row === 6) continue;
+          const areaIdx = row < 6 ? 0 : 1; // Object A or B
+          for (let col = 0; col <= cols; col++) {
+            const dot = document.createElement('div');
+            dot.className = 'timing-dot';
+            dot.style.left = `${(col / cols) * 100}%`;
+            dot.style.top = `${(row / rows) * 100}%`;
+            dot.dataset.col = col;
+            dot.dataset.row = row;
+            dot.dataset.area = areaIdx;
+            
+            dot.addEventListener('click', (e) => {
+              e.stopPropagation();
+              if (!this.connectMode || this.umlType !== 'timing') return;
+              this._handleTimingDotClick(dot, waveSvg);
+            });
+            
+            dotsOverlay.appendChild(dot);
+          }
+        }
+        this.canvas.prepend(dotsOverlay);
+
+        // 時間軸（タイムルーラー）の生成: 全axesを描画
+        const timeAxis = document.createElement('div');
+        timeAxis.className = 'timing-time-axis';
+
+        const allAxes = this.timingConfig.axes || [];
+        if (allAxes.length > 0) {
+          allAxes.forEach(axisCfg => {
+            const startIdx = parseInt(axisCfg.start, 10) || 0;
+            const intervals = axisCfg.intervals || [];
+            intervals.forEach((val, i) => {
+              const lineIdx = startIdx + i;
+              if (lineIdx > 50) return;
+              const label = document.createElement('span');
+              label.className = 'timing-time-label';
+              label.style.left = `calc(${lineIdx} * 100% / 50)`;
+              label.innerText = `${val}${axisCfg.unit}`;
+              timeAxis.appendChild(label);
+            });
+          });
+        } else {
+          // デフォルト: 5軸刻みで均等目盛り
+          for (let i = 0; i <= 50; i += 5) {
+            const label = document.createElement('span');
+            label.className = 'timing-time-label';
+            label.style.left = `calc(${i} * 100% / 50)`;
+            label.innerText = `${i}s`;
+            timeAxis.appendChild(label);
+          }
+        }
+
+        timeAxis.style.pointerEvents = 'auto';
+        timeAxis.style.cursor = 'pointer';
+        timeAxis.title = 'クリックして新規メモリを追加';
+        timeAxis.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.openTimingAxisModal();
+        });
+        this.canvas.prepend(timeAxis);
+
+        // ラベルオーバーレイの生成
+        const labelsOverlay = document.createElement('div');
+        labelsOverlay.className = 'timing-labels-overlay';
+        
+        // 12分割のうち、内側の5本ずつ（計10本）にラベルを配置
+        const lineIndices = [1, 2, 3, 4, 5, 7, 8, 9, 10, 11];
+        lineIndices.forEach(i => {
+          const span = document.createElement('span');
+          span.className = 'timing-grid-label';
+          span.style.top = `calc(${i} * 100% / 12)`;
+          
+          const isAreaB = i > 6;
+          const configIdx = isAreaB ? 1 : 0;
+          const stateIdx = isAreaB ? i - 7 : i - 1;
+          span.innerText = this.timingConfig[configIdx].states[stateIdx];
+          
+          span.style.pointerEvents = 'auto';
+          span.style.cursor = 'pointer';
+          span.title = 'クリックして編集';
+          span.onclick = (e) => {
+            e.stopPropagation();
+            this.openTimingConfigModal(configIdx);
+          };
+          
+          labelsOverlay.appendChild(span);
+        });
+
+        // Objectラベルを追加 (State 3のさらに左側に配置)
+        [3, 9].forEach((i, idx) => {
+          const objSpan = document.createElement('span');
+          objSpan.className = 'timing-object-label';
+          objSpan.style.top = `calc(${i} * 100% / 12)`;
+          objSpan.innerText = this.timingConfig[idx].name;
+          
+          objSpan.style.pointerEvents = 'auto';
+          objSpan.style.cursor = 'pointer';
+          objSpan.title = 'クリックして編集';
+          objSpan.onclick = (e) => {
+            e.stopPropagation();
+            this.openTimingConfigModal(idx);
+          };
+          
+          labelsOverlay.appendChild(objSpan);
+        });
+
+        this.canvas.prepend(labelsOverlay);
+      }
     }
   }
   initPalette() {
@@ -360,6 +498,11 @@ class DiagramTool {
         this.connectMode = !this.connectMode;
         this.updateConnectButton();
         this.canvas.style.cursor = this.connectMode ? 'crosshair' : 'default';
+        // タイミング図の場合、ドットを拡大表示するクラスを切り替え
+        if (this.umlType === 'timing') {
+          this.canvas.classList.toggle('timing-connect-active', this.connectMode);
+          this._timingDotFrom = null;
+        }
         const typeDef = UML_CONNECTION_TYPES.find(t => t.key === this.activeConnType);
         showToast(this.connectMode ? `接続モード: ON (${typeDef?.label || '関連'})` : '接続モード: OFF');
       });
@@ -376,10 +519,39 @@ class DiagramTool {
         this.connectMode = !this.connectMode;
         this.updateConnectButton();
         this.canvas.style.cursor = this.connectMode ? 'crosshair' : 'default';
+        // タイミング図の場合、ドットを拡大表示するクラスを切り替え
+        if (this.umlType === 'timing') {
+          this.canvas.classList.toggle('timing-connect-active', this.connectMode);
+          this._timingDotFrom = null;
+        }
         showToast(this.connectMode ? '接続モード: ONー ノードをクリックして接続' : '接続モード: OFF');
       });
     }
 
+    // タイミング図専用: メモリ設定 & メモリ一覧ボタン
+    const existingAxisBtn = document.getElementById(this.prefix + '-timing-axis-btn');
+    if (existingAxisBtn) existingAxisBtn.remove();
+    const existingListBtn = document.getElementById(this.prefix + '-timing-axes-list-btn');
+    if (existingListBtn) existingListBtn.remove();
+    if (this.umlType === 'timing') {
+      const parentEl = connectButton.parentNode;
+      // メモリ追加ボタン
+      const axisBtn = document.createElement('button');
+      axisBtn.type = 'button';
+      axisBtn.className = 'palette-action-btn';
+      axisBtn.id = this.prefix + '-timing-axis-btn';
+      axisBtn.textContent = '📐 メモリ追加';
+      axisBtn.addEventListener('click', () => this.openTimingAxisModal());
+      if (parentEl) parentEl.insertBefore(axisBtn, connectButton.nextSibling);
+      // メモリ一覧ボタン
+      const listBtn = document.createElement('button');
+      listBtn.type = 'button';
+      listBtn.className = 'palette-action-btn';
+      listBtn.id = this.prefix + '-timing-axes-list-btn';
+      listBtn.textContent = '📋 メモリ一覧';
+      listBtn.addEventListener('click', () => this.openTimingAxesListModal());
+      if (parentEl) parentEl.insertBefore(listBtn, axisBtn.nextSibling);
+    }
     // Sidebar toggle button
     const sidebarToggle = document.getElementById(this.prefix + '-sidebar-toggle');
     if (sidebarToggle) {
@@ -501,6 +673,11 @@ class DiagramTool {
     bindInput('textcolor', 'textColor');
     bindInput('color', 'color');
     bindInput('routing', 'routing');
+    bindInput('linestyle', 'lineStyle');
+    bindInput('fragtype', 'fragmentType');
+    bindInput('fraglabel', 'fragmentLabel');
+    bindInput('timingval', 'timingValue');
+    bindInput('timingtext', 'timingValue');
     bindInput('multFrom', 'multiplicityFrom');
     bindInput('multTo', 'multiplicityTo');
   }
@@ -521,10 +698,16 @@ class DiagramTool {
     });
     const routingGroup = document.getElementById(this.prefix + '-prop-group-routing');
     if (routingGroup) routingGroup.style.display = isConn ? '' : 'none';
+    const linestyleGroup = document.getElementById(this.prefix + '-prop-group-linestyle');
+    if (linestyleGroup) linestyleGroup.style.display = isConn ? '' : 'none';
     const multFromGroup = document.getElementById(this.prefix + '-prop-group-multFrom');
     if (multFromGroup) multFromGroup.style.display = isConn ? '' : 'none';
     const multToGroup = document.getElementById(this.prefix + '-prop-group-multTo');
     if (multToGroup) multToGroup.style.display = isConn ? '' : 'none';
+    const fragmentGroup = document.getElementById(this.prefix + '-prop-group-fragment');
+    if (fragmentGroup) fragmentGroup.style.display = (node && node.behaviorType === 'fragment') ? '' : 'none';
+    const timingGroup = document.getElementById(this.prefix + '-prop-group-timing');
+    if (timingGroup) timingGroup.style.display = (node && (node.behaviorType === 'stateTimeline' || node.behaviorType === 'valueTimeline')) ? '' : 'none';
     const zindexGroup = document.getElementById(this.prefix + '-prop-group-zindex');
     if (zindexGroup) zindexGroup.style.display = isNode ? '' : 'none';
 
@@ -548,9 +731,19 @@ class DiagramTool {
       };
       setVal('textcolor', rgbToHex(node.textColor || this.defaultTextStyle.color));
       setVal('color', rgbToHex(node.color));
+      if (node.behaviorType === 'fragment') {
+        setVal('fragtype', node.fragmentType || 'alt');
+        setVal('fraglabel', node.fragmentLabel || '');
+      }
+      if (node.behaviorType === 'stateTimeline' || node.behaviorType === 'valueTimeline') {
+        const val = node.timingValue || 'High';
+        setVal('timingval', (val === 'High' || val === 'Low') ? val : 'Other');
+        setVal('timingtext', val);
+      }
     } else if (isConn) {
       setVal('label', conn.label || '');
       setVal('routing', conn.routing || 'straight');
+      setVal('linestyle', conn.lineStyle || 'solid');
       setVal('multFrom', conn.multiplicityFrom || '');
       setVal('multTo', conn.multiplicityTo || '');
     }
@@ -869,6 +1062,287 @@ class DiagramTool {
     // フォーカスを名前入力へ
     setTimeout(() => container.querySelector('#uml-form-name')?.select(), 100);
   }
+
+  openTimingConfigModal(idx) {
+    const config = this.timingConfig[idx];
+    const container = document.getElementById('modal-container');
+    if (!container) return;
+
+    let bodyHtml = `
+      <div style="margin-bottom: 16px;">
+        <label style="display:block; margin-bottom:4px; font-weight:bold; color:var(--text-main);">オブジェクト名</label>
+        <input type="text" id="timing-object-name" class="property-input" value="${this.escapeHtml(config.name)}" style="width: 100%; box-sizing: border-box;">
+      </div>
+      <div>
+        <label style="display:block; margin-bottom:4px; font-weight:bold; color:var(--text-main);">各状態名 (上から順)</label>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          ${config.states.map((s, i) => `
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:0.8rem; color:var(--text-muted); width:20px; text-align:right;">${5-i}.</span>
+              <input type="text" class="property-input timing-state-input" data-index="${i}" value="${this.escapeHtml(s)}" style="flex:1;">
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+
+    container.innerHTML = `
+      <div class="modal-overlay">
+        <div class="modal uml-class-modal" style="width: 400px;">
+          <div class="modal-header">
+            <h3>タイミング図設定 (${idx === 0 ? '上段' : '下段'})</h3>
+          </div>
+          <div class="modal-body">${bodyHtml}</div>
+          <div class="modal-actions" style="margin-top: 16px;">
+            <button class="btn btn-secondary" id="timing-form-cancel">キャンセル</button>
+            <button class="btn btn-primary" id="timing-form-confirm">確定</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const close = () => container.innerHTML = '';
+    container.querySelector('#timing-form-cancel').addEventListener('click', close);
+    container.querySelector('.modal-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) close(); });
+
+    container.querySelector('#timing-form-confirm').addEventListener('click', () => {
+      config.name = container.querySelector('#timing-object-name').value.trim() || `Object ${String.fromCharCode(65 + idx)}`;
+      container.querySelectorAll('.timing-state-input').forEach(input => {
+        const i = parseInt(input.dataset.index, 10);
+        config.states[i] = input.value.trim() || `State ${5 - i}`;
+      });
+      close();
+      this.applyUmlMode();
+    });
+
+    setTimeout(() => container.querySelector('#timing-object-name')?.select(), 100);
+  }
+
+  openTimingAxisModal() {
+    // 常に新規作成フォームを表示
+    this._openTimingAxisForm(null);
+  }
+
+  _openTimingAxisForm(editIndex) {
+    const container = document.getElementById('modal-container');
+    if (!container) return;
+    const isEdit = editIndex !== null && editIndex !== undefined;
+    const existing = isEdit ? this.timingConfig.axes[editIndex] : null;
+
+    const startVal = existing ? existing.start : 0;
+    const endVal = existing ? existing.end : 50;
+    const unitVal = existing ? existing.unit : 's';
+    const intervalsVal = existing && existing.intervals.length > 0 ? existing.intervals.join(', ') : '';
+
+    let bodyHtml = `
+      <div style="margin-bottom: 12px;">
+        <label style="display:block; margin-bottom:4px; font-weight:bold; color:var(--text-main);">開始地点 <span style="font-size:0.75rem; color:var(--text-muted);">(軸の番号 0〜50)</span></label>
+        <input type="number" id="timing-axis-start" class="property-input" value="${startVal}" style="width:100%; box-sizing:border-box;" min="0" max="50">
+      </div>
+      <div style="margin-bottom: 12px;">
+        <label style="display:block; margin-bottom:4px; font-weight:bold; color:var(--text-main);">終了地点 <span style="font-size:0.75rem; color:var(--text-muted);">(軸の番号 0〜50)</span></label>
+        <input type="number" id="timing-axis-end" class="property-input" value="${endVal}" style="width:100%; box-sizing:border-box;" min="0" max="50">
+      </div>
+      <div style="margin-bottom: 12px;">
+        <label style="display:block; margin-bottom:4px; font-weight:bold; color:var(--text-main);">区間値 <span style="font-size:0.75rem; color:var(--text-muted);">(カンマ区切り、最大50個)</span></label>
+        <textarea id="timing-axis-intervals" class="property-input property-textarea" rows="3" placeholder="例: 0, 0.1, 0.5, 1.5, 2, 3.5" style="width:100%; box-sizing:border-box; font-family:monospace;">${this.escapeHtml(intervalsVal)}</textarea>
+        <div style="font-size:0.7rem; color:var(--text-muted); margin-top:4px;">各値は開始地点の垂直線から順に配置されます。</div>
+      </div>
+      <div>
+        <label style="display:block; margin-bottom:4px; font-weight:bold; color:var(--text-main);">単位</label>
+        <input type="text" id="timing-axis-unit" class="property-input" value="${this.escapeHtml(unitVal)}" placeholder="例: s, ms, clk" style="width:100%; box-sizing:border-box;">
+      </div>
+    `;
+
+    container.innerHTML = `
+      <div class="modal-overlay">
+        <div class="modal uml-class-modal" style="width: 400px;">
+          <div class="modal-header">
+            <h3>${isEdit ? 'メモリ編集' : '新規メモリ追加'}</h3>
+          </div>
+          <div class="modal-body">${bodyHtml}</div>
+          <div class="modal-actions" style="margin-top: 16px;">
+            <button class="btn btn-secondary" id="timing-axis-cancel">キャンセル</button>
+            ${isEdit ? '<button class="btn" id="timing-axis-delete" style="background:rgba(239,68,68,0.2);color:#ef4444;">削除</button>' : ''}
+            <button class="btn btn-primary" id="timing-axis-confirm">${isEdit ? '更新' : '追加'}</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const close = () => container.innerHTML = '';
+    container.querySelector('#timing-axis-cancel').addEventListener('click', close);
+    container.querySelector('.modal-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) close(); });
+
+    if (isEdit) {
+      container.querySelector('#timing-axis-delete')?.addEventListener('click', () => {
+        this.timingConfig.axes.splice(editIndex, 1);
+        close();
+        this.applyUmlMode();
+        showToast('メモリを削除しました');
+      });
+    }
+
+    container.querySelector('#timing-axis-confirm').addEventListener('click', () => {
+      const s = parseFloat(container.querySelector('#timing-axis-start').value);
+      const e = parseFloat(container.querySelector('#timing-axis-end').value);
+      const u = container.querySelector('#timing-axis-unit').value.trim() || 's';
+      const intervalsText = container.querySelector('#timing-axis-intervals').value.trim();
+      let intervals = [];
+      if (intervalsText) {
+        intervals = intervalsText
+          .split(/[,、\s]+/)
+          .map(v => v.trim())
+          .filter(v => v !== '')
+          .slice(0, 50);
+      }
+
+      const entry = {
+        start: isNaN(s) ? 0 : s,
+        end: isNaN(e) ? 50 : e,
+        unit: u,
+        intervals: intervals
+      };
+
+      if (isEdit) {
+        this.timingConfig.axes[editIndex] = entry;
+      } else {
+        this.timingConfig.axes.push(entry);
+      }
+
+      close();
+      this.applyUmlMode();
+      showToast(isEdit ? 'メモリを更新しました' : 'メモリを追加しました');
+    });
+
+    setTimeout(() => container.querySelector('#timing-axis-start')?.focus(), 100);
+  }
+
+  openTimingAxesListModal() {
+    const container = document.getElementById('modal-container');
+    if (!container) return;
+    const axes = this.timingConfig.axes || [];
+
+    let listHtml;
+    if (axes.length === 0) {
+      listHtml = '<div style="text-align:center; color:var(--text-muted); padding:20px 0;">メモリがまだありません。<br>「📏 メモリ追加」で作成してください。</div>';
+    } else {
+      listHtml = '<div style="display:flex; flex-direction:column; gap:8px;">' +
+        axes.map((ax, i) => {
+          const preview = (ax.intervals || []).slice(0, 3).join(', ');
+          const more = (ax.intervals || []).length > 3 ? '...' : '';
+          return `<div class="timing-axes-list-item" data-idx="${i}" style="padding:10px 14px; border-radius:8px; background:rgba(124,58,237,0.08); border:1px solid rgba(124,58,237,0.2); cursor:pointer; transition:background 0.15s;">
+            <div style="font-weight:bold; color:var(--text-main); font-size:0.95rem;">軸 ${ax.start} 〜 ${ax.end} <span style="font-size:0.8rem; color:var(--text-muted);">(${ax.unit})</span></div>
+            <div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">区間値: ${preview || 'なし'}${more}</div>
+          </div>`;
+        }).join('') + '</div>';
+    }
+
+    container.innerHTML = `
+      <div class="modal-overlay">
+        <div class="modal uml-class-modal" style="width: 400px;">
+          <div class="modal-header">
+            <h3>メモリ一覧 (${axes.length}件)</h3>
+          </div>
+          <div class="modal-body" style="max-height:400px; overflow-y:auto;">${listHtml}</div>
+          <div class="modal-actions" style="margin-top: 16px;">
+            <button class="btn btn-secondary" id="timing-axes-list-close">閉じる</button>
+            <button class="btn btn-primary" id="timing-axes-list-add">新規追加</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const close = () => container.innerHTML = '';
+    container.querySelector('#timing-axes-list-close').addEventListener('click', close);
+    container.querySelector('.modal-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) close(); });
+    container.querySelector('#timing-axes-list-add').addEventListener('click', () => {
+      close();
+      this.openTimingAxisModal();
+    });
+
+    container.querySelectorAll('.timing-axes-list-item').forEach(item => {
+      item.addEventListener('mouseenter', () => item.style.background = 'rgba(124,58,237,0.18)');
+      item.addEventListener('mouseleave', () => item.style.background = 'rgba(124,58,237,0.08)');
+      item.addEventListener('click', () => {
+        const idx = parseInt(item.dataset.idx, 10);
+        close();
+        this._openTimingAxisForm(idx);
+      });
+    });
+  }
+
+  _handleTimingDotClick(dot, waveSvg) {
+    if (!this._timingDotFrom) {
+      // 1点目を選択
+      this._timingDotFrom = dot;
+      dot.classList.add('timing-dot-selected');
+      return;
+    }
+
+    const fromDot = this._timingDotFrom;
+    fromDot.classList.remove('timing-dot-selected');
+    this._timingDotFrom = null;
+
+    const fromCol = parseInt(fromDot.dataset.col, 10);
+    const fromRow = parseInt(fromDot.dataset.row, 10);
+    const fromArea = parseInt(fromDot.dataset.area, 10);
+    const toCol = parseInt(dot.dataset.col, 10);
+    const toRow = parseInt(dot.dataset.row, 10);
+    const toArea = parseInt(dot.dataset.area, 10);
+
+    // 同一点をクリック → キャンセル
+    if (fromCol === toCol && fromRow === toRow) return;
+
+    // 同一オブジェクト内：斜めは禁止（水平のみ許可）
+    if (fromArea === toArea && fromRow !== toRow) {
+      showToast('同一オブジェクト内では水平方向のみ接続できます');
+      return;
+    }
+
+    // 接続データを保存
+    if (!this._timingWaveLines) this._timingWaveLines = [];
+    this._timingWaveLines.push({
+      fromCol, fromRow, fromArea,
+      toCol, toRow, toArea
+    });
+
+    this._drawTimingWaveLines(waveSvg);
+  }
+
+  _drawTimingWaveLines(waveSvg) {
+    if (!waveSvg || !this._timingWaveLines) return;
+    // SVG内をクリア
+    waveSvg.innerHTML = '';
+
+    const overlay = this.canvas.querySelector('.timing-dots-overlay');
+    if (!overlay) return;
+    const overlayRect = overlay.getBoundingClientRect();
+    const canvasRect = this.canvas.getBoundingClientRect();
+    const offsetX = overlayRect.left - canvasRect.left;
+    const offsetY = overlayRect.top - canvasRect.top;
+    const w = overlayRect.width;
+    const h = overlayRect.height;
+    const cols = 50;
+    const rows = 12;
+
+    this._timingWaveLines.forEach(seg => {
+      const x1 = offsetX + (seg.fromCol / cols) * w;
+      const y1 = offsetY + (seg.fromRow / rows) * h;
+      const x2 = offsetX + (seg.toCol / cols) * w;
+      const y2 = offsetY + (seg.toRow / rows) * h;
+      const isCross = seg.fromArea !== seg.toArea;
+
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', x1);
+      line.setAttribute('y1', y1);
+      line.setAttribute('x2', x2);
+      line.setAttribute('y2', y2);
+      line.classList.add(isCross ? 'timing-line-cross' : 'timing-line-same');
+      waveSvg.appendChild(line);
+    });
+  }
+
   renderNode(node) {
     const el = document.createElement('div');
     el.id = node.id;
@@ -877,6 +1351,8 @@ class DiagramTool {
     el.style.zIndex = node.zIndex || 10;
 
     const behaviorPresentation =
+      window.TimingDiagramLibrary?.buildNodePresentation?.(node, this.escapeHtml.bind(this)) ||
+      window.SequenceDiagramLibrary?.buildNodePresentation?.(node, this.escapeHtml.bind(this)) ||
       window.BehaviorDiagramLibrary?.activity?.buildNodePresentation?.(node, this.escapeHtml.bind(this)) ||
       window.BehaviorDiagramLibrary?.state?.buildNodePresentation?.(node, this.escapeHtml.bind(this)) ||
       window.BehaviorDiagramLibrary?.usecase?.buildNodePresentation?.(node, this.escapeHtml.bind(this));
@@ -924,12 +1400,15 @@ class DiagramTool {
       this.applyNodeTextStyle(node, labelEl);
     }
 
-    if (node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary') {
-      const resizeHandle = document.createElement('span');
-      resizeHandle.className = 'node-resize-handle';
-      resizeHandle.title = 'サイズ変更';
-      resizeHandle.style.cssText = 'position:absolute;right:3px;bottom:3px;width:14px;height:14px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;opacity:0.55;cursor:nwse-resize;';
-      el.appendChild(resizeHandle);
+    const isResizable = node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary' || node.behaviorType === 'fragment' || node.behaviorType === 'execSpec' || window.TimingDiagramLibrary?.isTimingNode(node);
+    if (isResizable) {
+      ['right', 'bottom', 'bottom-right'].forEach(dir => {
+        const handle = document.createElement('span');
+        handle.className = `node-resize-handle resize-${dir}`;
+        handle.title = 'サイズ変更';
+        handle.dataset.dir = dir;
+        el.appendChild(handle);
+      });
     }
 
     // Drag
@@ -938,17 +1417,29 @@ class DiagramTool {
       if (this.editingNodeId === node.id) return;
       if (e.target.classList.contains('node-port')) return;
       if (e.target.classList.contains('node-resize-handle')) {
+        const dir = e.target.dataset.dir || 'bottom-right';
         const startX = e.clientX;
         const startY = e.clientY;
         const startWidth = node.width || el.getBoundingClientRect().width;
         const startHeight = node.height || el.getBoundingClientRect().height;
-        const minWidth = (node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary') ? 260 : 120;
-        const minHeight = (node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary') ? 180 : 80;
+        const isResizable = node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary' || node.behaviorType === 'fragment' || node.behaviorType === 'execSpec' || window.TimingDiagramLibrary?.isTimingNode(node);
+        let minWidth = 120, minHeight = 80;
+        if (node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary') { minWidth = 200; minHeight = 100; }
+        else if (node.behaviorType === 'fragment') { minWidth = 150; minHeight = 80; }
+        else if (node.behaviorType === 'execSpec') { minWidth = 16; minHeight = 20; }
+        else if (node.behaviorType === 'timingLifeline') { minWidth = 200; minHeight = 40; }
+        else if (node.behaviorType === 'stateTimeline' || node.behaviorType === 'valueTimeline') { minWidth = 20; minHeight = 20; }
+        else if (node.behaviorType === 'timeRuler') { minWidth = 100; minHeight = 20; }
+        
         const onMouseMove = moveEvent => {
-          node.width = Math.max(minWidth, Math.round(startWidth + (moveEvent.clientX - startX)));
-          node.height = Math.max(minHeight, Math.round(startHeight + (moveEvent.clientY - startY)));
-          el.style.width = node.width + 'px';
-          el.style.height = node.height + 'px';
+          if (dir.includes('right')) {
+            node.width = Math.max(minWidth, Math.round(startWidth + (moveEvent.clientX - startX)));
+            el.style.width = node.width + 'px';
+          }
+          if (dir.includes('bottom')) {
+            node.height = Math.max(minHeight, Math.round(startHeight + (moveEvent.clientY - startY)));
+            el.style.height = node.height + 'px';
+          }
           this.drawConnections();
         };
         const onMouseUp = () => {
@@ -1007,7 +1498,9 @@ class DiagramTool {
       oy = e.clientY - node.y;
       e.preventDefault();
       // Nesting: コンテナノードの場合、内部の子ノードを特定
-      const isContainer = node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary';
+      const isContainer = node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary' || node.behaviorType === 'fragment';
+      // ライフラインの場合、実行仕様・破棄マークを子要素として追従させる
+      const isLifeline = window.SequenceDiagramLibrary?.isLifeline?.(node) || window.TimingDiagramLibrary?.isTimingLifeline?.(node);
       let childSnapshots = [];
       if (isContainer) {
         const containerRect = el.getBoundingClientRect();
@@ -1019,6 +1512,15 @@ class DiagramTool {
           return cr.left >= containerRect.left && cr.right <= containerRect.right &&
                  cr.top >= containerRect.top && cr.bottom <= containerRect.bottom;
         }).map(n => ({ node: n, offsetX: n.x - node.x, offsetY: n.y - node.y }));
+      } else if (isLifeline) {
+        // ライフラインの子ノードを取得
+        let lifeChildren = [];
+        if (window.SequenceDiagramLibrary?.isLifeline?.(node)) {
+          lifeChildren = window.SequenceDiagramLibrary?.findLifelineChildren?.(node, this.nodes) || [];
+        } else if (window.TimingDiagramLibrary?.isTimingLifeline?.(node)) {
+          lifeChildren = window.TimingDiagramLibrary?.findLifelineChildren?.(node, this.nodes) || [];
+        }
+        childSnapshots = lifeChildren.map(n => ({ node: n, offsetX: n.x - node.x, offsetY: n.y - node.y }));
       }
       const onMouseMove = e => {
         if (!dragging) return;
@@ -1030,10 +1532,10 @@ class DiagramTool {
         el.style.left = node.x + 'px';
         el.style.top = node.y + 'px';
         // Nesting: 子ノードも一緒に移動
-        if (isContainer) {
+        if (isContainer || isLifeline) {
           childSnapshots.forEach(({ node: child, offsetX, offsetY }) => {
             child.x = node.x + offsetX;
-            child.y = node.y + offsetY;
+            child.y = isLifeline ? child.y : node.y + offsetY; // ライフラインは横移動のみ
             const childEl = document.getElementById(child.id);
             if (childEl) {
               childEl.style.left = child.x + 'px';
@@ -1634,6 +2136,13 @@ class DiagramTool {
       let x1 = cx1, y1 = cy1, x2 = cx2, y2 = cy2;
       const isHorizontal = Math.abs(cx2 - cx1) > Math.abs(cy2 - cy1);
 
+      // シーケンス図: ライフライン間のメッセージは自動的に水平にする
+      const seqLib = window.SequenceDiagramLibrary;
+      const fromNode = this.nodes.find(n => n.id === conn.from);
+      const toNode = this.nodes.find(n => n.id === conn.to);
+      const isSeqMessage = seqLib && this.umlType === 'sequence' &&
+        (seqLib.isSequenceNode(fromNode) && seqLib.isSequenceNode(toNode));
+
       if (isHorizontal) {
         if (cx1 < cx2) {
           x1 = cx1 + fr.width/2; // from right
@@ -1650,6 +2159,11 @@ class DiagramTool {
           y1 = cy1 - fr.height/2; // from top
           y2 = cy2 + tr.height/2; // to bottom
         }
+      }
+
+      // シーケンス図水平補正: Y座標を揃える
+      if (isSeqMessage) {
+        y2 = y1;
       }
 
       let dStr = '';
@@ -1871,6 +2385,11 @@ class DiagramTool {
         default:
           path.setAttribute('marker-end', `url(#arrow-${p})`);
       }
+
+      if (conn.lineStyle === 'dashed') {
+        path.setAttribute('stroke-dasharray', '5 5');
+      }
+
       this.svg.appendChild(path);
 
       if (conn.label) {

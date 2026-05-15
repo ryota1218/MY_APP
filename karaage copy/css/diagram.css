@@ -666,6 +666,28 @@ svg.connections circle {
   letter-spacing: 0.02em;
 }
 
+/* Resize Handles */
+.node-resize-handle {
+  position: absolute;
+  background: var(--accent);
+  border: 1px solid var(--bg-card);
+  border-radius: 2px;
+  display: none;
+  z-index: 100;
+}
+.diagram-node.selected .node-resize-handle {
+  display: block;
+}
+.resize-right {
+  right: -4px; top: 50%; transform: translateY(-50%); width: 8px; height: 16px; cursor: ew-resize;
+}
+.resize-bottom {
+  bottom: -4px; left: 50%; transform: translateX(-50%); width: 16px; height: 8px; cursor: ns-resize;
+}
+.resize-bottom-right {
+  right: -4px; bottom: -4px; width: 10px; height: 10px; cursor: nwse-resize;
+}
+
 /* Diagram Nodes */
 .diagram-node {
   position: absolute; min-width: 120px;
@@ -974,3 +996,399 @@ svg.connections circle {
   height: 32px;
   cursor: pointer;
 }
+
+/* ===== Sequence Diagram ===== */
+
+/* 共通 seq-node 設定: diagram-node のデフォルトを上書き */
+.seq-node {
+  background: transparent;
+  border: none;
+  padding: 0;
+  min-width: 0;
+  gap: 0;
+}
+
+/* ライフライン */
+.seq-lifeline-node {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: none !important;
+}
+.seq-lifeline-node > .node-port {
+  display: none !important;
+}
+.diagram-node.selected.seq-lifeline-node .seq-lifeline-header {
+  box-shadow: 0 0 20px rgba(124,58,237,0.4);
+  border-color: var(--accent);
+}
+.seq-lifeline-header {
+  background: var(--bg-secondary, #1f2937);
+  border: 2px solid var(--border, #374151);
+  border-radius: 6px;
+  padding: 8px 16px;
+  text-align: center;
+  min-width: 90px;
+  position: relative;
+  z-index: 2;
+}
+.seq-lifeline-name {
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: var(--text, #e5e7eb);
+  white-space: nowrap;
+}
+.seq-lifeline-actor .seq-lifeline-name {
+  margin-top: 4px;
+}
+.seq-lifeline-dash {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+}
+
+/* アクター */
+.seq-lifeline-actor {
+  border: none !important;
+  background: transparent !important;
+  padding: 4px 12px !important;
+}
+.seq-actor-icon {
+  display: flex;
+  justify-content: center;
+}
+
+/* 実行仕様バー */
+.seq-exec-node {
+  border-radius: 2px !important;
+}
+.seq-exec-node:hover {
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+}
+
+/* フラグメント */
+.seq-fragment-node {
+  border-radius: 4px !important;
+}
+.seq-fragment-header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 10px;
+  border-bottom: 1px solid;
+  border-radius: 4px 4px 0 0;
+  font-size: 0.75rem;
+  position: relative;
+}
+.seq-fragment-header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 0 14px 14px;
+  border-color: transparent transparent var(--bg-card, #111827) transparent;
+}
+.seq-fragment-type {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.seq-fragment-label {
+  font-style: italic;
+  opacity: 0.8;
+}
+.seq-fragment-body {
+  flex: 1;
+  min-height: 60px;
+}
+
+/* ノート */
+.seq-note-node {
+  position: relative;
+  line-height: 1.4 !important;
+}
+.seq-note-fold {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  border-left: 1px solid;
+  border-bottom: 1px solid;
+  background: #fde68a;
+}
+
+/* 破棄マーク */
+.seq-destruction-node {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Timing Diagram */
+.diagram-canvas.timing-split-view {
+  background-image: 
+    linear-gradient(to bottom, transparent calc(50% - 1px), var(--accent) calc(50% - 1px), var(--accent) calc(50% + 1px), transparent calc(50% + 1px)),
+    linear-gradient(to right, transparent calc(100% / 6 - 1px), var(--accent) calc(100% / 6 - 1px), var(--accent) calc(100% / 6 + 1px), transparent calc(100% / 6 + 1px)),
+    repeating-linear-gradient(to right, transparent, transparent calc(100% / 50 - 1px), rgba(255, 255, 255, 0.1) calc(100% / 50 - 1px), rgba(255, 255, 255, 0.1) calc(100% / 50)),
+    repeating-linear-gradient(to bottom, transparent, transparent calc(100% / 12 - 1px), rgba(255, 255, 255, 0.1) calc(100% / 12 - 1px), rgba(255, 255, 255, 0.1) calc(100% / 12));
+  background-size: 100% 100%, 100% 100%, calc(100% * 5 / 6) 100%, calc(100% * 5 / 6) 100%;
+  background-position: 0 0, 0 0, right top, right top;
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
+}
+.diagram-canvas.timing-split-view::before {
+  content: 'AREA A';
+  position: absolute;
+  top: 10px; left: 10px;
+  font-size: 0.7rem; font-weight: 700; color: var(--accent);
+  opacity: 0.4; pointer-events: none;
+}
+.diagram-canvas.timing-split-view::after {
+  content: 'AREA B';
+  position: absolute;
+  top: calc(50% + 10px); left: 10px;
+  font-size: 0.7rem; font-weight: 700; color: var(--accent);
+  opacity: 0.4; pointer-events: none;
+}
+
+.timing-dots-overlay {
+  position: absolute;
+  top: 0; bottom: 0; right: 0;
+  width: calc(100% * 5 / 6);
+  pointer-events: none;
+  z-index: 5;
+}
+.timing-dot {
+  position: absolute;
+  width: 3px; height: 3px;
+  background: #a855f7;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition: width 0.2s, height 0.2s, box-shadow 0.2s;
+}
+/* 接続モードON: 点が最前面にくるように */
+.timing-split-view.timing-connect-active .timing-dots-overlay {
+  pointer-events: auto;
+  z-index: 15;
+}
+.timing-split-view.timing-connect-active .timing-dot {
+  width: 8px; height: 8px;
+  pointer-events: auto;
+  cursor: crosshair;
+  box-shadow: 0 0 4px #a855f7;
+}
+.timing-split-view.timing-connect-active .timing-dot:hover {
+  width: 12px; height: 12px;
+  background: #c084fc;
+  box-shadow: 0 0 8px #c084fc;
+}
+.timing-split-view.timing-connect-active .timing-dot.timing-dot-selected {
+  width: 12px; height: 12px;
+  background: #f59e0b;
+  box-shadow: 0 0 10px #f59e0b;
+}
+
+/* タイミング波形線 */
+.timing-wave-svg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+.timing-wave-svg line.timing-line-same {
+  stroke: #ffffff;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.timing-wave-svg line.timing-line-cross {
+  stroke: #facc15;
+  stroke-width: 2;
+  stroke-dasharray: 6 3;
+  stroke-linecap: round;
+}
+
+.timing-labels-overlay {
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  width: calc(100% / 6);
+  pointer-events: none;
+}
+.timing-grid-label {
+  position: absolute;
+  right: 15px;
+  transform: translateY(-50%);
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  opacity: 0.7;
+  white-space: nowrap;
+}
+.timing-object-label {
+  position: absolute;
+  left: 20px;
+  transform: translateY(-50%);
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.timing-time-axis {
+  position: absolute;
+  bottom: 5px; right: 0;
+  width: calc(100% * 5 / 6);
+  height: 20px;
+  pointer-events: none;
+  z-index: 1;
+}
+.timing-time-label {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  opacity: 0.8;
+}
+
+.timing-lifeline-node {
+  background: transparent !important;
+  border: none !important;
+}
+.timing-lifeline-header {
+  position: relative;
+  border-radius: 6px 0 0 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+  overflow: hidden;
+}
+.timing-lifeline-label {
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--text);
+  margin-bottom: 4px;
+  text-align: center;
+  width: 100%;
+}
+.timing-lifeline-states {
+  position: absolute;
+  right: 5px;
+  height: 100%;
+  width: 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.timing-lifeline-grid {
+  position: relative;
+  background: var(--bg-card);
+  border-radius: 0 6px 6px 0;
+  overflow: hidden;
+}
+.timing-grid-pattern {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: 
+    linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 40px 20px;
+}
+
+.timing-timeline-node {
+  background: transparent !important;
+  border: none !important;
+}
+.timing-timeline-node .node-port {
+  pointer-events: auto;
+}
+.timing-wave-line {
+  position: absolute;
+  left: 0; right: 0;
+  border-top: 3px solid;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.timing-wave-label {
+  position: absolute;
+  left: 5px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  padding: 0 4px;
+}
+.timing-value-box {
+  position: absolute;
+  top: 10%; bottom: 10%; left: 0; right: 0;
+  border: 2px solid;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.timing-ruler-node {
+  background: transparent !important;
+  border: none !important;
+}
+.timing-ruler-line {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+}
+.timing-ruler-tick {
+  position: absolute;
+  bottom: 0; height: 10px;
+  border-left: 1px solid;
+}
+.timing-ruler-val {
+  position: absolute;
+  top: -18px; left: -10px;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.timing-constraint-node {
+  background: transparent !important;
+  border: none !important;
+}
+.timing-constraint-arrow {
+  position: absolute;
+  top: 0; bottom: 0; left: 0; right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.timing-constraint-text {
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: var(--bg-card);
+  padding: 0 4px;
+}
+
+.timing-note-node {
+  box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+}
+.timing-note-fold {
+  position: absolute;
+  top: 0; right: 0;
+  width: 0; height: 0;
+  border-style: solid;
+  border-width: 0 12px 12px 0;
+  border-color: transparent transparent var(--bg-card) transparent;
+}
+
