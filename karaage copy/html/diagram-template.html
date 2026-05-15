@@ -64,15 +64,28 @@
               <span>自動</span>
             </button>
             <div class="diagram-color-divider"></div>
+            <!-- カスタムカラーピッカーセクション -->
+            <div style="padding: 12px; background: #f8f9fa; border-radius: 4px; margin-bottom: 12px;">
+              <div style="font-size: 11px; color: #666; margin-bottom: 6px; font-weight: 500;">カスタムカラー</div>
+              <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                <div id="{{prefix}}-color-gradient" style="flex: 1; height: 120px; background: linear-gradient(to bottom, hsl(0, 100%, 100%) 0%, hsl(0, 100%, 50%) 50%, hsl(0, 100%, 0%) 100%); border: 1px solid #ddd; border-radius: 4px; cursor: crosshair; position: relative; touch-action: none; user-select: none; overflow: hidden;">
+                  <div id="{{prefix}}-color-gradient-marker" style="position: absolute; width: 14px; height: 14px; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1px rgba(0,0,0,0.35); transform: translate(-50%, -50%); pointer-events: none; left: 50%; top: 50%;"></div>
+                </div>
+                <div id="{{prefix}}-color-hue" style="width: 20px; height: 120px; background: linear-gradient(to bottom, hsl(0, 100%, 50%), hsl(60, 100%, 50%), hsl(120, 100%, 50%), hsl(180, 100%, 50%), hsl(240, 100%, 50%), hsl(300, 100%, 50%), hsl(360, 100%, 50%)); border: 1px solid #ddd; border-radius: 4px; cursor: pointer; touch-action: none; user-select: none; position: relative; overflow: hidden;">
+                  <div id="{{prefix}}-color-hue-marker" style="position: absolute; left: 50%; width: 16px; height: 4px; background: #fff; border-radius: 999px; box-shadow: 0 0 0 1px rgba(0,0,0,0.35); transform: translate(-50%, -50%); pointer-events: none; top: 0%;"></div>
+                </div>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <input type="text" id="{{prefix}}-color-hex" placeholder="#000000" maxlength="7" style="flex: 1; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; font-family: monospace;">
+                <div id="{{prefix}}-color-preview" style="width: 40px; height: 32px; background: #000000; border: 1px solid #ddd; border-radius: 4px;"></div>
+              </div>
+            </div>
+            <div class="diagram-color-divider"></div>
             <div class="diagram-color-group-label">テーマの色</div>
             <div class="diagram-color-theme-row" id="{{prefix}}-theme-row"></div>
             <div class="diagram-color-shade-grid" id="{{prefix}}-shade-grid"></div>
             <div class="diagram-color-group-label">標準の色</div>
             <div class="diagram-color-standard-row" id="{{prefix}}-standard-row"></div>
-            <button type="button" class="diagram-color-other-btn" id="{{prefix}}-other-color-btn">
-              <span class="diagram-color-other-icon">🎨</span>
-              <span>その他の色(M)...</span>
-            </button>
           </div>
         </details>
       </label>
@@ -99,7 +112,7 @@
     </div>
     <div class="property-panel-body">
       <div class="property-group">
-        <label>ラベル</label>
+        <label>名前</label>
         <input type="text" id="{{prefix}}-prop-label" class="property-input">
       </div>
       <div class="property-group">

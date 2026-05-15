@@ -54,57 +54,101 @@ const umlComponents = [
 const umlDiagramTypes = {
   class: {
     label: 'クラス図',
-    get components() {
-      return window.BehaviorDiagramLibrary?.structure?.getComponents('class') || [];
-    }
+    components: [
+      { icon:'<i data-lucide="box" class="node-lucide-icon"></i>', label:'クラス', color:'#7c3aed', nodeType:'class-box',
+        defaults: { stereotype:'', attributes:['-属性1 : 型'], methods:['+操作1() : 戻り値型'] } },
+      { icon:'<i data-lucide="diamond" class="node-lucide-icon"></i>', label:'インターフェース', color:'#3b82f6', nodeType:'class-box',
+        defaults: { stereotype:'«interface»', attributes:[], methods:['+操作1() : 戻り値型'] } },
+      { icon:'<i data-lucide="box" class="node-lucide-icon"></i>', label:'抽象クラス', color:'#8b5cf6', nodeType:'class-box',
+        defaults: { stereotype:'«abstract»', attributes:['-属性1 : 型'], methods:['+操作1() : 戻り値型'] } },
+      { icon:'<i data-lucide="list" class="node-lucide-icon"></i>', label:'列挙型', color:'#06b6d4', nodeType:'class-box',
+        defaults: { stereotype:'«enum»', attributes:['VALUE_1','VALUE_2','VALUE_3'], methods:[] } },
+      { icon:'<i data-lucide="folder" class="node-lucide-icon"></i>', label:'パッケージ', color:'#f59e0b' },
+      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
+    ],
   },
   object: {
     label: 'オブジェクト図',
-    get components() {
-      return window.BehaviorDiagramLibrary?.structure?.getComponents('object') || [];
-    }
+    components: [
+      { icon:'<i data-lucide="square" class="node-lucide-icon"></i>', label:'オブジェクト', color:'#14b8a6' },
+      { icon:'<i data-lucide="link-2" class="node-lucide-icon"></i>', label:'リンク', color:'#7c3aed' },
+      { icon:'<i data-lucide="box" class="node-lucide-icon"></i>', label:'クラス', color:'#3b82f6' },
+      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
+    ],
   },
   package: {
     label: 'パッケージ図',
-    get components() {
-      return window.BehaviorDiagramLibrary?.structure?.getComponents('package') || [];
-    }
+    components: [
+      { icon:'<i data-lucide="folder" class="node-lucide-icon"></i>', label:'パッケージ', color:'#06b6d4' },
+      { icon:'<i data-lucide="box" class="node-lucide-icon"></i>', label:'クラス', color:'#7c3aed' },
+      { icon:'<i data-lucide="diamond" class="node-lucide-icon"></i>', label:'インターフェース', color:'#3b82f6' },
+      { icon:'<i data-lucide="link" class="node-lucide-icon"></i>', label:'依存', color:'#f59e0b' },
+      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
+    ],
   },
   composite: {
     label: 'コンポジット構造図',
-    get components() {
-      return window.BehaviorDiagramLibrary?.structure?.getComponents('composite') || [];
-    }
+    components: [
+      { icon:'<i data-lucide="box" class="node-lucide-icon"></i>', label:'クラス/コンポーネント', color:'#7c3aed' },
+      { icon:'<i data-lucide="plug" class="node-lucide-icon"></i>', label:'ポート', color:'#10b981' },
+      { icon:'<i data-lucide="square" class="node-lucide-icon"></i>', label:'パート', color:'#06b6d4' },
+      { icon:'<i data-lucide="diamond" class="node-lucide-icon"></i>', label:'インターフェース', color:'#3b82f6' },
+      { icon:'<i data-lucide="link-2" class="node-lucide-icon"></i>', label:'コネクタ', color:'#f59e0b' },
+      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
+    ],
   },
   component: {
     label: 'コンポーネント図',
-    get components() {
-      return window.BehaviorDiagramLibrary?.structure?.getComponents('component') || [];
-    }
+    components: [
+      { icon:'<i data-lucide="square" class="node-lucide-icon"></i>', label:'コンポーネント', color:'#7c3aed' },
+      { icon:'<i data-lucide="diamond" class="node-lucide-icon"></i>', label:'インターフェース', color:'#3b82f6' },
+      { icon:'<i data-lucide="plug" class="node-lucide-icon"></i>', label:'ポート', color:'#10b981' },
+      { icon:'<i data-lucide="folder" class="node-lucide-icon"></i>', label:'パッケージ', color:'#06b6d4' },
+      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
+    ],
   },
   deployment: {
     label: '配置図',
-    get components() {
-      return window.BehaviorDiagramLibrary?.structure?.getComponents('deployment') || [];
-    }
+    components: [
+      { icon:'<i data-lucide="monitor" class="node-lucide-icon"></i>', label:'ノード', color:'#7c3aed' },
+      { icon:'<i data-lucide="smartphone" class="node-lucide-icon"></i>', label:'デバイス', color:'#a855f7' },
+      { icon:'<i data-lucide="cloud" class="node-lucide-icon"></i>', label:'実行環境', color:'#06b6d4' },
+      { icon:'<i data-lucide="square" class="node-lucide-icon"></i>', label:'コンポーネント', color:'#10b981' },
+      { icon:'<i data-lucide="hard-drive" class="node-lucide-icon"></i>', label:'成果物', color:'#f59e0b' },
+      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
+    ],
   },
   usecase: {
     label: 'ユースケース図',
-    get components() {
-      return window.BehaviorDiagramLibrary?.usecase?.getDefaultComponents?.() || [];
-    }
+    components: [
+      { icon:'<i data-lucide="user" class="node-lucide-icon"></i>', label:'アクター', color:'#10b981' },
+      { icon:'<i data-lucide="circle" class="node-lucide-icon"></i>', label:'ユースケース', color:'#f59e0b' },
+      { icon:'<i data-lucide="rectangle-horizontal" class="node-lucide-icon"></i>', label:'システム境界', color:'#7c3aed' },
+      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
+    ],
   },
   activity: {
     label: 'アクティビティ図',
-    get components() {
-      return window.BehaviorDiagramLibrary?.activity?.getDefaultComponents?.() || [];
-    }
+    components: [
+      { icon:'<i data-lucide="play" class="node-lucide-icon"></i>', label:'アクション', color:'#06b6d4' },
+      { icon:'<i data-lucide="circle" class="node-lucide-icon"></i>', label:'開始ノード', color:'#10b981' },
+      { icon:'<i data-lucide="circle-x" class="node-lucide-icon"></i>', label:'終了ノード', color:'#ef4444' },
+      { icon:'<i data-lucide="diamond" class="node-lucide-icon"></i>', label:'分岐/合流', color:'#f59e0b' },
+      { icon:'<i data-lucide="minus" class="node-lucide-icon"></i>', label:'フォーク/ジョイン', color:'#8b5cf6' },
+      { icon:'<i data-lucide="square" class="node-lucide-icon"></i>', label:'オブジェクトノード', color:'#7c3aed' },
+      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
+    ],
   },
   state: {
     label: 'ステートマシン図',
-    get components() {
-      return window.BehaviorDiagramLibrary?.state?.getDefaultComponents?.() || [];
-    }
+    components: [
+      { icon:'<i data-lucide="git-branch" class="node-lucide-icon"></i>', label:'ステート', color:'#6366f1' },
+      { icon:'<i data-lucide="play-circle" class="node-lucide-icon"></i>', label:'初期状態', color:'#10b981' },
+      { icon:'<i data-lucide="stop-circle" class="node-lucide-icon"></i>', label:'終了状態', color:'#ef4444' },
+      { icon:'<i data-lucide="diamond" class="node-lucide-icon"></i>', label:'選択', color:'#f59e0b' },
+      { icon:'<i data-lucide="box" class="node-lucide-icon"></i>', label:'複合ステート', color:'#7c3aed' },
+      { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
+    ],
   },
   sequence: {
     label: 'シーケンス図',
@@ -176,13 +220,11 @@ class DiagramTool {
     this.nodes = [];
     this.connections = [];
     this.selectedNode = null;
-    this.selectedConnection = null;
     this.connectingFrom = null;
     this.undoHistory = [];
     this.redoHistory = [];
     this.isApplyingUndo = false;
     this.nodeIdCounter = 0;
-    this.connIdCounter = 0;
     this.quickAddCounter = 0;
     this.defaultTextStyle = { fontSize: 14, color: '#e5e7eb' };
     this.inlineShapeLimit = Number.isFinite(options.inlineShapeLimit)
@@ -640,10 +682,10 @@ class DiagramTool {
       const isEditingField = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable);
       if (isEditingField) return;
       if (e.key !== 'Delete' && e.key !== 'Backspace') return;
-      console.debug('[DiagramTool] keydown', e.key, 'selectedNode=', this.selectedNode?.id, 'selectedConn=', this.selectedConnection?.id);
-      if (!this.selectedNode && !this.selectedConnection) return;
+      console.debug('[DiagramTool] keydown', e.key, 'selectedNode=', this.selectedNode && this.selectedNode.id);
+      if (!this.selectedNode) return;
       e.preventDefault();
-      this.deleteSelected();
+      this.deleteSelectedNode();
     });
   }
   
@@ -656,13 +698,9 @@ class DiagramTool {
       const el = document.getElementById(this.prefix + '-prop-' + suffix);
       if (el) {
         el.addEventListener('input', (e) => {
-          if (this.propertyPanelNode) {
-            this.propertyPanelNode[prop] = parser(e.target.value);
-            this.updateNodeDOM(this.propertyPanelNode);
-          } else if (this.propertyPanelConn) {
-            this.propertyPanelConn[prop] = parser(e.target.value);
-            this.drawConnections();
-          }
+          if (!this.propertyPanelNode) return;
+          this.propertyPanelNode[prop] = parser(e.target.value);
+          this.updateNodeDOM(this.propertyPanelNode);
         });
       }
     };
@@ -670,8 +708,6 @@ class DiagramTool {
     bindInput('x', 'x', Number);
     bindInput('y', 'y', Number);
     bindInput('fontsize', 'textSize', Number);
-    bindInput('textcolor', 'textColor');
-    bindInput('color', 'color');
     bindInput('routing', 'routing');
     bindInput('linestyle', 'lineStyle');
     bindInput('fragtype', 'fragmentType');
@@ -680,22 +716,146 @@ class DiagramTool {
     bindInput('timingtext', 'timingValue');
     bindInput('multFrom', 'multiplicityFrom');
     bindInput('multTo', 'multiplicityTo');
+
+    // プロパティパネルのカラーピッカー初期化
+    this.initPropertyPanelColorPicker('textcolor', 'textColor');
+    this.initPropertyPanelColorPicker('color', 'color');
   }
 
-  openPropertyPanel(node, conn = null) {
-    this.propertyPanelNode = node;
-    this.propertyPanelConn = conn;
-    const panel = document.getElementById(this.prefix + '-property-panel');
-    if (panel) panel.classList.add('open');
+  initPropertyPanelColorPicker(suffix, nodeProp) {
+    const pickerEl = document.getElementById(this.prefix + '-prop-' + suffix + '-picker');
+    const menuEl = document.getElementById(this.prefix + '-prop-' + suffix + '-menu');
+    const themeRowEl = document.getElementById(this.prefix + '-prop-' + suffix + '-theme-row');
+    const shadeGridEl = document.getElementById(this.prefix + '-prop-' + suffix + '-shade-grid');
+    const standardRowEl = document.getElementById(this.prefix + '-prop-' + suffix + '-standard-row');
+    const otherBtn = document.getElementById(this.prefix + '-prop-' + suffix + '-other-btn');
+    const sampleEl = document.getElementById(this.prefix + '-prop-' + suffix + '-sample');
+    const textEl = document.getElementById(this.prefix + '-prop-' + suffix + '-text');
 
-    const isConn = !!conn;
-    const isNode = !!node;
+    if (!pickerEl || !menuEl) return;
 
-    // Show/hide groups based on selection
-    ['x','y','fontsize','textcolor','color'].forEach(k => {
-      const g = document.getElementById(this.prefix + '-prop-' + k)?.closest('.property-group');
-      if (g) g.style.display = isNode ? '' : 'none';
+    // カラーパレット構築
+    const themeColors = [
+      { label:'黒', color:'#111111', shades:['#f3f4f6','#d1d5db','#6b7280','#111111'] },
+      { label:'赤', color:'#ef4444', shades:['#fee2e2','#fca5a5','#ef4444','#991b1b'] },
+      { label:'灰', color:'#9ca3af', shades:['#f3f4f6','#d1d5db','#9ca3af','#4b5563'] },
+      { label:'青', color:'#3b82f6', shades:['#dbeafe','#93c5fd','#3b82f6','#1d4ed8'] },
+      { label:'水色', color:'#60a5fa', shades:['#dbeafe','#bfdbfe','#60a5fa','#2563eb'] },
+      { label:'橙', color:'#f97316', shades:['#ffedd5','#fdba74','#f97316','#c2410c'] },
+      { label:'銀', color:'#a3a3a3', shades:['#f5f5f5','#e5e7eb','#a3a3a3','#525252'] },
+      { label:'黄', color:'#facc15', shades:['#fef9c3','#fde68a','#facc15','#ca8a04'] },
+      { label:'青系', color:'#60a5fa', shades:['#eff6ff','#dbeafe','#60a5fa','#1d4ed8'] },
+      { label:'緑', color:'#84cc16', shades:['#ecfccb','#bef264','#84cc16','#3f6212'] },
+    ];
+    const standardColors = ['#dc2626','#ff0000','#f59e0b','#ffea00','#84cc16','#10b981','#06b6d4','#0284c7','#1d4ed8','#7c3aed'];
+
+    if (themeRowEl) {
+      themeRowEl.innerHTML = themeColors.map(item => `
+        <button type="button" class="diagram-color-option" data-color="${item.color}" data-label="${item.label}">
+          <span class="diagram-color-option-swatch" style="background:${item.color}"></span>
+        </button>
+      `).join('');
+    }
+
+    if (shadeGridEl) {
+      shadeGridEl.innerHTML = themeColors.map(item => `
+        <div class="diagram-color-shade-column" data-label="${item.label}">
+          ${item.shades.map((shade, index) => `<button type="button" class="diagram-color-shade-option" data-color="${shade}" data-label="${item.label} ${index + 1}" style="background:${shade}"></button>`).join('')}
+        </div>
+      `).join('');
+    }
+
+    if (standardRowEl) {
+      standardRowEl.innerHTML = standardColors.map((color, index) => `
+        <button type="button" class="diagram-color-option" data-color="${color}" data-label="標準 ${index + 1}">
+          <span class="diagram-color-option-swatch" style="background:${color}"></span>
+        </button>
+      `).join('');
+    }
+
+    // カラー選択イベント
+    menuEl.addEventListener('click', e => {
+      const option = e.target.closest('[data-color]');
+      if (!option) return;
+      const selectedColor = option.dataset.color || '';
+      if (!this.propertyPanelNode) return;
+      this.propertyPanelNode[nodeProp] = selectedColor;
+      this.updateNodeDOM(this.propertyPanelNode);
+      this.refreshPropertyPanelColorButton(suffix, nodeProp);
+      pickerEl.open = false;
     });
+    
+      if (!this.propertyPanelNode) return;
+      this.propertyPanelNode[nodeProp] = selectedColor;
+      this.updateNodeDOM(this.propertyPanelNode);
+      this.refreshPropertyPanelColorButton(suffix, nodeProp);
+      pickerEl.open = false;
+    });
+
+    // その他の色ボタン（カラーピッカーの続き）
+    if (otherBtn) {
+      const inputId = this.prefix + '-native-' + suffix;
+      let nativeColorInput = document.getElementById(inputId);
+      
+      if (!nativeColorInput) {
+        nativeColorInput = document.createElement('input');
+        nativeColorInput.id = inputId;
+        nativeColorInput.type = 'color';
+        nativeColorInput.value = '#e5e7eb';
+        nativeColorInput.style.display = 'none';
+        document.body.appendChild(nativeColorInput);
+      }
+      
+      otherBtn.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        nativeColorInput.value = this.propertyPanelNode && this.propertyPanelNode[nodeProp] ? this.propertyPanelNode[nodeProp] : '#e5e7eb';
+        nativeColorInput.click();
+      });
+      
+      nativeColorInput.addEventListener('change', () => {
+        const selectedColor = nativeColorInput.value;
+        if (!this.propertyPanelNode) return;
+        this.propertyPanelNode[nodeProp] = selectedColor;
+        this.updateNodeDOM(this.propertyPanelNode);
+        this.refreshPropertyPanelColorButton(suffix, nodeProp);
+        pickerEl.open = false;
+      });
+    }
+
+    // 外部クリックで閉じる
+    document.addEventListener('click', e => {
+      if (!pickerEl.contains(e.target)) {
+        pickerEl.open = false;
+      }
+    });
+  }
+
+  refreshPropertyPanelColorButton(suffix, nodeProp) {
+    const sampleEl = document.getElementById(this.prefix + '-prop-' + suffix + '-sample');
+    const textEl = document.getElementById(this.prefix + '-prop-' + suffix + '-text');
+    const menuEl = document.getElementById(this.prefix + '-prop-' + suffix + '-menu');
+
+    if (!this.propertyPanelNode || !sampleEl || !textEl) return;
+
+    const color = this.propertyPanelNode[nodeProp] || '';
+    const isAuto = !color;
+    const displayColor = isAuto ? '#e5e7eb' : color;
+
+    sampleEl.style.background = displayColor;
+    
+    if (menuEl) {
+      const activeOption = isAuto ? menuEl.querySelector('.diagram-color-auto-row') : menuEl.querySelector(`.diagram-color-option[data-color="${color}"]`);
+      textEl.textContent = activeOption?.dataset.label || (isAuto ? '自動' : color);
+    }
+  }
+
+  openPropertyPanel(node) {
+    this.propertyPanelNode = node;
+    const isConn = node && node.from !== undefined;
+    const isNode = node && node.from === undefined;
+
+    // パネル項目の表示切り替え（タイミング図などの設定）
     const routingGroup = document.getElementById(this.prefix + '-prop-group-routing');
     if (routingGroup) routingGroup.style.display = isConn ? '' : 'none';
     const linestyleGroup = document.getElementById(this.prefix + '-prop-group-linestyle');
@@ -711,26 +871,26 @@ class DiagramTool {
     const zindexGroup = document.getElementById(this.prefix + '-prop-group-zindex');
     if (zindexGroup) zindexGroup.style.display = isNode ? '' : 'none';
 
+    const panel = document.getElementById(this.prefix + '-property-panel');
+    if (panel) panel.classList.add('open');
+
     // Populate fields
     const setVal = (suffix, val) => {
       const el = document.getElementById(this.prefix + '-prop-' + suffix);
       if (el) el.value = val;
     };
-
+    
     if (isNode) {
       setVal('label', node.label);
       setVal('x', node.x);
       setVal('y', node.y);
       setVal('fontsize', node.textSize || this.defaultTextStyle.fontSize);
       
-      // color input needs #rrggbb format
-      const rgbToHex = (color) => {
-        if (!color) return '#e5e7eb';
-        if (color.startsWith('#') && color.length === 7) return color;
-        return color;
-      };
-      setVal('textcolor', rgbToHex(node.textColor || this.defaultTextStyle.color));
-      setVal('color', rgbToHex(node.color));
+      // カラーボタンの表示を更新（新方式）
+      this.refreshPropertyPanelColorButton('textcolor', 'textColor');
+      this.refreshPropertyPanelColorButton('color', 'color');
+
+      // タイミング図やフラグメント専用の設定
       if (node.behaviorType === 'fragment') {
         setVal('fragtype', node.fragmentType || 'alt');
         setVal('fraglabel', node.fragmentLabel || '');
@@ -741,12 +901,17 @@ class DiagramTool {
         setVal('timingtext', val);
       }
     } else if (isConn) {
-      setVal('label', conn.label || '');
-      setVal('routing', conn.routing || 'straight');
-      setVal('linestyle', conn.lineStyle || 'solid');
-      setVal('multFrom', conn.multiplicityFrom || '');
-      setVal('multTo', conn.multiplicityTo || '');
+      // 線（コネクション）を選択した場合
+      setVal('label', node.label || '');
+      setVal('routing', node.routing || 'straight');
+      setVal('linestyle', node.lineStyle || 'solid');
+      setVal('multFrom', node.multiplicityFrom || '');
+      setVal('multTo', node.multiplicityTo || '');
+      
+      // 線の場合の色更新（線の色変更用）
+      this.refreshPropertyPanelColorButton('color', 'color');
     }
+
 
     // --- クラスボックス専用フィールドの動的生成 ---
     const panelBody = panel?.querySelector('.property-panel-body');
@@ -760,7 +925,7 @@ class DiagramTool {
     if (textcolorGroup) textcolorGroup.style.display = node.nodeType === 'class-box' ? 'none' : '';
 
     if (node.nodeType === 'class-box' && panelBody) {
-      const deleteBtn = panelBody.querySelector('[data-action="deleteSelected"]');
+      const deleteBtn = panelBody.querySelector('[data-action="deleteSelectedNode"]');
 
       // ステレオタイプ
       const stereoGroup = document.createElement('div');
@@ -820,7 +985,6 @@ class DiagramTool {
     if (!el) return;
     el.style.left = node.x + 'px';
     el.style.top = node.y + 'px';
-    el.style.zIndex = node.zIndex || 10;
 
     if (node.nodeType === 'class-box') {
       el.style.borderColor = (node.color || '#e5e7eb') + '80';
@@ -883,12 +1047,8 @@ class DiagramTool {
       icon: comp.icon,
       label: overrides.label || comp.label,
       color: comp.color,
-      behaviorType: comp.behaviorType || null,
-      width: overrides.width || comp.width || null,
-      height: overrides.height || comp.height || null,
       x,
       y,
-      zIndex: 10,
       textColor: this.defaultTextStyle.color,
       textSize: this.defaultTextStyle.fontSize,
     };
@@ -1349,13 +1509,13 @@ class DiagramTool {
     el.style.left = node.x + 'px';
     el.style.top = node.y + 'px';
     el.style.zIndex = node.zIndex || 10;
-
     const behaviorPresentation =
       window.TimingDiagramLibrary?.buildNodePresentation?.(node, this.escapeHtml.bind(this)) ||
       window.SequenceDiagramLibrary?.buildNodePresentation?.(node, this.escapeHtml.bind(this)) ||
       window.BehaviorDiagramLibrary?.activity?.buildNodePresentation?.(node, this.escapeHtml.bind(this)) ||
       window.BehaviorDiagramLibrary?.state?.buildNodePresentation?.(node, this.escapeHtml.bind(this)) ||
       window.BehaviorDiagramLibrary?.usecase?.buildNodePresentation?.(node, this.escapeHtml.bind(this));
+      
     if (behaviorPresentation) {
       el.className = behaviorPresentation.className;
       const sizeStyle = [
@@ -1400,7 +1560,7 @@ class DiagramTool {
       this.applyNodeTextStyle(node, labelEl);
     }
 
-    const isResizable = node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary' || node.behaviorType === 'fragment' || node.behaviorType === 'execSpec' || window.TimingDiagramLibrary?.isTimingNode(node);
+const isResizable = node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary' || node.behaviorType === 'fragment' || node.behaviorType === 'execSpec' || window.TimingDiagramLibrary?.isTimingNode(node);
     if (isResizable) {
       ['right', 'bottom', 'bottom-right'].forEach(dir => {
         const handle = document.createElement('span');
@@ -1410,7 +1570,7 @@ class DiagramTool {
         el.appendChild(handle);
       });
     }
-
+    
     // Drag
     let dragging = false, ox, oy;
     el.addEventListener('mousedown', e => {
@@ -1459,26 +1619,12 @@ class DiagramTool {
         return;
       }
       if (this.connectMode) {
-        if (node.behaviorType === 'systemBoundary') {
-          showToast('システム境界には接続できません');
-          return;
-        }
         if (!this.connectingFrom) {
           this.connectingFrom = node;
           el.classList.add('selected');
           showToast('接続先ノードをクリックしてください');
         } else if (this.connectingFrom.id !== node.id) {
-          const newConn = {
-            id: this.prefix + '_conn_' + (this.connIdCounter++),
-            from: this.connectingFrom.id,
-            to: node.id,
-            connType: this.activeConnType || 'association',
-            routing: 'straight',
-            label: '',
-            multiplicityFrom: '',
-            multiplicityTo: '',
-          };
-          this.connections.push(newConn);
+          this.connections.push({ from: this.connectingFrom.id, to: node.id, connType: this.activeConnType || 'association' });
           this.drawConnections();
           document.getElementById(this.connectingFrom.id)?.classList.remove('selected');
           this.pushUndoAction({
@@ -1572,10 +1718,6 @@ class DiagramTool {
     el.querySelectorAll('.node-port').forEach(port => {
       port.addEventListener('mousedown', e => {
         e.stopPropagation();
-        if (node.behaviorType === 'systemBoundary') {
-          showToast('システム境界には接続できません');
-          return;
-        }
         if (!this.connectingFrom) {
           this.connectingFrom = node;
           this.connectMode = true;
@@ -1646,12 +1788,6 @@ class DiagramTool {
     labelEl.addEventListener('blur', onBlur);
     labelEl.addEventListener('keydown', onKeyDown);
   }
-  selectConnection(conn) {
-    this.deselectAll();
-    this.selectedConnection = conn;
-    this.drawConnections();
-    this.openPropertyPanel(null, conn);
-  }
   selectNode(node, el) {
     this.deselectAll();
     this.selectedNode = node;
@@ -1660,10 +1796,7 @@ class DiagramTool {
   }
   deselectAll() {
     this.selectedNode = null;
-    this.selectedConnection = null;
     this.canvas.querySelectorAll('.diagram-node').forEach(n => n.classList.remove('selected'));
-    this.canvas.querySelectorAll('.diagram-conn-label').forEach(n => n.classList.remove('selected'));
-    this.drawConnections();
   }
   pushUndoAction(action) {
     if (this.isApplyingUndo || !action) return;
@@ -1779,24 +1912,6 @@ class DiagramTool {
       return inverse;
     }
 
-    if (action.type === 'resizeNode') {
-      const node = this.getNodeById(action.nodeId);
-      const el = node ? document.getElementById(node.id) : null;
-      if (!node || !el) return null;
-      const inverse = {
-        type: 'resizeNode',
-        nodeId: action.nodeId,
-        width: node.width,
-        height: node.height,
-      };
-      node.width = action.width;
-      node.height = action.height;
-      if (action.width) el.style.width = `${action.width}px`;
-      if (action.height) el.style.height = `${action.height}px`;
-      this.drawConnections();
-      return inverse;
-    }
-
     if (action.type === 'removeConnection') {
       const beforeCount = this.connections.length;
       this.connections = this.connections.filter(conn => !(conn.from === action.from && conn.to === action.to));
@@ -1897,30 +2012,15 @@ class DiagramTool {
       this.isApplyingUndo = false;
     }
   }
-  deleteSelected() {
-    if (this.selectedConnection) {
-      const conn = this.selectedConnection;
-      this.connections = this.connections.filter(c => c.id !== conn.id);
-      this.pushUndoAction({
-        type: 'removeConnection',
-        from: conn.from,
-        to: conn.to,
-        connType: conn.connType,
-        routing: conn.routing,
-        label: conn.label
-      });
-      this.deselectAll();
-      this.drawConnections();
-      showToast('選択した線を削除しました');
-      return;
-    }
-
+  deleteSelectedNode() {
     const node = this.selectedNode;
     if (!node) {
-      showToast('削除する図形または線を選択してください');
+      console.debug('[DiagramTool] deleteSelectedNode called but no selection');
+      showToast('削除する図形を選択してください');
       return;
     }
 
+    console.debug('[DiagramTool] deleting node', node.id);
     const snapshotNode = { ...node };
     const snapshotConnections = this.connections
       .filter(conn => conn.from === node.id || conn.to === node.id)
@@ -1934,20 +2034,6 @@ class DiagramTool {
     this.deselectAll();
     this.drawConnections();
     showToast('選択した図形を削除しました');
-  }
-
-  bringToFront() {
-    if (!this.selectedNode) return;
-    const maxZ = Math.max(...this.nodes.map(n => n.zIndex || 10));
-    this.selectedNode.zIndex = maxZ + 1;
-    this.updateNodeDOM(this.selectedNode);
-  }
-
-  sendToBack() {
-    if (!this.selectedNode) return;
-    const minZ = Math.min(...this.nodes.map(n => n.zIndex || 10));
-    this.selectedNode.zIndex = Math.max(1, minZ - 1);
-    this.updateNodeDOM(this.selectedNode);
   }
   initTextStyleControls() {
     this.fontSizeControl = document.getElementById(this.prefix + '-font-size');
@@ -1994,21 +2080,159 @@ class DiagramTool {
       }
       this.textColorPicker.open = false;
     });
+
+    // カスタムカラーピッカーの初期化
+    this.customColorGradient = document.getElementById(this.prefix + '-color-gradient');
+    this.customColorGradientMarker = document.getElementById(this.prefix + '-color-gradient-marker');
+    this.customColorHue = document.getElementById(this.prefix + '-color-hue');
+    this.customColorHueMarker = document.getElementById(this.prefix + '-color-hue-marker');
+    this.customColorHex = document.getElementById(this.prefix + '-color-hex');
+    this.customColorPreview = document.getElementById(this.prefix + '-color-preview');
+
+    if (this.customColorGradient && this.customColorHue && this.customColorHex && this.customColorPreview) {
+      this.customColorState = this.customColorState || {
+        hue: 0,
+        saturation: 100,
+        lightness: 50,
+        dragState: null,
+        activeControl: null,
+      };
+
+      const syncCustomColorUI = () => {
+        const state = this.customColorState;
+        this.customColorGradient.style.background = `linear-gradient(to bottom, hsl(${state.hue}, 100%, 100%) 0%, hsl(${state.hue}, 100%, 50%) 50%, hsl(${state.hue}, 100%, 0%) 100%)`;
+        const hexColor = this.hslToHex(state.hue, state.saturation, state.lightness);
+        this.customColorHex.value = hexColor;
+        this.customColorPreview.style.background = hexColor;
+        if (this.customColorGradientMarker) {
+          this.customColorGradientMarker.style.left = `${state.saturation}%`;
+          this.customColorGradientMarker.style.top = `${100 - state.lightness}%`;
+        }
+        if (this.customColorHueMarker) {
+          this.customColorHueMarker.style.top = `${Math.max(0, Math.min(100, (state.hue / 360) * 100))}%`;
+        }
+        return hexColor;
+      };
+
+      const applyCustomColor = () => {
+        const hexColor = syncCustomColorUI();
+        this.setTextColor(hexColor);
+        applyCurrent();
+        return hexColor;
+      };
+
+      const updateStateFromHex = (hex) => {
+        const rgb = this.hexToRgb(hex);
+        if (!rgb) return false;
+        const hsl = this.rgbToHsl(rgb.r, rgb.g, rgb.b);
+        this.customColorState.hue = hsl.h;
+        this.customColorState.saturation = hsl.s;
+        this.customColorState.lightness = hsl.l;
+        syncCustomColorUI();
+        return true;
+      };
+
+      this.syncCustomColorPickerFromHex = (hex) => updateStateFromHex(hex);
+      updateStateFromHex(this.selectedTextColor || this.defaultTextStyle.color);
+
+      const beginDrag = (control) => {
+        const node = this.selectedNode;
+        this.customColorState.dragState = node ? { textSize: node.textSize, textColor: node.textColor } : null;
+        this.customColorState.activeControl = control;
+      };
+
+      const finishDrag = () => {
+        const state = this.customColorState.dragState;
+        const node = this.selectedNode;
+        if (state && node && (node.textSize !== state.textSize || node.textColor !== state.textColor)) {
+          this.pushUndoAction({
+            type: 'styleNode',
+            nodeId: node.id,
+            textSize: state.textSize,
+            textColor: state.textColor,
+          });
+        }
+        this.customColorState.dragState = null;
+        this.customColorState.activeControl = null;
+      };
+
+      const updateFromGradientPoint = (clientX, clientY) => {
+        const rect = this.customColorGradient.getBoundingClientRect();
+        const x = Math.max(0, Math.min(rect.width, clientX - rect.left));
+        const y = Math.max(0, Math.min(rect.height, clientY - rect.top));
+        this.customColorState.saturation = Math.round((x / rect.width) * 100);
+        this.customColorState.lightness = Math.round(100 - (y / rect.height) * 100);
+        applyCustomColor();
+      };
+
+      const updateFromHuePoint = (clientY) => {
+        const rect = this.customColorHue.getBoundingClientRect();
+        const y = Math.max(0, Math.min(rect.height, clientY - rect.top));
+        const percentage = Math.max(0, Math.min(1, y / rect.height));
+        this.customColorState.hue = Math.round(percentage * 360);
+        syncCustomColorUI();
+        applyCustomColor();
+      };
+
+      const onPointerMove = (event) => {
+        if (this.customColorState.activeControl === 'gradient') {
+          updateFromGradientPoint(event.clientX, event.clientY);
+        } else if (this.customColorState.activeControl === 'hue') {
+          updateFromHuePoint(event.clientY);
+        }
+      };
+
+      const endPointerDrag = () => {
+        finishDrag();
+        document.removeEventListener('pointermove', onPointerMove);
+        document.removeEventListener('pointerup', endPointerDrag);
+        document.removeEventListener('pointercancel', endPointerDrag);
+      };
+
+      const startPointerDrag = (control, event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        beginDrag(control);
+        if (control === 'gradient') {
+          updateFromGradientPoint(event.clientX, event.clientY);
+        } else {
+          updateFromHuePoint(event.clientY);
+        }
+        document.addEventListener('pointermove', onPointerMove);
+        document.addEventListener('pointerup', endPointerDrag, { once: true });
+        document.addEventListener('pointercancel', endPointerDrag, { once: true });
+      };
+
+      this.customColorGradient.addEventListener('pointerdown', e => startPointerDrag('gradient', e));
+      this.customColorHue.addEventListener('pointerdown', e => startPointerDrag('hue', e));
+
+      this.customColorHex.addEventListener('input', (e) => {
+        let hex = e.target.value.trim();
+        if (!hex.startsWith('#')) hex = '#' + hex;
+        if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) return;
+        if (updateStateFromHex(hex)) {
+          this.setTextColor(hex);
+          applyCurrent();
+        }
+      });
+    }
     if (this.otherColorButton) {
-      this.nativeColorInput = document.createElement('input');
-      this.nativeColorInput.type = 'color';
-      this.nativeColorInput.value = '#e5e7eb';
-      this.nativeColorInput.style.position = 'fixed';
-      this.nativeColorInput.style.left = '-9999px';
-      this.nativeColorInput.style.opacity = '0';
-      document.body.appendChild(this.nativeColorInput);
-      this.otherColorButton.addEventListener('click', e => {
+      const nativeColorInput = document.createElement('input');
+      nativeColorInput.type = 'color';
+      nativeColorInput.value = '#e5e7eb';
+      nativeColorInput.style.display = 'none';
+      document.body.appendChild(nativeColorInput);
+      
+      this.otherColorButton.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        this.nativeColorInput.click();
-      });
-      this.nativeColorInput.addEventListener('input', () => {
-        const selectedColor = this.nativeColorInput.value;
+        e.stopImmediatePropagation();
+        nativeColorInput.value = this.selectedTextColor || '#e5e7eb';
+        nativeColorInput.click();
+      }, true);
+      
+      nativeColorInput.addEventListener('change', () => {
+        const selectedColor = nativeColorInput.value;
         const node = this.selectedNode;
         const previousState = node ? { textSize: node.textSize, textColor: node.textColor } : null;
         this.setTextColor(selectedColor);
@@ -2046,6 +2270,65 @@ class DiagramTool {
     this.textColorSample.style.background = activeColor;
     this.textColorText.textContent = activeOption?.dataset.label || (isAuto ? '自動' : color);
     this.setTextColor(isAuto ? '' : color);
+    if (typeof this.syncCustomColorPickerFromHex === 'function') {
+      this.syncCustomColorPickerFromHex(activeColor);
+    }
+  }
+  hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : null;
+  }
+  rgbToHex(r, g, b) {
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  }
+  rgbToHsl(r, g, b) {
+    r /= 255;
+    g /= 255;
+    b /= 255;
+
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    let h = 0;
+    let s = 0;
+    const l = (max + min) / 2;
+
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case r:
+          h = (g - b) / d + (g < b ? 6 : 0);
+          break;
+        case g:
+          h = (b - r) / d + 2;
+          break;
+        default:
+          h = (r - g) / d + 4;
+          break;
+      }
+      h *= 60;
+    }
+
+    return {
+      h: Math.round(h),
+      s: Math.round(s * 100),
+      l: Math.round(l * 100),
+    };
+  }
+  hslToHex(h, s, l) {
+    s /= 100;
+    l /= 100;
+    const k = n => (n + h / 30) % 12;
+    const a = s * Math.min(l, 1 - l);
+    const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+    const r = Math.round(255 * f(0));
+    const g = Math.round(255 * f(8));
+    const b = Math.round(255 * f(4));
+    return this.rgbToHex(r, g, b);
   }
   buildColorPalette() {
     if (!this.themeRow || !this.shadeGrid || !this.standardRow) return;
@@ -2118,10 +2401,7 @@ class DiagramTool {
       <marker id="x-mark-${p}" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto"><line x1="2" y1="2" x2="8" y2="8" stroke="#7c3aed" stroke-width="2"/><line x1="8" y1="2" x2="2" y2="8" stroke="#7c3aed" stroke-width="2"/></marker>
     </defs>`;
 
-    this.canvas.querySelectorAll('.diagram-conn-label, .diagram-conn-multiplicity').forEach(el => el.remove());
-
     this.connections.forEach(conn => {
-      if (!conn.id) conn.id = this.prefix + '_conn_' + (this.connIdCounter++);
       const fromEl = document.getElementById(conn.from);
       const toEl = document.getElementById(conn.to);
       if (!fromEl || !toEl) return;
@@ -2343,19 +2623,14 @@ class DiagramTool {
       }
 
       const connType = conn.connType || 'association';
-      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-      path.setAttribute('d', dStr);
-      const isSelected = this.selectedConnection === conn;
-      path.setAttribute('stroke', isSelected ? '#f59e0b' : '#7c3aed');
-      path.setAttribute('stroke-width', isSelected ? '3' : '2');
-      path.setAttribute('fill', 'none');
-      path.setAttribute('pointer-events', 'visibleStroke');
-      path.setAttribute('opacity', '0.8');
-      path.style.cursor = 'pointer';
-      path.addEventListener('mousedown', e => {
-        e.stopPropagation();
-        this.selectConnection(conn);
-      });
+      const path = document.createElementNS('http://www.w3.org/2000/svg','line');
+      path.setAttribute('x1', x1);
+      path.setAttribute('y1', y1);
+      path.setAttribute('x2', x2);
+      path.setAttribute('y2', y2);
+      path.setAttribute('stroke','#7c3aed');
+      path.setAttribute('stroke-width','2');
+      path.setAttribute('opacity','0.8');
 
       switch (connType) {
         case 'association':
@@ -2391,83 +2666,12 @@ class DiagramTool {
       }
 
       this.svg.appendChild(path);
-
-      if (conn.label) {
-        const labelDiv = document.createElement('div');
-        labelDiv.className = 'diagram-conn-label' + (isSelected ? ' selected' : '');
-        labelDiv.textContent = conn.label;
-        labelDiv.style.left = midX + 'px';
-        labelDiv.style.top = midY + 'px';
-        labelDiv.addEventListener('mousedown', e => {
-          e.stopPropagation();
-          this.selectConnection(conn);
-        });
-        this.canvas.appendChild(labelDiv);
-      }
-
-      // 中点ドラッグハンドル (選択中のみ表示)
-      if (isSelected && routing === 'straight') {
-        const handle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        handle.setAttribute('cx', midX);
-        handle.setAttribute('cy', midY);
-        handle.setAttribute('r', '6');
-        handle.setAttribute('fill', '#f59e0b');
-        handle.setAttribute('stroke', '#fff');
-        handle.setAttribute('stroke-width', '2');
-        handle.style.cursor = 'move';
-        
-        let hDragging = false;
-        handle.addEventListener('mousedown', e => {
-          e.stopPropagation();
-          e.preventDefault();
-          hDragging = true;
-          
-          const onMouseMove = me => {
-            if (!hDragging) return;
-            const rect = this.canvas.getBoundingClientRect();
-            conn.manualMid = {
-              x: me.clientX - rect.left,
-              y: me.clientY - rect.top
-            };
-            this.drawConnections();
-          };
-          
-          const onMouseUp = () => {
-            hDragging = false;
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('mouseup', onMouseUp);
-          };
-          
-          document.addEventListener('mousemove', onMouseMove);
-          document.addEventListener('mouseup', onMouseUp);
-        });
-        this.svg.appendChild(handle);
-      }
-
-      // 多重度ラベル (multiplicityFrom / multiplicityTo)
-      const multOffset = 18;
-      if (conn.multiplicityFrom) {
-        const mfDiv = document.createElement('div');
-        mfDiv.className = 'diagram-conn-multiplicity';
-        mfDiv.textContent = conn.multiplicityFrom;
-        // fromノード側の端点付近にオフセット配置
-        const angle = Math.atan2(y2 - y1, x2 - x1);
-        mfDiv.style.left = (x1 + Math.cos(angle) * 20 + Math.sin(angle) * multOffset) + 'px';
-        mfDiv.style.top = (y1 + Math.sin(angle) * 20 - Math.cos(angle) * multOffset) + 'px';
-        this.canvas.appendChild(mfDiv);
-      }
-      if (conn.multiplicityTo) {
-        const mtDiv = document.createElement('div');
-        mtDiv.className = 'diagram-conn-multiplicity';
-        mtDiv.textContent = conn.multiplicityTo;
-        const angle = Math.atan2(y1 - y2, x1 - x2);
-        mtDiv.style.left = (x2 + Math.cos(angle) * 20 + Math.sin(angle) * multOffset) + 'px';
-        mtDiv.style.top = (y2 + Math.sin(angle) * 20 - Math.cos(angle) * multOffset) + 'px';
-        this.canvas.appendChild(mtDiv);
-      }
     });
   }
   clearAll() {
+    if (!confirm('キャンバスをクリアします。よろしいですか？')) {
+      return;
+    }
     const snapshot = this.captureSnapshot();
     this.nodes = []; this.connections = []; this.nodeIdCounter = 0;
     this.quickAddCounter = 0;
