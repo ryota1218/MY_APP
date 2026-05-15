@@ -112,7 +112,7 @@
     </div>
     <div class="property-panel-body">
       <div class="property-group">
-        <label>ラベル</label>
+        <label>名前</label>
         <input type="text" id="{{prefix}}-prop-label" class="property-input">
       </div>
       <div class="property-group">
@@ -126,58 +126,6 @@
       <div class="property-group">
         <label>フォントサイズ</label>
         <input type="number" id="{{prefix}}-prop-fontsize" class="property-input" min="10" max="48">
-      </div>
-      <div class="property-group">
-        <label>文字色</label>
-        <details class="diagram-color-picker" id="{{prefix}}-prop-textcolor-picker">
-          <summary class="diagram-color-button" id="{{prefix}}-prop-textcolor-btn">
-            <span class="diagram-color-sample" id="{{prefix}}-prop-textcolor-sample"></span>
-            <span class="diagram-color-text" id="{{prefix}}-prop-textcolor-text">自動</span>
-            <span class="diagram-color-caret">▾</span>
-          </summary>
-          <div class="diagram-color-menu" id="{{prefix}}-prop-textcolor-menu" aria-label="文字色の選択">
-            <button type="button" class="diagram-color-auto-row diagram-color-option" data-color="" data-label="自動">
-              <span class="diagram-color-option-swatch diagram-color-option-auto"></span>
-              <span>自動</span>
-            </button>
-            <div class="diagram-color-divider"></div>
-            <div class="diagram-color-group-label">テーマの色</div>
-            <div class="diagram-color-theme-row" id="{{prefix}}-prop-textcolor-theme-row"></div>
-            <div class="diagram-color-shade-grid" id="{{prefix}}-prop-textcolor-shade-grid"></div>
-            <div class="diagram-color-group-label">標準の色</div>
-            <div class="diagram-color-standard-row" id="{{prefix}}-prop-textcolor-standard-row"></div>
-            <button type="button" class="diagram-color-other-btn" id="{{prefix}}-prop-textcolor-other-btn">
-              <span class="diagram-color-other-icon">🎨</span>
-              <span>その他の色(M)...</span>
-            </button>
-          </div>
-        </details>
-      </div>
-      <div class="property-group">
-        <label>ノード枠色</label>
-        <details class="diagram-color-picker" id="{{prefix}}-prop-color-picker">
-          <summary class="diagram-color-button" id="{{prefix}}-prop-color-btn">
-            <span class="diagram-color-sample" id="{{prefix}}-prop-color-sample"></span>
-            <span class="diagram-color-text" id="{{prefix}}-prop-color-text">自動</span>
-            <span class="diagram-color-caret">▾</span>
-          </summary>
-          <div class="diagram-color-menu" id="{{prefix}}-prop-color-menu" aria-label="ノード枠色の選択">
-            <button type="button" class="diagram-color-auto-row diagram-color-option" data-color="" data-label="自動">
-              <span class="diagram-color-option-swatch diagram-color-option-auto"></span>
-              <span>自動</span>
-            </button>
-            <div class="diagram-color-divider"></div>
-            <div class="diagram-color-group-label">テーマの色</div>
-            <div class="diagram-color-theme-row" id="{{prefix}}-prop-color-theme-row"></div>
-            <div class="diagram-color-shade-grid" id="{{prefix}}-prop-color-shade-grid"></div>
-            <div class="diagram-color-group-label">標準の色</div>
-            <div class="diagram-color-standard-row" id="{{prefix}}-prop-color-standard-row"></div>
-            <button type="button" class="diagram-color-other-btn" id="{{prefix}}-prop-color-other-btn">
-              <span class="diagram-color-other-icon">🎨</span>
-              <span>その他の色(M)...</span>
-            </button>
-          </div>
-        </details>
       </div>
       <button class="btn btn-sm btn-danger" data-action="deleteSelectedNode" style="width: 100%; margin-top: 16px;">ノードを削除</button>
     </div>
