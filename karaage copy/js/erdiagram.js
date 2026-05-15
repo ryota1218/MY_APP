@@ -75,6 +75,10 @@ class ERDiagramTool {
   copy() { if(this.selectedEntity) showToast('エンティティをコピーしました'); }
   paste() { showToast('貼り付けは未実装です'); }
 
+  toggleSidebar() {
+    document.body.classList.toggle('sidebar-collapsed');
+  }
+
   toggleNameView() {
     this.viewMode = this.viewMode === 'logical' ? 'physical' : 'logical';
     const btn = document.getElementById('er-toggle-name-btn');
@@ -664,6 +668,9 @@ class ERDiagramTool {
     });
   }
   clearAll() {
+    if (!confirm('E-R図をクリアします。よろしいですか？')) {
+      return;
+    }
     const snapshot = {
       entities: this.entities.map(entity => ({ ...entity, attrs: entity.attrs.map(attr => ({ ...attr })) })),
       relations: this.relations.map(rel => ({ ...rel })),

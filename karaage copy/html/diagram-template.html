@@ -64,15 +64,28 @@
               <span>自動</span>
             </button>
             <div class="diagram-color-divider"></div>
+            <!-- カスタムカラーピッカーセクション -->
+            <div style="padding: 12px; background: #f8f9fa; border-radius: 4px; margin-bottom: 12px;">
+              <div style="font-size: 11px; color: #666; margin-bottom: 6px; font-weight: 500;">カスタムカラー</div>
+              <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                <div id="{{prefix}}-color-gradient" style="flex: 1; height: 120px; background: linear-gradient(to bottom, hsl(0, 100%, 100%) 0%, hsl(0, 100%, 50%) 50%, hsl(0, 100%, 0%) 100%); border: 1px solid #ddd; border-radius: 4px; cursor: crosshair; position: relative; touch-action: none; user-select: none; overflow: hidden;">
+                  <div id="{{prefix}}-color-gradient-marker" style="position: absolute; width: 14px; height: 14px; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1px rgba(0,0,0,0.35); transform: translate(-50%, -50%); pointer-events: none; left: 50%; top: 50%;"></div>
+                </div>
+                <div id="{{prefix}}-color-hue" style="width: 20px; height: 120px; background: linear-gradient(to bottom, hsl(0, 100%, 50%), hsl(60, 100%, 50%), hsl(120, 100%, 50%), hsl(180, 100%, 50%), hsl(240, 100%, 50%), hsl(300, 100%, 50%), hsl(360, 100%, 50%)); border: 1px solid #ddd; border-radius: 4px; cursor: pointer; touch-action: none; user-select: none; position: relative; overflow: hidden;">
+                  <div id="{{prefix}}-color-hue-marker" style="position: absolute; left: 50%; width: 16px; height: 4px; background: #fff; border-radius: 999px; box-shadow: 0 0 0 1px rgba(0,0,0,0.35); transform: translate(-50%, -50%); pointer-events: none; top: 0%;"></div>
+                </div>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <input type="text" id="{{prefix}}-color-hex" placeholder="#000000" maxlength="7" style="flex: 1; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; font-family: monospace;">
+                <div id="{{prefix}}-color-preview" style="width: 40px; height: 32px; background: #000000; border: 1px solid #ddd; border-radius: 4px;"></div>
+              </div>
+            </div>
+            <div class="diagram-color-divider"></div>
             <div class="diagram-color-group-label">テーマの色</div>
             <div class="diagram-color-theme-row" id="{{prefix}}-theme-row"></div>
             <div class="diagram-color-shade-grid" id="{{prefix}}-shade-grid"></div>
             <div class="diagram-color-group-label">標準の色</div>
             <div class="diagram-color-standard-row" id="{{prefix}}-standard-row"></div>
-            <button type="button" class="diagram-color-other-btn" id="{{prefix}}-other-color-btn">
-              <span class="diagram-color-other-icon">🎨</span>
-              <span>その他の色(M)...</span>
-            </button>
           </div>
         </details>
       </label>
@@ -99,7 +112,7 @@
     </div>
     <div class="property-panel-body">
       <div class="property-group">
-        <label>ラベル</label>
+        <label>名前</label>
         <input type="text" id="{{prefix}}-prop-label" class="property-input">
       </div>
       <div class="property-group">
@@ -122,7 +135,70 @@
         <label>ノード枠色</label>
         <input type="color" id="{{prefix}}-prop-color" class="property-input color-input">
       </div>
-      <button class="btn btn-sm btn-danger" data-action="deleteSelectedNode" style="width: 100%; margin-top: 16px;">ノードを削除</button>
-    </div>
+      <div class="property-group" id="{{prefix}}-prop-group-routing" style="display:none;">
+        <label>ルーティング</label>
+        <select id="{{prefix}}-prop-routing" class="property-input">
+          <option value="straight">直線</option>
+          <option value="orthogonal">直角 (Orthogonal)</option>
+          <option value="curve">曲線 (Curve)</option>
+        </select>
+      </div>
+      <div class="property-group" id="{{prefix}}-prop-group-linestyle" style="display:none;">
+        <label>線の種類</label>
+        <select id="{{prefix}}-prop-linestyle" class="property-input">
+          <option value="solid">実線</option>
+          <option value="dashed">点線</option>
+        </select>
+      </div>
+      <div class="property-group" id="{{prefix}}-prop-group-fragment" style="display:none;">
+        <label>フラグメント種類</label>
+        <select id="{{prefix}}-prop-fragtype" class="property-input">
+          <option value="alt">alt (条件分岐)</option>
+          <option value="opt">opt (任意実行)</option>
+          <option value="loop">loop (繰り返し)</option>
+          <option value="break">break (中断)</option>
+          <option value="par">par (並列実行)</option>
+          <option value="critical">critical (排他制御)</option>
+          <option value="ref">ref (参照)</option>
+        </select>
+        <label style="margin-top: 8px; display: block;">詳細ラベル</label>
+        <input type="text" id="{{prefix}}-prop-fraglabel" class="property-input" placeholder="例: [score > 80]">
+      </div>
+      <div class="property-group" id="{{prefix}}-prop-group-timing" style="display:none;">
+        <label>状態/値</label>
+        <select id="{{prefix}}-prop-timingval" class="property-input">
+          <option value="High">High (ON)</option>
+          <option value="Low">Low (OFF)</option>
+          <option value="Other">その他...</option>
+        </select>
+        <input type="text" id="{{prefix}}-prop-timingtext" class="property-input" style="margin-top:4px;" placeholder="その他の値を入力">
+      </div>
+      <div class="property-group" id="{{prefix}}-prop-group-multFrom" style="display:none;">
+        <label>多重度 (接続元)</label>
+        <input type="text" id="{{prefix}}-prop-multFrom" class="property-input" placeholder="例: 1, 0..1, *, 1..*">
+      </div>
+      <div class="property-group" id="{{prefix}}-prop-group-multTo" style="display:none;">
+        <label>多重度 (接続先)</label>
+        <input type="text" id="{{prefix}}-prop-multTo" class="property-input" placeholder="例: 0..*, 1, *">
+      </div>
+      <div class="property-group" id="{{prefix}}-prop-group-conntype" style="display:none;">
+        <label>線の関係性 (UML)</label>
+        <select id="{{prefix}}-prop-conntype" class="property-input">
+          <option value="association">関連 (Association)</option>
+          <option value="dependency">依存 (Dependency)</option>
+          <option value="aggregation">集約 (Aggregation)</option>
+          <option value="composition">コンポジション (Composition)</option>
+          <option value="include">包含 (&lt;&lt;include&gt;&gt;)</option>
+          <option value="extend">拡張 (&lt;&lt;extend&gt;&gt;)</option>
+        </select>
+      </div>
+      <div class="property-group" id="{{prefix}}-prop-group-zindex">
+        <label>重なり順 (Z-Index)</label>
+        <div style="display:flex; gap: 8px;">
+          <button class="btn btn-sm btn-secondary" style="flex:1;" data-action="bringToFront">最前面へ</button>
+          <button class="btn btn-sm btn-secondary" style="flex:1;" data-action="sendToBack">最背面へ</button>
+        </div>
+      </div>
+      <button class="btn btn-sm btn-danger" data-action="deleteSelected" style="width: 100%; margin-top: 16px;">削除</button>
   </div>
 </div>

@@ -12,9 +12,11 @@ class LayoutTool {
     this.aspectRatio = null; // null = free
     this.canvas = document.getElementById('layout-canvas');
     this.canvas.classList.add('free-size');
+    this.propertyPanelEl = null;
     this.initPalette();
     this.initCanvasEvents();
     this.initActionButtons();
+    this.initPropertyPanel();
     this.initCanvasConfig();
   }
   initActionButtons() {
@@ -99,7 +101,10 @@ class LayoutTool {
       this.addElement(this.paletteItems[idx], x, y);
     });
     this.canvas.addEventListener('click', e => {
-      if (e.target === this.canvas) this.deselectAll();
+      if (e.target === this.canvas) {
+        this.deselectAll();
+        this.closePropertyPanel();
+      }
     });
 
     // キーボードによるショートカット処理
@@ -186,6 +191,135 @@ class LayoutTool {
       }
     });
   }
+  initPropertyPanel() {
+    const bindInput = (suffix, updater) => {
+      const input = document.getElementById('layout-prop-' + suffix);
+      if (!input) return;
+      input.addEventListener('input', e => {
+        if (!this.propertyPanelEl) return;
+        updater(this.propertyPanelEl, e.target.value);
+        this.updateElementDOM(this.propertyPanelEl);
+        this.syncPropertyPanel(this.propertyPanelEl);
+      });
+    };
+
+    bindInput('label', (el, value) => { el.label = value; });
+    bindInput('x', (el, value) => { el.x = Math.max(0, Number(value) || 0); });
+    bindInput('y', (el, value) => { el.y = Math.max(0, Number(value) || 0); });
+    bindInput('w', (el, value) => { el.w = Math.max(40, Number(value) || 40); });
+    bindInput('h', (el, value) => { el.h = Math.max(30, Number(value) || 30); });
+    bindInput('fontsize', (el, value) => { el.fontSize = Math.max(10, Number(value) || 14); });
+    bindInput('textcolor', (el, value) => { el.textColor = value; });
+    bindInput('bg', (el, value) => { el.bg = value; });
+    bindInput('zindex', (el, value) => { el.zIndex = Math.max(0, Number(value) || 0); });
+
+    // Z順序ボタンのイベントリスナー
+    const forwardBtn = document.getElementById('layout-zindex-forward');
+    const backwardBtn = document.getElementById('layout-zindex-backward');
+    if (forwardBtn) {
+      forwardBtn.addEventListener('click', () => {
+        if (this.propertyPanelEl) this.moveForward(this.propertyPanelEl);
+      });
+    }
+    if (backwardBtn) {
+      backwardBtn.addEventListener('click', () => {
+        if (this.propertyPanelEl) this.moveBackward(this.propertyPanelEl);
+      });
+    }
+  }
+  openPropertyPanel(el) {
+    this.propertyPanelEl = el;
+    const panel = document.getElementById('layout-property-panel');
+    if (panel) panel.classList.add('open');
+    this.syncPropertyPanel(el);
+
+    setTimeout(() => {
+      const labelInput = document.getElementById('layout-prop-label');
+      if (labelInput) {
+        labelInput.focus({ preventScroll: true });
+        labelInput.select();
+      }
+    }, 120);
+  }
+  syncPropertyPanel(el) {
+    if (!el) return;
+    const setVal = (suffix, value) => {
+      const input = document.getElementById('layout-prop-' + suffix);
+      if (input) input.value = value;
+    };
+
+    setVal('label', el.label || '');
+    setVal('x', Math.round(el.x || 0));
+    setVal('y', Math.round(el.y || 0));
+    setVal('w', Math.round(el.w || 0));
+    setVal('h', Math.round(el.h || 0));
+    setVal('fontsize', Math.round(el.fontSize || 14));
+    setVal('textcolor', this.normalizeHexColor(el.textColor || '#64748b'));
+    setVal('bg', this.normalizeHexColor(el.bg || '#f1f5f9'));
+    setVal('zindex', el.zIndex || 0);
+
+    const bgInput = document.getElementById('layout-prop-bg');
+    if (bgInput) bgInput.disabled = !!el.imageUrl;
+  }
+  closePropertyPanel() {
+    this.propertyPanelEl = null;
+    const panel = document.getElementById('layout-property-panel');
+    if (panel) panel.classList.remove('open');
+  }
+  normalizeHexColor(color) {
+    if (!color || color === 'transparent') return '#ffffff';
+    if (typeof color !== 'string') return '#ffffff';
+
+    // #rgb / #rrggbb / #rrggbbaa
+    if (color.startsWith('#')) {
+      if (color.length === 4) {
+        const r = color[1];
+        const g = color[2];
+        const b = color[3];
+        return `#${r}${r}${g}${g}${b}${b}`;
+      }
+      if (color.length === 7) return color;
+      if (color.length === 9) return color.slice(0, 7);
+    }
+
+    // rgb(...) / rgba(...)
+    const match = color.match(/rgba?\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+    if (match) {
+      const toHex = (n) => Number(n).toString(16).padStart(2, '0');
+      return `#${toHex(match[1])}${toHex(match[2])}${toHex(match[3])}`;
+    }
+
+    return '#ffffff';
+  }
+  updateElementDOM(el) {
+    const div = document.getElementById(el.id);
+    if (!div) return;
+
+    let borderStyle = el.bg === 'transparent' ? 'none' : '2px dashed #cbd5e1';
+    if (el.imageUrl) borderStyle = 'none';
+
+    div.style.left = el.x + 'px';
+    div.style.top = el.y + 'px';
+    div.style.width = el.w + 'px';
+    div.style.height = el.h + 'px';
+    div.style.color = el.textColor || '#64748b';
+    div.style.fontSize = (el.fontSize || 13) + 'px';
+    div.style.border = borderStyle;
+    div.style.zIndex = el.zIndex || 0;
+    div.style.background = el.imageUrl ? 'transparent' : (el.bg || 'transparent');
+
+    if (el.imageUrl) {
+      div.style.backgroundImage = `url(${el.imageUrl})`;
+      div.style.backgroundSize = 'contain';
+      div.style.backgroundPosition = 'center';
+      div.style.backgroundRepeat = 'no-repeat';
+    } else {
+      div.style.backgroundImage = 'none';
+    }
+
+    const labelSpan = div.querySelector('.layout-label');
+    if (labelSpan) labelSpan.textContent = el.label || '';
+  }
   addElementFromPalette(idx) {
     const item = this.paletteItems[idx];
     if (!item) return;
@@ -207,7 +341,19 @@ class LayoutTool {
   }
   addElement(item, x, y) {
     const id = 'layout_el_' + (this.elemIdCounter++);
-    const el = { id, label: item.label || '', x, y, w: item.w, h: item.h, bg: item.bg || 'transparent', textColor: item.textColor || '#64748b', imageUrl: item.imageUrl || null };
+    const el = {
+      id,
+      label: item.label || '',
+      x,
+      y,
+      w: item.w,
+      h: item.h,
+      bg: item.bg || 'transparent',
+      textColor: item.textColor || '#64748b',
+      fontSize: item.fontSize || 14,
+      zIndex: this.elements.length,
+      imageUrl: item.imageUrl || null,
+    };
     this.elements.push(el);
     this.renderElement(el);
     this.pushUndoAction({
@@ -224,7 +370,9 @@ class LayoutTool {
     let borderStyle = el.bg === 'transparent' ? 'none' : '2px dashed #cbd5e1';
     if (el.imageUrl) borderStyle = 'none';
     
-    div.style.cssText = `left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;background:${el.bg};color:${el.textColor};border:${borderStyle}`;
+    const fontSize = el.fontSize || 14;
+    const zIndex = el.zIndex || 0;
+    div.style.cssText = `left:${el.x}px;top:${el.y}px;width:${el.w}px;height:${el.h}px;background:${el.bg};color:${el.textColor};border:${borderStyle};font-size:${fontSize}px;z-index:${zIndex}`;
     
     if (el.imageUrl) {
       div.style.backgroundImage = `url(${el.imageUrl})`;
@@ -268,6 +416,7 @@ class LayoutTool {
           el.h = Math.max(30, oh + dy);
           div.style.width = el.w + 'px';
           div.style.height = el.h + 'px';
+          if (this.propertyPanelEl && this.propertyPanelEl.id === el.id) this.syncPropertyPanel(el);
           moved = true;
         } else if (dragging) {
           const nextX = Math.max(0, event.clientX - ox);
@@ -276,6 +425,7 @@ class LayoutTool {
           el.x = nextX;
           el.y = nextY;
           div.style.left = el.x + 'px'; div.style.top = el.y + 'px';
+          if (this.propertyPanelEl && this.propertyPanelEl.id === el.id) this.syncPropertyPanel(el);
         }
       };
       const onMouseUp = () => {
@@ -303,20 +453,11 @@ class LayoutTool {
       document.addEventListener('mousemove', onMouseMove);
       document.addEventListener('mouseup', onMouseUp);
     });
-    div.addEventListener('dblclick', () => {
-      if (el.imageUrl) return; // 画像の場合はラベル編集をスキップ
-      const name = prompt('ラベル:', el.label);
-      if (name !== null && name !== el.label) {
-        const oldLabel = el.label;
-        el.label = name;
-        const span = div.querySelector('.layout-label');
-        if (span) span.textContent = name;
-        this.pushUndoAction({
-          type: 'renameElement',
-          elementId: el.id,
-          label: oldLabel,
-        });
-      }
+    div.addEventListener('dblclick', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.selectElement(el, div);
+      this.openPropertyPanel(el);
     });
     this.canvas.appendChild(div);
   }
@@ -324,10 +465,67 @@ class LayoutTool {
     this.deselectAll();
     this.selectedEl = el;
     div.classList.add('selected');
+    const panel = document.getElementById('layout-property-panel');
+    if (panel && panel.classList.contains('open')) {
+      this.propertyPanelEl = el;
+      this.syncPropertyPanel(el);
+    }
   }
   deselectAll() {
     this.selectedEl = null;
     this.canvas.querySelectorAll('.layout-element').forEach(e => e.classList.remove('selected'));
+  }
+  moveForward(el) {
+    if (!el) return;
+    const currentZ = el.zIndex || 0;
+    // 1段階上のZ順序を持つ要素を探す
+    const nextElement = this.elements.find(e => e.zIndex === currentZ + 1);
+    
+    if (nextElement) {
+      // 入れ替え
+      const oldZ = el.zIndex;
+      el.zIndex = nextElement.zIndex;
+      nextElement.zIndex = oldZ;
+      
+      this.updateElementDOM(el);
+      this.updateElementDOM(nextElement);
+    }
+    
+    this.syncPropertyPanel(el);
+    this.pushUndoAction({
+      type: 'changeZIndex',
+      elementId: el.id,
+      oldZIndex: (el.zIndex === currentZ + 1) ? currentZ : el.zIndex,
+    });
+  }
+  moveBackward(el) {
+    if (!el) return;
+    const currentZ = el.zIndex || 0;
+    
+    if (currentZ === 0) {
+      showToast('これ以上背面に移動できません');
+      return;
+    }
+    
+    // 1段階下のZ順序を持つ要素を探す
+    const prevElement = this.elements.find(e => e.zIndex === currentZ - 1);
+    
+    if (prevElement) {
+      // 入れ替え
+      const oldZ = el.zIndex;
+      el.zIndex = prevElement.zIndex;
+      prevElement.zIndex = oldZ;
+      
+      this.updateElementDOM(el);
+      this.updateElementDOM(prevElement);
+    }
+    
+    this.syncPropertyPanel(el);
+    this.pushUndoAction({
+      type: 'changeZIndex',
+      elementId: el.id,
+      oldZIndex: (el.zIndex === currentZ - 1) ? currentZ : el.zIndex,
+    });
   }
   deleteSelected() {
     if (!this.selectedEl) return;
@@ -417,6 +615,19 @@ class LayoutTool {
         return;
       }
 
+      if (action.type === 'changeZIndex') {
+        const element = this.getElementById(action.elementId);
+        if (element) {
+          element.zIndex = action.oldZIndex;
+          this.updateElementDOM(element);
+          if (this.propertyPanelEl && this.propertyPanelEl.id === element.id) {
+            this.syncPropertyPanel(element);
+          }
+        }
+        showToast('一つ戻しました');
+        return;
+      }
+
       if (action.type === 'clearAll') {
         this.restoreSnapshot(action.snapshot);
         showToast('一つ戻しました');
@@ -436,6 +647,9 @@ class LayoutTool {
     }
   }
   clearAll() {
+    if (!confirm('キャンバスをクリアします。よろしいですか？')) {
+      return;
+    }
     const snapshot = {
       elements: this.elements.map(element => ({ ...element })),
       elemIdCounter: this.elemIdCounter,
