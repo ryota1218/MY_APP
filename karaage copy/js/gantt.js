@@ -31,6 +31,8 @@ class GanttTool {
     this.tasks = USE_GANTT_TEST_DATA ? JSON.parse(JSON.stringify(GANTT_TEST_DATA)) : [];
     this.selected = new Set(); // 選択状態を管理
     this.expandedPhases = new Set(); // フェーズの展開状態を管理
+    this.overallStartOverride = null;
+    this.overallEndOverride = null;
 
     // taskIdCounterを最大IDから設定
     this.taskIdCounter = (this.tasks.length > 0 ? Math.max(...this.tasks.map(t => t.id)) : 10) + 1;
@@ -54,6 +56,11 @@ class GanttTool {
     if (addPhaseBtn) {
       addPhaseBtn.onclick = () => this.addPhase();
     }
+    const editDatesBtn = document.getElementById('edit-project-dates-btn');
+
+    if (editDatesBtn) {
+      editDatesBtn.onclick = () => this.editProjectDates();
+    }
     if (addTaskBtn) {
       addTaskBtn.onclick = () => this.addTask();
     }
@@ -67,7 +74,8 @@ class GanttTool {
       exportCsvBtn.onclick = () => this.exportCSV();
     }
 
-    // タブ機能
+    // Calculator controls
+    this.setupCalculatorControls();
     const tabs = document.querySelectorAll('.tab');
     tabs.forEach(tab => {
       tab.addEventListener('click', () => {
@@ -89,20 +97,107 @@ class GanttTool {
           editContent.style.display = 'none';
           calculatorContent.style.display = 'block';
           this.updateCalculator();
-
-          // 計算ボタンのイベントリスナーを設定
-          const effortBtn = document.getElementById('calc-effort-btn');
-          const progressBtn = document.getElementById('calc-progress-btn');
-          
-          if (effortBtn) {
-            effortBtn.onclick = () => this.calculateEffort();
-          }
-          if (progressBtn) {
-            progressBtn.onclick = () => this.calculateProgress();
-          }
+          this.setupCalculatorControls();
         }
       });
     });
+  }
+
+  setupCalculatorControls() {
+    const effortBtn = document.getElementById('calc-effort-btn');
+    const effortUnitUp = document.getElementById('effort-unit-up');
+    const effortUnitDown = document.getElementById('effort-unit-down');
+    const effortUnitSelect = document.getElementById('effort-unit');
+    const effortUnitDisplay = document.getElementById('effort-unit-display');
+
+    const units = ['hours', 'days', 'months'];
+    const unitLabels = { hours: '時間', days: '日', months: '月' };
+
+    const updateUnitDisplay = () => {
+      if (!effortUnitSelect || !effortUnitDisplay) return;
+      const currentUnit = effortUnitSelect.value;
+      effortUnitDisplay.textContent = unitLabels[currentUnit] || '時間';
+    };
+
+    if (effortBtn) {
+      effortBtn.onclick = () => this.performEffortCalculation();
+    }
+
+    // Remove old event listeners and add new ones
+    if (effortUnitUp) {
+      // Clone and replace to remove old listeners
+      const newUpBtn = effortUnitUp.cloneNode(true);
+      effortUnitUp.parentNode.replaceChild(newUpBtn, effortUnitUp);
+      newUpBtn.onclick = () => {
+        if (!effortUnitSelect) return;
+        const currentIndex = units.indexOf(effortUnitSelect.value);
+        const nextIndex = (currentIndex + 1) % units.length;
+        effortUnitSelect.value = units[nextIndex];
+        updateUnitDisplay();
+      };
+    }
+
+    if (effortUnitDown) {
+      // Clone and replace to remove old listeners
+      const newDownBtn = effortUnitDown.cloneNode(true);
+      effortUnitDown.parentNode.replaceChild(newDownBtn, effortUnitDown);
+      newDownBtn.onclick = () => {
+        if (!effortUnitSelect) return;
+        const currentIndex = units.indexOf(effortUnitSelect.value);
+        const nextIndex = (currentIndex - 1 + units.length) % units.length;
+        effortUnitSelect.value = units[nextIndex];
+        updateUnitDisplay();
+      };
+    }
+
+    updateUnitDisplay();
+  }
+
+  performEffortCalculation() {
+    const peopleInput = document.getElementById('effort-people');
+    const valueInput = document.getElementById('effort-value');
+    const unitInput = document.getElementById('effort-unit');
+    const summaryText = document.getElementById('effort-summary-text');
+    const resultHours = document.getElementById('effort-result-hours');
+    const resultPersonDays = document.getElementById('effort-result-person-days');
+    const resultPersonMonths = document.getElementById('effort-result-person-months');
+
+    if (!peopleInput || !valueInput || !unitInput || !resultHours || !resultPersonDays || !resultPersonMonths) {
+      showToast('工数計算の要素が見つかりません');
+      return;
+    }
+
+    const people = Number(peopleInput.value);
+    const value = Number(valueInput.value);
+    const unit = unitInput.value;
+
+    if (!people || !value) {
+      showToast('人数と値を正しく入力してください');
+      return;
+    }
+
+    // 単位に応じた変換
+    let totalHours;
+    if (unit === 'hours') {
+      totalHours = people * value;
+    } else if (unit === 'days') {
+      totalHours = people * value * 8; // 1日 = 8時間
+    } else if (unit === 'months') {
+      totalHours = people * value * 20 * 8; // 1月 = 20日 = 160時間
+    }
+
+    const personDays = totalHours / 8;
+    const personMonths = personDays / 20;
+
+    resultHours.textContent = `${totalHours.toFixed(0)} 時間`;
+    resultPersonDays.textContent = `${personDays.toFixed(2)} 人日`;
+    resultPersonMonths.textContent = `${personMonths.toFixed(2)} 人月`;
+
+    if (summaryText) {
+      summaryText.textContent = `人時: ${totalHours.toFixed(0)}時間 / 人日: ${personDays.toFixed(2)}人日 / 人月: ${personMonths.toFixed(2)}人月`;
+    }
+
+    showToast(`工数を計算しました: ${totalHours.toFixed(0)}時間 / ${personDays.toFixed(2)}人日 / ${personMonths.toFixed(2)}人月`);
   }
 
   render() {
@@ -150,6 +245,13 @@ class GanttTool {
       min = max = `${year}-${month}-${day}`;
     }
 
+    if (this.overallStartOverride) {
+      min = this.overallStartOverride;
+    }
+    if (this.overallEndOverride) {
+      max = this.overallEndOverride;
+    }
+
     const start = this.parseDate(min);
     start.setUTCDate(start.getUTCDate() - 3);
 
@@ -157,6 +259,51 @@ class GanttTool {
     end.setUTCDate(end.getUTCDate() + 7);
 
     return { start, end };
+  }
+
+  getProjectBounds() {
+    if (this.tasks.length === 0) {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      return { start: `${year}-${month}-${day}`, end: `${year}-${month}-${day}` };
+    }
+
+    let min = '2099-12-31';
+    let max = '2000-01-01';
+    this.tasks.forEach(t => {
+      if (t.start < min) min = t.start;
+      if (t.end > max) max = t.end;
+    });
+    return { start: min, end: max };
+  }
+
+  editProjectDates() {
+    const bounds = this.getProjectBounds();
+    const startValue = this.overallStartOverride || bounds.start;
+    const endValue = this.overallEndOverride || bounds.end;
+
+    showModal('プロジェクト期間編集', `
+      <div class="form-group"><label>全体開始日</label><input class="form-input" id="project-start-override" type="date" value="${startValue}"></div>
+      <div class="form-group"><label>全体終了日</label><input class="form-input" id="project-end-override" type="date" value="${endValue}"></div>
+      <div style="margin-top: 12px; font-size: 0.9rem; color: #475569;">設定した全体期間はチャートの表示範囲に反映されます。</div>
+    `, () => {
+      const start = document.getElementById('project-start-override').value;
+      const end = document.getElementById('project-end-override').value;
+      if (!start || !end) {
+        showToast('開始日と終了日を入力してください');
+        return;
+      }
+      if (start > end) {
+        showToast('開始日が終了日より後になっています');
+        return;
+      }
+      this.overallStartOverride = start;
+      this.overallEndOverride = end;
+      this.render();
+      showToast('全体期間を更新しました');
+    });
   }
 
   renderTasks() {
@@ -174,8 +321,10 @@ class GanttTool {
           <div class="gantt-task-row phase-row ${this.selected.has(task.id) ? 'selected' : ''}" 
                data-id="${task.id}" 
                style="height:32px; position: relative; display: grid; grid-template-columns: 24px 1fr 70px 70px; align-items: center; gap: 8px; cursor: pointer; background: #f3f4f6; font-weight: 600;">
-            <input type="checkbox" class="task-checkbox" data-id="${task.id}" ${this.selected.has(task.id) ? 'checked' : ''} style="cursor: pointer; margin-left: 8px;">
-            <span class="phase-toggle-btn" data-id="${task.id}" style="cursor: pointer; font-size: 1rem; padding-left: 0;">${arrowIcon}</span>
+            <div style="display:flex; align-items:center; gap:4px; margin-left: 4px;">
+              <input type="checkbox" class="task-checkbox" data-id="${task.id}" ${this.selected.has(task.id) ? 'checked' : ''} style="cursor: pointer;">
+              <span class="phase-toggle-btn" data-id="${task.id}" style="cursor: pointer; font-size: 1rem; padding-left: 0;">${arrowIcon}</span>
+            </div>
             <span style="font-weight: 600; color: #1f2937;">${task.name}</span>
             <span style="font-size:0.75rem;color:var(--text-muted)">
               ${task.start.slice(5)}
@@ -251,18 +400,28 @@ class GanttTool {
       });
     });
 
-    // 行ダブルクリック: 名前編集
+    // フェーズクリックで展開/収納
+    list.querySelectorAll('.gantt-task-row.phase-row').forEach(row => {
+      row.addEventListener('click', (e) => {
+        if (e.target.closest('.task-checkbox') || e.target.closest('.phase-toggle-btn')) return;
+        const id = parseInt(row.dataset.id);
+        if (this.expandedPhases.has(id)) {
+          this.expandedPhases.delete(id);
+        } else {
+          this.expandedPhases.add(id);
+        }
+        this.render();
+      });
+    });
+
+    // 行ダブルクリック: タスク編集
     list.querySelectorAll('.gantt-task-row').forEach(row => {
       row.addEventListener('dblclick', () => {
         const id = parseInt(row.dataset.id);
         const task = this.tasks.find(t => t.id === id);
         if (!task) return;
 
-        const newName = prompt('タスク名:', task.name);
-        if (newName) {
-          task.name = newName;
-          this.render();
-        }
+        this.editTask(task);
       });
     });
 
@@ -284,34 +443,56 @@ class GanttTool {
   updateDeleteButtonVisibility() {
     const deleteBtn = document.getElementById('delete-selected-btn');
     const inputActualBtn = document.getElementById('input-actual-btn');
+    const hasTaskSelected = Array.from(this.selected).some(id => {
+      const task = this.tasks.find(t => t.id === id);
+      return task && !task.phase;
+    });
     if (deleteBtn) {
-      deleteBtn.style.display = this.selected.size > 0 ? 'inline-block' : 'none';
+      deleteBtn.style.display = hasTaskSelected ? 'inline-block' : 'none';
     }
     if (inputActualBtn) {
-      // タスク選択時のみ実績入力ボタンを表示（フェーズを除く）
-      const hasTaskSelected = Array.from(this.selected).some(id => {
-        const task = this.tasks.find(t => t.id === id);
-        return task && !task.phase;
-      });
       inputActualBtn.style.display = hasTaskSelected ? 'inline-block' : 'none';
     }
   }
 
-  deleteSelected() {
-    if (this.selected.size === 0) {
-      showToast('削除するタスクを選択してください');
-      return;
-    }
-
-    const count = this.selected.size;
-    showModal('タスク削除確認', `
-      <p><strong>${count}件</strong>のタスク/フェーズを削除してもよろしいですか？</p>
+  editTask(task) {
+    showModal('タスク編集', `
+      <div class="form-group"><label>タスク名</label><input class="form-input" id="edit-task-name" value="${task.name}"></div>
+      <div class="form-group"><label>計画開始日</label><input class="form-input" id="edit-task-start" type="date" value="${task.start}"></div>
+      <div class="form-group"><label>計画終了日</label><input class="form-input" id="edit-task-end" type="date" value="${task.end}"></div>
+      <div class="form-group"><label>実績開始日</label><input class="form-input" id="edit-actual-start" type="date" value="${task.actualStart || ''}"></div>
+      <div class="form-group"><label>実績終了日</label><input class="form-input" id="edit-actual-end" type="date" value="${task.actualEnd || ''}"></div>
     `,
     () => {
-      this.tasks = this.tasks.filter(t => !this.selected.has(t.id));
-      this.selected.clear();
+      const name = document.getElementById('edit-task-name').value;
+      const start = document.getElementById('edit-task-start').value;
+      const end = document.getElementById('edit-task-end').value;
+      const actualStart = document.getElementById('edit-actual-start').value;
+      const actualEnd = document.getElementById('edit-actual-end').value;
+
+      if (!name || !start || !end) {
+        showToast('タスク名、計画開始日、計画終了日は必須です');
+        return;
+      }
+
+      if (start > end) {
+        showToast('計画開始日が計画終了日より後になっています');
+        return;
+      }
+
+      if (actualStart && actualEnd && actualStart > actualEnd) {
+        showToast('実績開始日が実績終了日より後になっています');
+        return;
+      }
+
+      task.name = name;
+      task.start = start;
+      task.end = end;
+      task.actualStart = actualStart;
+      task.actualEnd = actualEnd;
+
       this.render();
-      showToast(`${count}件のタスク/フェーズを削除しました`);
+      showToast('タスクを更新しました');
     });
   }
 
@@ -368,9 +549,17 @@ class GanttTool {
 
   // バー
   const startDayNum = Math.floor(start.getTime() / 86400000);
-  bars.innerHTML = todayLine + this.tasks.map(task => {
+  bars.innerHTML = todayLine + this.tasks.filter(task => !task.phase).map(task => {
     const taskStartDayNum = this.getDayNumber(task.start);
     const taskEndDayNum = this.getDayNumber(task.end);
+
+    if (!task.phase) {
+      const parentPhase = this.tasks.find(p => p.phase && this.getDayNumber(p.start) <= taskStartDayNum && this.getDayNumber(p.end) >= taskEndDayNum);
+      const parentPhaseId = parentPhase ? parentPhase.id : null;
+      if (parentPhaseId && !this.expandedPhases.has(parentPhaseId)) {
+        return '';
+      }
+    }
 
     // 開始位置：タスク開始日 - 基準開始日
     const startOffset = (taskStartDayNum - startDayNum) * dayWidth;
@@ -408,7 +597,7 @@ class GanttTool {
                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
              ">
           <span style="display: block; padding: 2px 4px; font-size: 0.75rem; font-weight: 500; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-            ${task.name}
+            ${task.phase ? '' : task.name}
           </span>
           ${statusBadge}
         </div>
@@ -552,7 +741,9 @@ enableDrag() {
       document.getElementById('project-duration').textContent = '-';
       document.getElementById('project-start').textContent = '-';
       document.getElementById('project-end').textContent = '-';
-      document.getElementById('project-count').textContent = '0';
+      document.getElementById('project-remaining-count').textContent = '0';
+      document.getElementById('project-progress').textContent = '-';
+      document.getElementById('project-progress-detail').textContent = '-';
       document.getElementById('calculator-table-body').innerHTML = `
         <tr style="text-align: center; color: #9ca3af;">
           <td colspan="6" style="padding: 20px;">データが入力されていません</td>
@@ -563,15 +754,16 @@ enableDrag() {
     }
 
     // プロジェクト全体の開始日・終了日
-    let minStart = this.parseDate('2099-12-31');
-    let maxEnd = this.parseDate('2000-01-01');
+    const bounds = this.getProjectBounds();
+    let minStart = this.parseDate(bounds.start);
+    let maxEnd = this.parseDate(bounds.end);
 
-    this.tasks.forEach(t => {
-      const start = this.parseDate(t.start);
-      const end = this.parseDate(t.end);
-      if (start < minStart) minStart = start;
-      if (end > maxEnd) maxEnd = end;
-    });
+    if (this.overallStartOverride) {
+      minStart = this.parseDate(this.overallStartOverride);
+    }
+    if (this.overallEndOverride) {
+      maxEnd = this.parseDate(this.overallEndOverride);
+    }
 
     // プロジェクト期間計算
     const projectDays = Math.ceil((maxEnd - minStart) / 86400000) + 1;
@@ -584,6 +776,12 @@ enableDrag() {
     const completedTasks = allTasks.filter(t => t.actualEnd);
     const remainingTasks = allTasks.length - completedTasks.length;
     document.getElementById('project-remaining-count').textContent = remainingTasks;
+
+    const totalWork = allTasks.reduce((sum, t) => sum + ((this.getDayNumber(t.end) - this.getDayNumber(t.start)) + 1), 0);
+    const completedWork = completedTasks.reduce((sum, t) => sum + ((this.getDayNumber(t.end) - this.getDayNumber(t.start)) + 1), 0);
+    const progressRate = totalWork > 0 ? Math.round((completedWork / totalWork) * 100) : 0;
+    document.getElementById('project-progress').textContent = totalWork > 0 ? `${progressRate}%` : '-';
+    document.getElementById('project-progress-detail').textContent = totalWork > 0 ? `計算式: ${completedWork} ÷ ${totalWork} × 100` : '-';
 
     // テーブル行生成
     let tableHtml = '';
@@ -704,33 +902,34 @@ enableDrag() {
   }
 
   calculateEffort() {
-    const tasks = this.tasks.filter(t => !t.phase);
-    
-    if (tasks.length === 0) {
-      showToast('タスクが登録されていません');
+    const peopleInput = document.getElementById('effort-people');
+    const hoursInput = document.getElementById('effort-hours');
+    const resultHours = document.getElementById('effort-result-hours');
+    const resultPersonDays = document.getElementById('effort-result-person-days');
+    const resultPersonMonths = document.getElementById('effort-result-person-months');
+
+    if (!peopleInput || !hoursInput || !resultHours || !resultPersonDays || !resultPersonMonths) {
+      showToast('工数計算の要素が見つかりません');
       return;
     }
 
-    let totalEffort = 0;
-    let detailsHtml = '';
+    const people = Number(peopleInput.value);
+    const hours = Number(hoursInput.value);
 
-    tasks.forEach(task => {
-      const duration = (this.getDayNumber(task.end) - this.getDayNumber(task.start)) + 1;
-      // 工数 = 工期（営業日数を想定）
-      totalEffort += duration;
-      detailsHtml += `<p style="margin: 4px 0;"><strong>${task.name}</strong>: ${duration}日</p>`;
-    });
+    if (!people || !hours) {
+      showToast('人数と時間を正しく入力してください');
+      return;
+    }
 
-    showModal('工数計算結果', `
-      <div style="background: #e0f2fe; padding: 16px; border-radius: 6px; border-left: 4px solid #0284c7; margin-bottom: 16px;">
-        <div style="font-size: 0.875rem; color: #0c4a6e; margin-bottom: 4px;">総工期</div>
-        <div style="font-size: 2rem; font-weight: bold; color: #0284c7;">${totalEffort}日</div>
-      </div>
-      <div style="margin-top: 16px;">
-        <h4 style="margin: 0 0 12px 0; color: #374151;">タスク別工期</h4>
-        ${detailsHtml}
-      </div>
-    `, null, false);
+    const totalHours = people * hours;
+    const personDays = totalHours / 8;
+    const personMonths = personDays / 20;
+
+    resultHours.textContent = `${totalHours} 時間`;
+    resultPersonDays.textContent = `${personDays.toFixed(2)} 人日`;
+    resultPersonMonths.textContent = `${personMonths.toFixed(2)} 人月`;
+
+    showToast(`工数を計算しました: ${totalHours}時間 / ${personDays.toFixed(2)}人日 / ${personMonths.toFixed(2)}人月`);
   }
 
   calculateProgress() {
@@ -745,7 +944,9 @@ enableDrag() {
     const inProgressTasks = tasks.filter(t => t.actualStart && !t.actualEnd);
     const notStartedTasks = tasks.filter(t => !t.actualStart);
 
-    const progressRate = Math.round((completedTasks.length / tasks.length) * 100);
+    const totalWork = tasks.reduce((sum, t) => sum + ((this.getDayNumber(t.end) - this.getDayNumber(t.start)) + 1), 0);
+    const completedWork = completedTasks.reduce((sum, t) => sum + ((this.getDayNumber(t.end) - this.getDayNumber(t.start)) + 1), 0);
+    const progressRate = totalWork > 0 ? Math.round((completedWork / totalWork) * 100) : 0;
     
     let detailsHtml = `
       <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px;">
@@ -814,27 +1015,40 @@ enableDrag() {
   addTask() {
     showModal('タスク追加', `
       <div class="form-group"><label>タスク名</label><input class="form-input" id="gantt-task-name"></div>
-      <div class="form-group"><label>開始日</label><input class="form-input" id="gantt-task-start" type="date"></div>
-      <div class="form-group"><label>終了日</label><input class="form-input" id="gantt-task-end" type="date"></div>
+      <div class="form-group"><label>計画開始日</label><input class="form-input" id="gantt-task-start" type="date"></div>
+      <div class="form-group"><label>計画終了日</label><input class="form-input" id="gantt-task-end" type="date"></div>
+      <div class="form-group"><label>実績開始日</label><input class="form-input" id="gantt-task-actual-start" type="date"></div>
+      <div class="form-group"><label>実績終了日</label><input class="form-input" id="gantt-task-actual-end" type="date"></div>
     `,
     () => {
       const name = document.getElementById('gantt-task-name').value;
       const start = document.getElementById('gantt-task-start').value;
       const end = document.getElementById('gantt-task-end').value;
+      const actualStart = document.getElementById('gantt-task-actual-start').value;
+      const actualEnd = document.getElementById('gantt-task-actual-end').value;
 
-      if (name && start && end) {
-        this.tasks.push({
-          id: this.taskIdCounter++,
-          name,
-          phase: false,
-          start,
-          end,
-          color: '#a78bfa'
-        });
-
-        this.render();
-        showToast('タスクを追加しました');
+      if (!name || !start || !end) {
+        showToast('タスク名と計画開始・終了日を入力してください');
+        return;
       }
+      if (actualStart && actualEnd && actualStart > actualEnd) {
+        showToast('実績開始日が実績終了日より後になっています');
+        return;
+      }
+
+      this.tasks.push({
+        id: this.taskIdCounter++,
+        name,
+        phase: false,
+        start,
+        end,
+        actualStart: actualStart || null,
+        actualEnd: actualEnd || null,
+        color: '#a78bfa'
+      });
+
+      this.render();
+      showToast('タスクを追加しました');
     });
   }
 

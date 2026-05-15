@@ -6,6 +6,7 @@
 
 <!-- 編集パネル -->
 <div id="edit-panel" class="edit-panel" style="padding: 16px; border-bottom: 1px solid var(--border); display: flex; gap: 12px; align-items: center;" data-panel="edit">
+  <button id="edit-project-dates-btn" class="btn-secondary" style="padding: 8px 16px; background: #64748b; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500;">📆 全体期間編集</button>
   <button id="add-phase-btn" class="btn-primary" style="padding: 8px 16px; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500;">+ フェーズ追加</button>
   <button id="add-task-btn" class="btn-primary" style="padding: 8px 16px; background: #06b6d4; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500;">+ タスク追加</button>
   <button id="input-actual-btn" class="btn-info" style="padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500; display: none;">📅 実績入力</button>
@@ -21,7 +22,7 @@
   <div class="gantt-tasks" id="gantt-tasks">
     <div class="gantt-tasks-header" style="display: grid; grid-template-columns: 24px 1fr 70px 70px;">
       <span style="text-align: center;"></span>
-      <span>タスク名</span>
+      <span>名前</span>
       <span>開始</span>
       <span>終了</span>
     </div>
@@ -39,6 +40,14 @@
   <!-- 計算機パネル -->
 <div id="calculator-content" style="padding: 20px; overflow-y: auto; height: calc(100vh - 240px); display: none;">
   <div style="max-width: 1000px;">
+    
+    <!-- クリティカルパス -->
+    <div style="margin-bottom: 24px;">
+      <h3 style="font-size: 1.1rem; font-weight: bold; margin-bottom: 12px; color: #e9edf3;">🔴 クリティカルパス</h3>
+      <div id="critical-path" style="background: #fee2e2; padding: 16px; border-radius: 6px; border-left: 4px solid #dc2626; color: #7f1d1d; font-size: 0.95rem; line-height: 1.6;">
+        データが入力されていません
+      </div>
+    </div>
     <!-- プロジェクト概要 -->
     <div style="margin-bottom: 24px;">
       <h3 style="font-size: 1.1rem; font-weight: bold; margin-bottom: 12px; color: #f8fafc;">📊 プロジェクト概要</h3>
@@ -59,13 +68,56 @@
           <div style="font-size: 0.875rem; color: #dcfce7; margin-bottom: 6px; font-weight: 500;">残りタスク数</div>
           <div id="project-remaining-count" style="font-size: 1.5rem; font-weight: bold; color: #ffffff;">-</div>
         </div>
+        <div style="background: linear-gradient(135deg, #14b8a6 0%, #06b6d4 100%); padding: 16px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <div style="font-size: 0.875rem; color: #d9faf8; margin-bottom: 6px; font-weight: 500;">進捗率</div>
+          <div id="project-progress" style="font-size: 1.5rem; font-weight: bold; color: #ffffff;">-</div>
+          <div id="project-progress-detail" style="font-size: 0.75rem; color: #cffafe; margin-top: 6px;">-</div>
+        </div>
       </div>
     </div>
 
-    <!-- 計算ボタン -->
-    <div style="margin-bottom: 24px; display: flex; gap: 12px; flex-wrap: wrap;">
-      <button id="calc-effort-btn" style="padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.95rem; font-weight: 500;">📊 工数を計算</button>
-      <button id="calc-progress-btn" style="padding: 10px 20px; background: #8b5cf6; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.95rem; font-weight: 500;">📈 進捗率を計算</button>
+    <!-- 工数入力 -->
+    <h3 style="font-size: 1.1rem; font-weight: bold; margin-bottom: 12px; color: #f8fafc;">工数計算</h3>
+    <div id="effort-panel" style="margin-bottom: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start;">
+      <div style="background: #ffffff; border: 1px solid #d1d5db; border-radius: 8px; padding: 16px;">
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;">
+          <div>
+            <label style="display: block; font-size: 0.85rem; margin-bottom: 8px; font-weight: 600; color: #000000;">人数</label>
+            <input class="form-input" id="effort-people" type="number" min="1" value="1" style="width: 100%; color: #000000;">
+          </div>
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+              <span id="effort-unit-display" style="font-size: 0.85rem; font-weight: 600; color: #000000; min-width: 30px;">時間</span>
+              <div style="display: flex; gap: 2px;">
+                <button id="effort-unit-up" style="padding: 2px 4px; background: #3b82f6; color: white; border: none; border-radius: 2px; cursor: pointer; font-size: 0.6rem; line-height: 1; min-width: 20px;">▲</button>
+                <button id="effort-unit-down" style="padding: 2px 4px; background: #3b82f6; color: white; border: none; border-radius: 2px; cursor: pointer; font-size: 0.6rem; line-height: 1; min-width: 20px;">▼</button>
+              </div>
+            </div>
+            <input class="form-input" id="effort-value" type="number" min="1" value="8" style="width: 100%; color: #000000;">
+            <select class="form-input" id="effort-unit" style="width: 100%; color: #000000; display: none;">
+              <option value="hours">時間</option>
+              <option value="days">日</option>
+              <option value="months">月</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top: 16px;">
+          <button id="calc-effort-btn" style="padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.95rem; font-weight: 500;">計算</button>
+        </div>
+      </div>
+      <div id="effort-result" style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px;">
+        <div style="font-size: 0.95rem; font-weight: 700; margin-bottom: 12px; color: #000000;">計算結果</div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span style="color: #000000;">人時</span><strong id="effort-result-hours" style="color: #000000;">-</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span style="color: #000000;">人日</span><strong id="effort-result-person-days" style="color: #000000;">-</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: #000000;">人月</span><strong id="effort-result-person-months" style="color: #000000;">-</strong>
+        </div>
+      </div>
+      </div>
     </div>
 
     <!-- フェーズ・タスク一覧 -->
@@ -92,12 +144,6 @@
       </div>
     </div>
 
-    <!-- クリティカルパス -->
-    <div style="margin-bottom: 24px;">
-      <h3 style="font-size: 1.1rem; font-weight: bold; margin-bottom: 12px; color: #e9edf3;">🔴 クリティカルパス</h3>
-      <div id="critical-path" style="background: #fee2e2; padding: 16px; border-radius: 6px; border-left: 4px solid #dc2626; color: #7f1d1d; font-size: 0.95rem; line-height: 1.6;">
-        データが入力されていません
-      </div>
     </div>
   </div>
 </div>
