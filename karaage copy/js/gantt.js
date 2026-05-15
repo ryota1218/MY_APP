@@ -38,34 +38,40 @@ class GanttTool {
     this.taskIdCounter = (this.tasks.length > 0 ? Math.max(...this.tasks.map(t => t.id)) : 10) + 1;
     this.isSyncingScroll = false;
 
-    // Undo/Redo履歴
-    this.undoHistory = [];
-    this.redoHistory = [];
-    this.isApplyingUndo = false;
-
-    // ドラッグソート用
-    this.draggedElement = null;
-    this.draggedTaskId = null;
-
-    // グローバル参照を設定（HTMLの onclick から呼び出すため）
-    window.ganttInstance = this;
+    // 初期状態ではすべてのフェーズを展開
+    this.tasks.filter(t => t.phase).forEach(t => this.expandedPhases.add(t.id));
 
     this.render();
     this.setupButtons();
   }
 
   setupButtons() {
-    // ボタンイベントリスナーを設定（data-action属性を使用）
-    const container = document.getElementById('gantt') || document.querySelector('.tool-section');
-    if (container) {
-      container.querySelectorAll('[data-action]').forEach(btn => {
-        btn.addEventListener('click', e => {
-          const action = btn.dataset.action;
-          if (typeof this[action] === 'function') {
-            this[action]();
-          }
-        });
-      });
+    // ボタンイベントリスナーを設定
+    const addPhaseBtn = document.getElementById('add-phase-btn');
+    const addTaskBtn = document.getElementById('add-task-btn');
+    const inputActualBtn = document.getElementById('input-actual-btn');
+    const deleteBtn = document.getElementById('delete-selected-btn');
+    const exportCsvBtn = document.getElementById('export-csv-btn');
+
+    if (addPhaseBtn) {
+      addPhaseBtn.onclick = () => this.addPhase();
+    }
+    const editDatesBtn = document.getElementById('edit-project-dates-btn');
+
+    if (editDatesBtn) {
+      editDatesBtn.onclick = () => this.editProjectDates();
+    }
+    if (addTaskBtn) {
+      addTaskBtn.onclick = () => this.addTask();
+    }
+    if (inputActualBtn) {
+      inputActualBtn.onclick = () => this.inputActual();
+    }
+    if (deleteBtn) {
+      deleteBtn.onclick = () => this.deleteSelected();
+    }
+    if (exportCsvBtn) {
+      exportCsvBtn.onclick = () => this.exportCSV();
     }
 
     // Calculator controls
@@ -199,7 +205,6 @@ class GanttTool {
     this.renderTimeline();
     this.setupScrollSync(); // ←重要
     this.enableDrag(); // ドラッグ機能有効化
-    this.enableTaskReordering(); // タスク並び替え機能を有効化
     this.updateCalculator(); // 計算機も更新
   }
 
@@ -304,23 +309,67 @@ class GanttTool {
   renderTasks() {
     const list = document.getElementById('gantt-task-list');
 
-    list.innerHTML = this.tasks.map(t => `
-      <div class="gantt-task-row ${t.phase ? 'phase' : ''} ${this.selected.has(t.id) ? 'selected' : ''}" 
-           data-id="${t.id}" 
-           draggable="true"
-           style="height:32px; position: relative; display: grid; grid-template-columns: 24px 1fr 70px 70px; align-items: center; gap: 8px;">
-        <input type="checkbox" class="task-checkbox" data-id="${t.id}" ${this.selected.has(t.id) ? 'checked' : ''} style="cursor: pointer; margin-left: 8px;">
-        <span style="padding-left:${t.phase?'0':'8'}px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-          ${t.phase?'▸ ':''}${t.name}
-        </span>
-        <span style="font-size:0.75rem;color:var(--text-muted)">
-          ${t.start.slice(5)}
-        </span>
-        <span style="font-size:0.75rem;color:var(--text-muted)">
-          ${t.end.slice(5)}
-        </span>
-      </div>
-    `).join('');
+    let tasksHtml = '';
+    
+    for (const task of this.tasks) {
+      if (task.phase) {
+        // フェーズ行
+        const isExpanded = this.expandedPhases.has(task.id);
+        const arrowIcon = isExpanded ? '▼' : '▶';
+        
+        tasksHtml += `
+          <div class="gantt-task-row phase-row ${this.selected.has(task.id) ? 'selected' : ''}" 
+               data-id="${task.id}" 
+               style="height:32px; position: relative; display: grid; grid-template-columns: 24px 1fr 70px 70px; align-items: center; gap: 8px; cursor: pointer; background: #f3f4f6; font-weight: 600;">
+            <div style="display:flex; align-items:center; gap:4px; margin-left: 4px;">
+              <input type="checkbox" class="task-checkbox" data-id="${task.id}" ${this.selected.has(task.id) ? 'checked' : ''} style="cursor: pointer;">
+              <span class="phase-toggle-btn" data-id="${task.id}" style="cursor: pointer; font-size: 1rem; padding-left: 0;">${arrowIcon}</span>
+            </div>
+            <span style="font-weight: 600; color: #1f2937;">${task.name}</span>
+            <span style="font-size:0.75rem;color:var(--text-muted)">
+              ${task.start.slice(5)}
+            </span>
+            <span style="font-size:0.75rem;color:var(--text-muted)">
+              ${task.end.slice(5)}
+            </span>
+          </div>
+        `;
+
+        // フェーズが展開されている場合のみ、配下のタスクを表示
+        if (isExpanded) {
+          const childTasks = this.tasks.filter(t => 
+            !t.phase && 
+            this.getDayNumber(t.start) >= this.getDayNumber(task.start) &&
+            this.getDayNumber(t.end) <= this.getDayNumber(task.end)
+          );
+
+          for (const childTask of childTasks) {
+            const statusIcon = childTask.actualEnd ? '✓' : '';
+            const statusColor = childTask.actualEnd ? '#10b981' : '#9ca3af';
+            
+            tasksHtml += `
+              <div class="gantt-task-row ${this.selected.has(childTask.id) ? 'selected' : ''}" 
+                   data-id="${childTask.id}" 
+                   style="height:32px; position: relative; display: grid; grid-template-columns: 24px 1fr 70px 70px; align-items: center; gap: 8px; padding-left: 16px; background: #ffffff; border-left: 3px solid ${childTask.color};">
+                <input type="checkbox" class="task-checkbox" data-id="${childTask.id}" ${this.selected.has(childTask.id) ? 'checked' : ''} style="cursor: pointer; margin-left: 8px;">
+                <span style="padding-left:8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 8px;">
+                  ${childTask.name}
+                  <span style="color: ${statusColor}; font-size: 0.875rem;">${statusIcon}</span>
+                </span>
+                <span style="font-size:0.75rem;color:var(--text-muted)">
+                  ${childTask.start.slice(5)}
+                </span>
+                <span style="font-size:0.75rem;color:var(--text-muted)">
+                  ${childTask.end.slice(5)}
+                </span>
+              </div>
+            `;
+          }
+        }
+      }
+    }
+
+    list.innerHTML = tasksHtml;
 
     // フェーズの展開・収納イベント
     list.querySelectorAll('.phase-toggle-btn').forEach(btn => {
@@ -401,42 +450,51 @@ class GanttTool {
     if (deleteBtn) {
       deleteBtn.style.display = hasTaskSelected ? 'inline-block' : 'none';
     }
-  }
-
-  deleteSelected() {
-  if (this.selected.size === 0) {
-    showToast('削除するタスクを選択してください');
-    return;
-  }
-
-  const count = this.selected.size;
-  // 削除前のインデックスを含めて保存
-  const deletedTasks = Array.from(this.selected).map(id => {
-    const index = this.tasks.findIndex(t => t.id === id);
-    if (index !== -1) {
-      return { ...this.tasks[index], _originalIndex: index };
+    if (inputActualBtn) {
+      inputActualBtn.style.display = hasTaskSelected ? 'inline-block' : 'none';
     }
-    return null;
-  }).filter(Boolean);
+  }
 
-  // インデックスの大きい順にソート（削除時にズレを防ぐため）
-  deletedTasks.sort((a, b) => b._originalIndex - a._originalIndex);
+  editTask(task) {
+    showModal('タスク編集', `
+      <div class="form-group"><label>タスク名</label><input class="form-input" id="edit-task-name" value="${task.name}"></div>
+      <div class="form-group"><label>計画開始日</label><input class="form-input" id="edit-task-start" type="date" value="${task.start}"></div>
+      <div class="form-group"><label>計画終了日</label><input class="form-input" id="edit-task-end" type="date" value="${task.end}"></div>
+      <div class="form-group"><label>実績開始日</label><input class="form-input" id="edit-actual-start" type="date" value="${task.actualStart || ''}"></div>
+      <div class="form-group"><label>実績終了日</label><input class="form-input" id="edit-actual-end" type="date" value="${task.actualEnd || ''}"></div>
+    `,
+    () => {
+      const name = document.getElementById('edit-task-name').value;
+      const start = document.getElementById('edit-task-start').value;
+      const end = document.getElementById('edit-task-end').value;
+      const actualStart = document.getElementById('edit-actual-start').value;
+      const actualEnd = document.getElementById('edit-actual-end').value;
 
-  showModal('タスク削除確認', `
-    <p><strong>${count}件</strong>のタスク/フェーズを削除してもよろしいですか？</p>
-  `,
-  () => {
-    this.pushUndoAction({
-      type: 'deleteTasks',
-      deletedTasks: deletedTasks.map(t => ({ ...t }))
+      if (!name || !start || !end) {
+        showToast('タスク名、計画開始日、計画終了日は必須です');
+        return;
+      }
+
+      if (start > end) {
+        showToast('計画開始日が計画終了日より後になっています');
+        return;
+      }
+
+      if (actualStart && actualEnd && actualStart > actualEnd) {
+        showToast('実績開始日が実績終了日より後になっています');
+        return;
+      }
+
+      task.name = name;
+      task.start = start;
+      task.end = end;
+      task.actualStart = actualStart;
+      task.actualEnd = actualEnd;
+
+      this.render();
+      showToast('タスクを更新しました');
     });
-    
-    this.tasks = this.tasks.filter(t => !this.selected.has(t.id));
-    this.selected.clear();
-    this.render();
-    showToast(`${count}件のタスク/フェーズを削除しました`);
-  });
-}
+  }
 
   renderTimeline() {
   const { start, end } = this.getDateRange();
@@ -648,75 +706,6 @@ enableDrag() {
   });
 }
 
-  enableTaskReordering() {
-    const list = document.getElementById('gantt-task-list');
-    if (!list) return;
-
-    list.querySelectorAll('.gantt-task-row').forEach(row => {
-      row.addEventListener('dragstart', (e) => {
-        this.draggedTaskId = parseInt(row.dataset.id);
-        this.draggedElement = row;
-        row.style.opacity = '0.5';
-        e.dataTransfer.effectAllowed = 'move';
-      });
-
-      row.addEventListener('dragend', (e) => {
-        if (this.draggedElement) {
-          this.draggedElement.style.opacity = '1';
-        }
-        this.draggedElement = null;
-        this.draggedTaskId = null;
-      });
-
-      row.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        
-        if (this.draggedTaskId === null || this.draggedTaskId === parseInt(row.dataset.id)) {
-          return;
-        }
-
-        row.style.borderTop = '2px solid #3b82f6';
-      });
-
-      row.addEventListener('dragleave', (e) => {
-        row.style.borderTop = 'none';
-      });
-
-      row.addEventListener('drop', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        row.style.borderTop = 'none';
-
-        if (this.draggedTaskId === null || this.draggedTaskId === parseInt(row.dataset.id)) {
-          return;
-        }
-
-        const draggedIndex = this.tasks.findIndex(t => t.id === this.draggedTaskId);
-        const targetIndex = this.tasks.findIndex(t => t.id === parseInt(row.dataset.id));
-
-        if (draggedIndex === -1 || targetIndex === -1) return;
-
-        // ドラッグ&ドロップ前の状態を保存
-        const snapshot = [...this.tasks];
-        
-        // タスクを移動
-        const [movedTask] = this.tasks.splice(draggedIndex, 1);
-        this.tasks.splice(targetIndex, 0, movedTask);
-
-        // Undo履歴に追加
-        this.pushUndoAction({
-          type: 'reorderTasks',
-          snapshot: snapshot
-        });
-
-        this.renderTasks();
-        this.renderTimeline();
-        showToast('タスクの順序を変更しました');
-      });
-    });
-  }
 
   /* ===== スクロール同期 ===== */
   setupScrollSync() {
@@ -1007,15 +996,9 @@ enableDrag() {
 
       if (name && start && end) {
         const colors = ['#7c3aed','#06b6d4','#10b981','#f59e0b','#ec4899','#6366f1'];
-        const newId = this.taskIdCounter++;
-
-        this.pushUndoAction({
-          type: 'addPhase',
-          id: newId
-        });
 
         this.tasks.push({
-          id: newId,
+          id: this.taskIdCounter++,
           name,
           phase: true,
           start,
@@ -1044,22 +1027,25 @@ enableDrag() {
       const actualStart = document.getElementById('gantt-task-actual-start').value;
       const actualEnd = document.getElementById('gantt-task-actual-end').value;
 
-      if (name && start && end) {
-        const newId = this.taskIdCounter++;
+      if (!name || !start || !end) {
+        showToast('タスク名と計画開始・終了日を入力してください');
+        return;
+      }
+      if (actualStart && actualEnd && actualStart > actualEnd) {
+        showToast('実績開始日が実績終了日より後になっています');
+        return;
+      }
 
-        this.pushUndoAction({
-          type: 'addTask',
-          id: newId
-        });
-
-        this.tasks.push({
-          id: newId,
-          name,
-          phase: false,
-          start,
-          end,
-          color: '#a78bfa'
-        });
+      this.tasks.push({
+        id: this.taskIdCounter++,
+        name,
+        phase: false,
+        start,
+        end,
+        actualStart: actualStart || null,
+        actualEnd: actualEnd || null,
+        color: '#a78bfa'
+      });
 
       this.render();
       showToast('タスクを追加しました');
@@ -1128,201 +1114,6 @@ enableDrag() {
     a.click();
 
     showToast('CSVをエクスポートしました');
-  }
-
-  pushUndoAction(action) {
-    if (this.isApplyingUndo || !action) return;
-    this.undoHistory.push(action);
-    this.redoHistory = [];
-  }
-
-  undoLastAction() {
-    const action = this.undoHistory.pop();
-    if (!action) {
-      showToast('戻せる操作がありません');
-      return;
-    }
-
-    this.isApplyingUndo = true;
-    try {
-      const redoAction = this.applyHistoryAction(action);
-      if (redoAction) this.redoHistory.push(redoAction);
-      showToast('一つ戻しました');
-    } finally {
-      this.isApplyingUndo = false;
-    }
-  }
-
-  redoLastAction() {
-    const action = this.redoHistory.pop();
-    if (!action) {
-      showToast('進められる操作がありません');
-      return;
-    }
-
-    this.isApplyingUndo = true;
-    try {
-      const undoAction = this.applyHistoryAction(action);
-      if (undoAction) this.undoHistory.push(undoAction);
-      showToast('一つ先に進みました');
-    } finally {
-      this.isApplyingUndo = false;
-    }
-  }
-
-  applyHistoryAction(action) {
-  if (!action) return null;
-
-  // 追加の取り消し（削除）
-  if (action.type === 'addTask' || action.type === 'addPhase') {
-    const taskToDelete = this.tasks.find(t => t.id === action.id);
-    const originalIndex = this.tasks.indexOf(taskToDelete);
-    
-    const inverse = {
-      type: 'restoreTasks',
-      deletedTasks: [{ ...taskToDelete, _originalIndex: originalIndex }]
-    };
-    this.tasks = this.tasks.filter(t => t.id !== action.id);
-    this.render();
-    return inverse;
-  }
-
-  // 削除の取り消し（復元）
-  if (action.type === 'deleteTasks' || action.type === 'restoreTasks') {
-    const isUndo = action.type === 'deleteTasks';
-    const inverseType = isUndo ? 'restoreTasks' : 'deleteTasks';
-
-    const inverse = {
-      type: inverseType,
-      deletedTasks: action.deletedTasks.map(t => ({ ...t }))
-    };
-
-    if (action.type === 'deleteTasks') {
-      // 復元処理: 保存されたインデックスが小さい順に処理して元の並びを再現
-      const tasksToRestore = [...action.deletedTasks].sort((a, b) => a._originalIndex - b._originalIndex);
-      tasksToRestore.forEach(t => {
-        const { _originalIndex, ...taskData } = t;
-        this.tasks.splice(_originalIndex, 0, taskData);
-      });
-    } else {
-      // 削除処理（Redo時など）
-      const idsToDelete = action.deletedTasks.map(t => t.id);
-      this.tasks = this.tasks.filter(t => !idsToDelete.includes(t.id));
-    }
-
-    this.render();
-    return inverse;
-  }
-
-  // 並び替えの取り消し
-  if (action.type === 'reorderTasks') {
-    const inverse = {
-      type: 'reorderTasks',
-      snapshot: this.tasks.map(t => ({ ...t }))
-    };
-    this.tasks = action.snapshot.map(t => ({ ...t }));
-    this.render();
-    return inverse;
-  }
-
-  return null;
-}
-
-  // ===== ヘッダーボタン機能 =====
-  clearAll() {
-    if (this.tasks.length === 0) {
-      showToast('すべてのタスクが既に削除されています');
-      return;
-    }
-
-    showModal('すべて削除', `
-      <p>すべてのタスク/フェーズを削除してもよろしいですか？<br><strong>${this.tasks.length}件</strong>のデータが削除されます。</p>
-    `,
-    () => {
-      const snapshot = this.tasks.map(t => ({ ...t }));
-      this.pushUndoAction({
-        type: 'clearAll',
-        snapshot
-      });
-      this.tasks = [];
-      this.selected.clear();
-      this.render();
-      showToast('すべてのタスクを削除しました');
-    });
-  }
-
-  save() {
-    showToast('ガントチャートを保存しました');
-  }
-
-  openFolder() {
-    showToast('ファイルを開く機能は準備中です');
-  }
-
-  zoomIn() {
-    showToast('拡大機能は準備中です');
-  }
-
-  zoomOut() {
-    showToast('縮小機能は準備中です');
-  }
-
-  fitToScreen() {
-    showToast('全体表示機能は準備中です');
-  }
-
-  toggleGrid() {
-    showToast('グリッド表示の切り替え機能は準備中です');
-  }
-
-  autoLayout() {
-    showToast('自動配置機能は準備中です');
-  }
-
-  exportSVG() {
-    let svg = '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="400" viewBox="0 0 1200 400" style="background: white;">';
-    svg += '<style>.gantt-text { font-family: sans-serif; font-size: 12px; } .gantt-bar { opacity: 0.8; }</style>';
-    
-    const { start, end } = this.getDateRange();
-    const days = [];
-    let current = new Date(start);
-    while (current <= end) {
-      days.push(new Date(current));
-      current.setDate(current.getDate() + 1);
-    }
-
-    const dayWidth = 1000 / (days.length || 1);
-    const taskHeight = 30;
-    let y = 60;
-
-    // タイトル
-    svg += '<text x="10" y="30" class="gantt-text" style="font-weight: bold; font-size: 16px;">ガントチャート</text>';
-
-    // タスク描画
-    this.tasks.forEach(task => {
-      const taskStart = new Date(task.start);
-      const taskEnd = new Date(task.end);
-      const startIdx = days.findIndex(d => d.toDateString() === taskStart.toDateString());
-      const endIdx = days.findIndex(d => d.toDateString() === taskEnd.toDateString());
-
-      if (startIdx >= 0) {
-        const x = 50 + startIdx * dayWidth;
-        const width = Math.max(dayWidth * (endIdx - startIdx + 1), dayWidth);
-        svg += `<rect x="${x}" y="${y}" width="${width}" height="20" fill="${task.color}" class="gantt-bar" />`;
-        svg += `<text x="${x + 5}" y="${y + 15}" class="gantt-text">${task.name}</text>`;
-      }
-      y += taskHeight;
-    });
-
-    svg += '</svg>';
-
-    const blob = new Blob([svg], { type: 'image/svg+xml' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'gantt_chart.svg';
-    a.click();
-
-    showToast('ガントチャートをSVGでエクスポートしました');
   }
 }
 

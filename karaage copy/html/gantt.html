@@ -1,39 +1,4 @@
 <!-- 上タブ -->
-<div class="section-header editor-header">
-  <div class="editor-header-bar">
-    <div class="editor-header-group">
-      <button class="editor-header-btn" data-label="新規作成" aria-label="新規作成" data-action="clearAll"><i data-lucide="file-plus" class="editor-icon"></i></button>
-      <button class="editor-header-btn" data-label="保存" aria-label="保存" data-action="save"><i data-lucide="save" class="editor-icon"></i></button>
-      <button class="editor-header-btn" data-label="フォルダを開く" aria-label="フォルダを開く" data-action="openFolder"><i data-lucide="folder-open" class="editor-icon"></i></button>
-      <div class="editor-header-sep"></div>
-    </div>
-    <div class="editor-header-group">
-      <button class="editor-header-btn" data-label="元に戻す" aria-label="元に戻す" data-action="undoLastAction"><i data-lucide="undo-2" class="editor-icon"></i></button>
-      <button class="editor-header-btn" data-label="やり直す" aria-label="やり直す" data-action="redoLastAction"><i data-lucide="redo-2" class="editor-icon"></i></button>
-      <button class="editor-header-btn" data-label="コピー" aria-label="コピー" data-action="copy"><i data-lucide="copy" class="editor-icon"></i></button>
-      <button class="editor-header-btn" data-label="貼り付け" aria-label="貼り付け" data-action="paste"><i data-lucide="clipboard-paste" class="editor-icon"></i></button>
-      <div class="editor-header-sep"></div>
-    </div>
-    <div class="editor-header-group">
-      <button class="editor-header-btn" data-label="ズームイン" aria-label="ズームイン" data-action="zoomIn"><i data-lucide="zoom-in" class="editor-icon"></i></button>
-      <button class="editor-header-btn" data-label="ズームアウト" aria-label="ズームアウト" data-action="zoomOut"><i data-lucide="zoom-out" class="editor-icon"></i></button>
-      <button class="editor-header-btn" data-label="全体表示" aria-label="全体表示" data-action="fitToScreen"><i data-lucide="maximize-2" class="editor-icon"></i></button>
-      <button class="editor-header-btn" data-label="グリッド表示" aria-label="グリッド表示" data-action="toggleGrid"><i data-lucide="grid-3x3" class="editor-icon"></i></button>
-      <div class="editor-header-sep"></div>
-    </div>
-    <div class="editor-header-group">
-      <button class="editor-header-btn" data-label="自動配置" aria-label="自動配置" data-action="autoLayout"><i data-lucide="bot" class="editor-icon"></i></button>
-      <button class="editor-header-btn" data-label="SVGエクスポート" aria-label="SVGエクスポート" data-action="exportSVG"><i data-lucide="download" class="editor-icon"></i></button>
-      <button class="editor-header-btn" data-label="共有" aria-label="共有" data-action="share"><i data-lucide="share-2" class="editor-icon"></i></button>
-      <button class="editor-header-btn" data-label="ユーザー" aria-label="ユーザー" data-action="userProfile"><i data-lucide="user" class="editor-icon"></i></button>
-    </div>
-    <div class="editor-header-spacer"></div>
-    <div class="editor-header-group">
-      <button class="editor-header-btn" data-label="ヘルプ" aria-label="ヘルプ" data-action="help"><i data-lucide="help-circle" class="editor-icon"></i></button>
-      <button class="editor-header-btn" data-label="設定" aria-label="設定" data-action="settings"><i data-lucide="settings" class="editor-icon"></i></button>
-    </div>
-  </div>
-</div>
 <div class="top-tabs">
   <div class="tab active" data-tab="edit">編集</div>
   <div class="tab" data-tab="calculator">計算機</div>
@@ -41,11 +6,13 @@
 
 <!-- 編集パネル -->
 <div id="edit-panel" class="edit-panel" style="padding: 16px; border-bottom: 1px solid var(--border); display: flex; gap: 12px; align-items: center;" data-panel="edit">
-  <button id="add-phase-btn" class="btn-primary" style="padding: 8px 16px; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500;" data-action="addPhase">+ フェーズ追加</button>
-  <button id="add-task-btn" class="btn-primary" style="padding: 8px 16px; background: #06b6d4; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500;" data-action="addTask">+ タスク追加</button>
-  <button id="delete-selected-btn" class="btn-danger" style="padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500; display: none;" data-action="deleteSelected">🗑️ 削除</button>
+  <button id="edit-project-dates-btn" class="btn-secondary" style="padding: 8px 16px; background: #64748b; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500;">📆 全体期間編集</button>
+  <button id="add-phase-btn" class="btn-primary" style="padding: 8px 16px; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500;">+ フェーズ追加</button>
+  <button id="add-task-btn" class="btn-primary" style="padding: 8px 16px; background: #06b6d4; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500;">+ タスク追加</button>
+  <button id="input-actual-btn" class="btn-info" style="padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500; display: none;">📅 実績入力</button>
+  <button id="delete-selected-btn" class="btn-danger" style="padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500; display: none;">🗑️ 削除</button>
   <div style="flex: 1;"></div>
-  
+  <button id="export-csv-btn" class="btn-secondary" style="padding: 8px 16px; background: #6366f1; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500;">📥 CSV エクスポート</button>
 </div>
 
 <!-- ガント -->
