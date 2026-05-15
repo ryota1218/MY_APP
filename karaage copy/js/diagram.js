@@ -107,12 +107,177 @@ const umlDiagramTypes = {
   },
   component: {
     label: 'コンポーネント図',
-    components: [
-      { icon: '<i data-lucide="square" class="node-lucide-icon"></i>', label: 'コンポーネント', color: '#7c3aed' },
-      { icon: '<i data-lucide="diamond" class="node-lucide-icon"></i>', label: 'インターフェース', color: '#3b82f6' },
-      { icon: '<i data-lucide="plug" class="node-lucide-icon"></i>', label: 'ポート', color: '#10b981' },
-      { icon: '<i data-lucide="folder" class="node-lucide-icon"></i>', label: 'パッケージ', color: '#06b6d4' },
-      { icon: '<i data-lucide="file-text" class="node-lucide-icon"></i>', label: 'ノート', color: '#64748b' },
+  components: [
+
+    // =========================================
+    // UML コンポーネント
+    // =========================================
+    {
+      icon: `
+        <div class="uml-tool uml-component-tool">
+          <div class="uml-mini-component">
+            <div class="tabs">
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+        </div>
+      `,
+      label:'コンポーネント',
+      color:'#8b5cf6',
+      nodeType:'component',
+      size:{ w:220, h:120 }
+    },
+
+    // =========================================
+    // インターフェース
+    // =========================================
+    {
+      icon: `
+        <div class="uml-tool uml-interface-tool">
+          <div class="uml-lollipop"></div>
+        </div>
+      `,
+      label:'インターフェース',
+      color:'#3b82f6',
+      nodeType:'interface',
+      size:{ w:180, h:90 }
+    },
+
+    // =========================================
+    // ポート
+    // =========================================
+    {
+      icon: `
+        <div class="uml-tool uml-port-tool">
+          <div class="uml-port-box"></div>
+        </div>
+      `,
+      label:'ポート',
+      color:'#10b981',
+      nodeType:'port',
+      size:{ w:26, h:26 }
+    },
+
+    // =========================================
+    // パッケージ
+    // =========================================
+    {
+      icon: `
+        <div class="uml-tool uml-package-tool">
+          <div class="uml-folder">
+            <div class="folder-tab"></div>
+          </div>
+        </div>
+      `,
+      label:'パッケージ',
+      color:'#06b6d4',
+      nodeType:'package',
+      size:{ w:320, h:220 }
+    },
+
+    // =========================================
+    // サブシステム
+    // =========================================
+    {
+      icon: `
+        <div class="uml-tool uml-subsystem-tool">
+          <div class="uml-subsystem-mini">
+            <div class="tabs">
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+        </div>
+      `,
+      label:'サブシステム',
+      color:'#64748b',
+      nodeType:'subsystem',
+      size:{ w:360, h:260 }
+    },
+
+    // =========================================
+    // サーバー
+    // =========================================
+    {
+      icon:'<i data-lucide="server-cog" class="uml-lucide large"></i>',
+      label:'サーバー',
+      color:'#10b981',
+      nodeType:'component',
+      size:{ w:240, h:120 }
+    },
+
+    // =========================================
+    // データベース
+    // =========================================
+    {
+      icon:'<i data-lucide="database" class="uml-lucide large"></i>',
+      label:'データベース',
+      color:'#2563eb',
+      nodeType:'component',
+      size:{ w:240, h:130 }
+    },
+
+    // =========================================
+    // メッセージング
+    // =========================================
+    {
+      icon:'<i data-lucide="mail" class="uml-lucide"></i>',
+      label:'メッセージング',
+      color:'#ef4444',
+      nodeType:'component',
+      size:{ w:220, h:120 }
+    },
+
+    // =========================================
+    // 認証
+    // =========================================
+    {
+      icon:'<i data-lucide="shield-check" class="uml-lucide"></i>',
+      label:'認証/認可',
+      color:'#8b5cf6',
+      nodeType:'component',
+      size:{ w:220, h:120 }
+    },
+
+    // =========================================
+    // 検索
+    // =========================================
+    {
+      icon:'<i data-lucide="search" class="uml-lucide"></i>',
+      label:'検索/キャッシュ',
+      color:'#f59e0b',
+      nodeType:'component',
+      size:{ w:220, h:120 }
+    },
+
+    // =========================================
+    // ビジネス機能
+    // =========================================
+    {
+      icon:'<i data-lucide="shopping-cart" class="uml-lucide"></i>',
+      label:'ビジネス機能',
+      color:'#14b8a6',
+      nodeType:'component',
+      size:{ w:240, h:120 }
+    },
+
+    // =========================================
+    // ノート
+    // =========================================
+    {
+      icon: `
+        <div class="uml-tool uml-note-tool">
+          <div class="uml-note">
+            <div class="fold"></div>
+          </div>
+        </div>
+      `,
+      label:'ノート',
+      color:'#94a3b8',
+      nodeType:'note',
+      size:{ w:260, h:180 }
+    },
     ],
   },
   deployment: {

@@ -435,13 +435,15 @@ class ERDiagramTool {
           if (!fromEl) return;
           const cr = this.canvas.getBoundingClientRect();
           const fr = fromEl.getBoundingClientRect();
-          const x1 = fr.left + fr.width/2 - cr.left;
-          const y1 = fr.top + fr.height/2 - cr.top;
+          const cx1 = fr.left + fr.width/2 - cr.left;
+          const cy1 = fr.top + fr.height/2 - cr.top;
           const x2 = e.clientX - cr.left;
           const y2 = e.clientY - cr.top;
 
-          this.activeConnectionLine.setAttribute('x1', x1);
-          this.activeConnectionLine.setAttribute('y1', y1);
+          const p1 = this.getEdgePoint(fr, cx1, cy1, x2, y2);
+
+          this.activeConnectionLine.setAttribute('x1', p1.x);
+          this.activeConnectionLine.setAttribute('y1', p1.y);
           this.activeConnectionLine.setAttribute('x2', x2);
           this.activeConnectionLine.setAttribute('y2', y2);
         };
@@ -574,24 +576,6 @@ class ERDiagramTool {
         <marker id="er-arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
           <polygon points="0 0,10 3.5,0 7" fill="#06b6d4"/>
         </marker>
-        <marker id="crows-1-start" markerWidth="14" markerHeight="14" refX="0" refY="7" orient="auto">
-          <line x1="8" y1="2" x2="8" y2="12" stroke="#06b6d4" stroke-width="2"/>
-          <line x1="14" y1="2" x2="14" y2="12" stroke="#06b6d4" stroke-width="2"/>
-        </marker>
-        <marker id="crows-1-end" markerWidth="14" markerHeight="14" refX="14" refY="7" orient="auto">
-          <line x1="6" y1="2" x2="6" y2="12" stroke="#06b6d4" stroke-width="2"/>
-          <line x1="0" y1="2" x2="0" y2="12" stroke="#06b6d4" stroke-width="2"/>
-        </marker>
-        <marker id="crows-n-start" markerWidth="14" markerHeight="14" refX="0" refY="7" orient="auto">
-          <line x1="14" y1="7" x2="0" y2="0" stroke="#06b6d4" stroke-width="2"/>
-          <line x1="14" y1="7" x2="0" y2="14" stroke="#06b6d4" stroke-width="2"/>
-          <line x1="0" y1="7" x2="14" y2="7" stroke="#06b6d4" stroke-width="2"/>
-        </marker>
-        <marker id="crows-n-end" markerWidth="14" markerHeight="14" refX="14" refY="7" orient="auto">
-          <line x1="0" y1="7" x2="14" y2="0" stroke="#06b6d4" stroke-width="2"/>
-          <line x1="0" y1="7" x2="14" y2="14" stroke="#06b6d4" stroke-width="2"/>
-          <line x1="14" y1="7" x2="0" y2="7" stroke="#06b6d4" stroke-width="2"/>
-        </marker>
       </defs>`;
       
     this.relations.forEach(rel => {
@@ -601,25 +585,21 @@ class ERDiagramTool {
       const cr = this.canvas.getBoundingClientRect();
       const fr = fromEl.getBoundingClientRect();
       const tr = toEl.getBoundingClientRect();
-      const x1 = fr.left + fr.width/2 - cr.left;
-      const y1 = fr.top + fr.height/2 - cr.top;
-      const x2 = tr.left + tr.width/2 - cr.left;
-      const y2 = tr.top + tr.height/2 - cr.top;
+      const cx1 = fr.left + fr.width/2 - cr.left;
+      const cy1 = fr.top + fr.height/2 - cr.top;
+      const cx2 = tr.left + tr.width/2 - cr.left;
+      const cy2 = tr.top + tr.height/2 - cr.top;
+      
+      const p1 = this.getEdgePoint(fr, cx1, cy1, cx2, cy2);
+      const p2 = this.getEdgePoint(tr, cx2, cy2, cx1, cy1);
+      
+      const x1 = p1.x;
+      const y1 = p1.y;
+      const x2 = p2.x;
+      const y2 = p2.y;
       
       let startMarker = '';
-      let endMarker = '';
-      const lbl = rel.label.toUpperCase();
-      if (lbl.includes('1:N')) {
-         startMarker = 'url(#crows-1-start)'; endMarker = 'url(#crows-n-end)';
-      } else if (lbl.includes('N:1')) {
-         startMarker = 'url(#crows-n-start)'; endMarker = 'url(#crows-1-end)';
-      } else if (lbl.includes('N:M')) {
-         startMarker = 'url(#crows-n-start)'; endMarker = 'url(#crows-n-end)';
-      } else if (lbl.includes('1:1')) {
-         startMarker = 'url(#crows-1-start)'; endMarker = 'url(#crows-1-end)';
-      } else {
-         endMarker = 'url(#er-arrow)'; // default
-      }
+      let endMarker = ''; // シンプルにするためマーカーなし。必要なら 'url(#er-arrow)' を設定できます。
 
       const g = document.createElementNS('http://www.w3.org/2000/svg','g');
       g.style.cursor = 'pointer';
@@ -684,5 +664,27 @@ class ERDiagramTool {
   }
   exportSVG() {
     showToast('SVGをエクスポートしました');
+  }
+
+  getEdgePoint(rect, cx, cy, targetX, targetY) {
+    const w = rect.width / 2;
+    const h = rect.height / 2;
+    const dx = targetX - cx;
+    const dy = targetY - cy;
+    
+    if (dx === 0 && dy === 0) return { x: cx, y: cy };
+    
+    const slope = dy / dx;
+    const rectSlope = h / w;
+    
+    let x, y;
+    if (Math.abs(slope) <= rectSlope) {
+      x = dx > 0 ? cx + w : cx - w;
+      y = cy + slope * (x - cx);
+    } else {
+      y = dy > 0 ? cy + h : cy - h;
+      x = cx + (y - cy) / slope;
+    }
+    return { x, y };
   }
 }
