@@ -8,6 +8,7 @@
 <div id="edit-panel" class="edit-panel" style="padding: 16px; border-bottom: 1px solid var(--border); display: flex; gap: 12px; align-items: center;" data-panel="edit">
   <button id="add-phase-btn" class="btn-primary" style="padding: 8px 16px; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500;">+ フェーズ追加</button>
   <button id="add-task-btn" class="btn-primary" style="padding: 8px 16px; background: #06b6d4; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500;">+ タスク追加</button>
+  <button id="input-actual-btn" class="btn-info" style="padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500; display: none;">📅 実績入力</button>
   <button id="delete-selected-btn" class="btn-danger" style="padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500; display: none;">🗑️ 削除</button>
   <div style="flex: 1;"></div>
   <button id="export-csv-btn" class="btn-secondary" style="padding: 8px 16px; background: #6366f1; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500;">📥 CSV エクスポート</button>
@@ -55,10 +56,16 @@
           <div id="project-end" style="font-size: 1.5rem; font-weight: bold; color: #ffffff;">-</div>
         </div>
         <div style="background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); padding: 16px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-          <div style="font-size: 0.875rem; color: #dcfce7; margin-bottom: 6px; font-weight: 500;">タスク・フェーズ数</div>
-          <div id="project-count" style="font-size: 1.5rem; font-weight: bold; color: #ffffff;">-</div>
+          <div style="font-size: 0.875rem; color: #dcfce7; margin-bottom: 6px; font-weight: 500;">残りタスク数</div>
+          <div id="project-remaining-count" style="font-size: 1.5rem; font-weight: bold; color: #ffffff;">-</div>
         </div>
       </div>
+    </div>
+
+    <!-- 計算ボタン -->
+    <div style="margin-bottom: 24px; display: flex; gap: 12px; flex-wrap: wrap;">
+      <button id="calc-effort-btn" style="padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.95rem; font-weight: 500;">📊 工数を計算</button>
+      <button id="calc-progress-btn" style="padding: 10px 20px; background: #8b5cf6; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.95rem; font-weight: 500;">📈 進捗率を計算</button>
     </div>
 
     <!-- フェーズ・タスク一覧 -->
