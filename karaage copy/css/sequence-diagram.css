@@ -1,0 +1,130 @@
+/* ===== Sequence Diagram ===== */
+
+/* 共通 seq-node 設定: diagram-node のデフォルトを上書き */
+.seq-node {
+  background: transparent;
+  border: none;
+  padding: 0;
+  min-width: 0;
+  gap: 0;
+}
+
+/* ライフライン */
+.seq-lifeline-node {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: none !important;
+}
+.seq-lifeline-node > .node-port {
+  display: none !important;
+}
+.diagram-node.selected.seq-lifeline-node .seq-lifeline-header {
+  box-shadow: 0 0 20px rgba(124,58,237,0.4);
+  border-color: var(--accent);
+}
+.seq-lifeline-header {
+  background: var(--bg-secondary, #1f2937);
+  border: 2px solid var(--border, #374151);
+  border-radius: 6px;
+  padding: 8px 16px;
+  text-align: center;
+  min-width: 90px;
+  position: relative;
+  z-index: 2;
+}
+.seq-lifeline-name {
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: var(--text, #e5e7eb);
+  white-space: nowrap;
+}
+.seq-lifeline-actor .seq-lifeline-name {
+  margin-top: 4px;
+}
+.seq-lifeline-dash {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+}
+
+/* アクター */
+.seq-lifeline-actor {
+  border: none !important;
+  background: transparent !important;
+  padding: 4px 12px !important;
+}
+.seq-actor-icon {
+  display: flex;
+  justify-content: center;
+}
+
+/* 実行仕様バー */
+.seq-exec-node {
+  border-radius: 2px !important;
+}
+.seq-exec-node:hover {
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+}
+
+/* フラグメント */
+.seq-fragment-node {
+  border-radius: 4px !important;
+}
+.seq-fragment-header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 4px 10px;
+  border-bottom: 1px solid;
+  border-radius: 4px 4px 0 0;
+  font-size: 0.75rem;
+  position: relative;
+}
+.seq-fragment-header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 0 14px 14px;
+  border-color: transparent transparent var(--bg-card, #111827) transparent;
+}
+.seq-fragment-type {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.seq-fragment-label {
+  font-style: italic;
+  opacity: 0.8;
+}
+.seq-fragment-body {
+  flex: 1;
+  min-height: 60px;
+}
+
+/* ノート */
+.seq-note-node {
+  position: relative;
+  line-height: 1.4 !important;
+}
+.seq-note-fold {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  border-left: 1px solid;
+  border-bottom: 1px solid;
+  background: #fde68a;
+}
+
+/* 破棄マーク */
+.seq-destruction-node {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}

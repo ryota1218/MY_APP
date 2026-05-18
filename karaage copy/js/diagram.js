@@ -107,7 +107,30 @@ const umlDiagramTypes = {
   },
   component: {
     label: 'コンポーネント図',
-  components: [
+
+  // ─────────────────────────────────────────────
+  // ★ コンポーネント図 サイズ設定 (ここで一括管理)
+  //   w = 幅(px), h = 高さ(px)
+  //   サイズを変えたいときはここの数値だけ編集すればOK
+  // ─────────────────────────────────────────────
+  sizes: {
+    component:    { w: 165, h: 60 },  // UML コンポーネント
+    interface:    { w:  26, h:  26 },  // インターフェース (円形)
+    port:         { w:  26, h:  26 },  // ポート (正方形)
+    package:      { w: 165, h: 80 },  // パッケージ
+    subsystem:    { w: 360, h: 260 },  // サブシステム
+    server:       { w: 240, h: 120 },  // サーバー
+    database:     { w: 240, h: 130 },  // データベース
+    messaging:    { w: 220, h: 120 },  // メッセージング
+    auth:         { w: 220, h: 120 },  // 認証/認可
+    search:       { w: 220, h: 120 },  // 検索/キャッシュ
+    business:     { w: 240, h: 120 },  // ビジネス機能
+    note:         { w: 260, h: 180 },  // ノート
+  },
+
+  get components() {
+    const s = this.sizes;
+    return [
 
     // =========================================
     // UML コンポーネント
@@ -126,7 +149,7 @@ const umlDiagramTypes = {
       label:'コンポーネント',
       color:'#8b5cf6',
       nodeType:'component',
-      size:{ w:220, h:120 }
+      size: s.component
     },
 
     // =========================================
@@ -141,7 +164,7 @@ const umlDiagramTypes = {
       label:'インターフェース',
       color:'#3b82f6',
       nodeType:'interface',
-      size:{ w:180, h:90 }
+      size: s.interface
     },
 
     // =========================================
@@ -156,7 +179,7 @@ const umlDiagramTypes = {
       label:'ポート',
       color:'#10b981',
       nodeType:'port',
-      size:{ w:26, h:26 }
+      size: s.port
     },
 
     // =========================================
@@ -173,7 +196,7 @@ const umlDiagramTypes = {
       label:'パッケージ',
       color:'#06b6d4',
       nodeType:'package',
-      size:{ w:320, h:220 }
+      size: s.package
     },
 
     // =========================================
@@ -193,7 +216,8 @@ const umlDiagramTypes = {
       label:'サブシステム',
       color:'#64748b',
       nodeType:'subsystem',
-      size:{ w:360, h:260 }
+      behaviorType:'compositeState',
+      size: s.subsystem
     },
 
     // =========================================
@@ -204,7 +228,7 @@ const umlDiagramTypes = {
       label:'サーバー',
       color:'#10b981',
       nodeType:'component',
-      size:{ w:240, h:120 }
+      size: s.server
     },
 
     // =========================================
@@ -215,7 +239,7 @@ const umlDiagramTypes = {
       label:'データベース',
       color:'#2563eb',
       nodeType:'component',
-      size:{ w:240, h:130 }
+      size: s.database
     },
 
     // =========================================
@@ -226,7 +250,7 @@ const umlDiagramTypes = {
       label:'メッセージング',
       color:'#ef4444',
       nodeType:'component',
-      size:{ w:220, h:120 }
+      size: s.messaging
     },
 
     // =========================================
@@ -237,7 +261,7 @@ const umlDiagramTypes = {
       label:'認証/認可',
       color:'#8b5cf6',
       nodeType:'component',
-      size:{ w:220, h:120 }
+      size: s.auth
     },
 
     // =========================================
@@ -248,7 +272,7 @@ const umlDiagramTypes = {
       label:'検索/キャッシュ',
       color:'#f59e0b',
       nodeType:'component',
-      size:{ w:220, h:120 }
+      size: s.search
     },
 
     // =========================================
@@ -259,7 +283,7 @@ const umlDiagramTypes = {
       label:'ビジネス機能',
       color:'#14b8a6',
       nodeType:'component',
-      size:{ w:240, h:120 }
+      size: s.business
     },
 
     // =========================================
@@ -276,9 +300,10 @@ const umlDiagramTypes = {
       label:'ノート',
       color:'#94a3b8',
       nodeType:'note',
-      size:{ w:260, h:180 }
+      size: s.note
     },
-    ],
+    ];
+  },
   },
   deployment: {
     label: '配置図',
@@ -293,35 +318,21 @@ const umlDiagramTypes = {
   },
   usecase: {
     label: 'ユースケース図',
-    components: [
-      { icon: '<i data-lucide="user" class="node-lucide-icon"></i>', label: 'アクター', color: '#10b981' },
-      { icon: '<i data-lucide="circle" class="node-lucide-icon"></i>', label: 'ユースケース', color: '#f59e0b' },
-      { icon: '<i data-lucide="rectangle-horizontal" class="node-lucide-icon"></i>', label: 'システム境界', color: '#7c3aed' },
-      { icon: '<i data-lucide="file-text" class="node-lucide-icon"></i>', label: 'ノート', color: '#64748b' },
-    ],
+    get components() {
+      return window.BehaviorDiagramLibrary?.usecase?.getDefaultComponents?.() || [];
+    }
   },
   activity: {
     label: 'アクティビティ図',
-    components: [
-      { icon: '<i data-lucide="play" class="node-lucide-icon"></i>', label: 'アクション', color: '#06b6d4' },
-      { icon: '<i data-lucide="circle" class="node-lucide-icon"></i>', label: '開始ノード', color: '#10b981' },
-      { icon: '<i data-lucide="circle-x" class="node-lucide-icon"></i>', label: '終了ノード', color: '#ef4444' },
-      { icon: '<i data-lucide="diamond" class="node-lucide-icon"></i>', label: '分岐/合流', color: '#f59e0b' },
-      { icon: '<i data-lucide="minus" class="node-lucide-icon"></i>', label: 'フォーク/ジョイン', color: '#8b5cf6' },
-      { icon: '<i data-lucide="square" class="node-lucide-icon"></i>', label: 'オブジェクトノード', color: '#7c3aed' },
-      { icon: '<i data-lucide="file-text" class="node-lucide-icon"></i>', label: 'ノート', color: '#64748b' },
-    ],
+    get components() {
+      return window.BehaviorDiagramLibrary?.activity?.getDefaultComponents?.() || [];
+    }
   },
   state: {
     label: 'ステートマシン図',
-    components: [
-      { icon: '<i data-lucide="git-branch" class="node-lucide-icon"></i>', label: 'ステート', color: '#6366f1' },
-      { icon: '<i data-lucide="play-circle" class="node-lucide-icon"></i>', label: '初期状態', color: '#10b981' },
-      { icon: '<i data-lucide="stop-circle" class="node-lucide-icon"></i>', label: '終了状態', color: '#ef4444' },
-      { icon: '<i data-lucide="diamond" class="node-lucide-icon"></i>', label: '選択', color: '#f59e0b' },
-      { icon: '<i data-lucide="box" class="node-lucide-icon"></i>', label: '複合ステート', color: '#7c3aed' },
-      { icon: '<i data-lucide="file-text" class="node-lucide-icon"></i>', label: 'ノート', color: '#64748b' },
-    ],
+    get components() {
+      return window.BehaviorDiagramLibrary?.state?.getDefaultComponents?.() || [];
+    }
   },
   sequence: {
     label: 'シーケンス図',
@@ -1208,15 +1219,27 @@ addNode(comp, x, y, options = {}) {
 
 _createNode(comp, x, y, options = {}, overrides = {}) {
   const id = this.prefix + '_node_' + (this.nodeIdCounter++);
+  let defaultLabel = comp.label;
+  if (comp.nodeType === 'port' || comp.nodeType === 'interface') {
+    defaultLabel = '';
+  }
+  // サイズ定義の統一: テキストなしの図形(ポート/インターフェース)のみサイズを適用し、それ以外は自動フィット(undefined)
+  const isTextlessShape = comp.nodeType === 'port' || comp.nodeType === 'interface';
+  const resolvedWidth = isTextlessShape ? (comp.width || comp.size?.w || undefined) : undefined;
+  const resolvedHeight = isTextlessShape ? (comp.height || comp.size?.h || undefined) : undefined;
   const node = {
     id,
     icon: comp.icon,
-    label: overrides.label || comp.label,
+    label: overrides.label !== undefined ? overrides.label : defaultLabel,
     color: comp.color,
     x,
     y,
     textColor: this.defaultTextStyle.color,
     textSize: this.defaultTextStyle.fontSize,
+    behaviorType: comp.behaviorType,
+    nodeType: comp.nodeType,
+    width: resolvedWidth,
+    height: resolvedHeight,
   };
   if (comp.nodeType === 'class-box') {
     node.nodeType = 'class-box';
@@ -1716,7 +1739,10 @@ renderNode(node) {
   } else {
     // 通常のノード
     el.className = 'diagram-node';
+    if (node.nodeType) el.classList.add('node-type-' + node.nodeType);
     el.style.borderColor = node.color + '60';
+    if (node.width) el.style.width = node.width + 'px';
+    if (node.height) el.style.height = node.height + 'px';
     el.innerHTML = `<span class="node-icon">${node.icon}</span><span class="node-label">${node.label}</span>
         <span class="node-port port-top" data-port="top"></span>
         <span class="node-port port-bottom" data-port="bottom"></span>

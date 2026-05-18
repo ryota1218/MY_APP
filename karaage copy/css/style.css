@@ -18,6 +18,15 @@
 /* ダイアグラム共通: キャンバス、ノード、パレット、カラーピッカー */
 @import url('diagram.css');
 
+/* シーケンス図 */
+@import url('sequence-diagram.css');
+
+/* タイミング図 */
+@import url('timing-diagram.css');
+
+/* UMLツールパネルアイコン */
+@import url('uml-tools.css');
+
 /* 技術スタック提案 */
 @import url('proposal.css');
 
