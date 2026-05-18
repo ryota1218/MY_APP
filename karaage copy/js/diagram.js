@@ -404,11 +404,13 @@ class DiagramTool {
     this.nodes = [];
     this.connections = [];
     this.selectedNode = null;
+    this.selectedConnection = null;
     this.connectingFrom = null;
     this.undoHistory = [];
     this.redoHistory = [];
     this.isApplyingUndo = false;
     this.nodeIdCounter = 0;
+    this.connIdCounter = 0;
     this.quickAddCounter = 0;
     this.defaultTextStyle = { fontSize: 14, color: '#e5e7eb' };
     this.inlineShapeLimit = Number.isFinite(options.inlineShapeLimit)
@@ -866,10 +868,10 @@ class DiagramTool {
       const isEditingField = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable);
       if (isEditingField) return;
       if (e.key !== 'Delete' && e.key !== 'Backspace') return;
-      console.debug('[DiagramTool] keydown', e.key, 'selectedNode=', this.selectedNode && this.selectedNode.id);
-      if (!this.selectedNode) return;
+      console.debug('[DiagramTool] keydown', e.key, 'selectedNode=', this.selectedNode?.id, 'selectedConn=', this.selectedConnection?.id);
+      if (!this.selectedNode && !this.selectedConnection) return;
       e.preventDefault();
-      this.deleteSelectedNode();
+      this.deleteSelected();
     });
   }
 
@@ -882,9 +884,14 @@ class DiagramTool {
       const el = document.getElementById(this.prefix + '-prop-' + suffix);
       if (el) {
         el.addEventListener('input', (e) => {
-          if (!this.propertyPanelNode) return;
-          this.propertyPanelNode[prop] = parser(e.target.value);
-          this.updateNodeDOM(this.propertyPanelNode);
+          if (this.propertyPanelNode) {
+            this.propertyPanelNode[prop] = parser(e.target.value);
+            if (this.propertyPanelNode.from !== undefined) {
+              this.drawConnections();
+            } else {
+              this.updateNodeDOM(this.propertyPanelNode);
+            }
+          }
         });
       }
     };
@@ -900,6 +907,9 @@ class DiagramTool {
     bindInput('timingtext', 'timingValue');
     bindInput('multFrom', 'multiplicityFrom');
     bindInput('multTo', 'multiplicityTo');
+    bindInput('subtexttop', 'subtextTop');
+    bindInput('subtextbottom', 'subtextBottom');
+    bindInput('arrowdir', 'arrowDirection');
 
     // プロパティパネルのカラーピッカー初期化
     this.initPropertyPanelColorPicker('textcolor', 'textColor');
@@ -1045,8 +1055,11 @@ openPropertyPanel(node) {
   if (fragmentGroup) fragmentGroup.style.display = (node && node.behaviorType === 'fragment') ? '' : 'none';
   const timingGroup = document.getElementById(this.prefix + '-prop-group-timing');
   if (timingGroup) timingGroup.style.display = (node && (node.behaviorType === 'stateTimeline' || node.behaviorType === 'valueTimeline')) ? '' : 'none';
-  const zindexGroup = document.getElementById(this.prefix + '-prop-group-zindex');
-  if (zindexGroup) zindexGroup.style.display = isNode ? '' : 'none';
+  
+  const nodeOnlyGroup = document.getElementById(this.prefix + '-prop-group-node-only');
+  if (nodeOnlyGroup) nodeOnlyGroup.style.display = isNode ? '' : 'none';
+  const connOnlyGroup = document.getElementById(this.prefix + '-prop-group-conn-only');
+  if (connOnlyGroup) connOnlyGroup.style.display = isConn ? '' : 'none';
 
   const panel = document.getElementById(this.prefix + '-property-panel');
   if (panel) panel.classList.add('open');
@@ -1058,7 +1071,9 @@ openPropertyPanel(node) {
   };
 
   if (isNode) {
-    setVal('label', node.label);
+    setVal('label', node.label || '');
+    setVal('subtexttop', node.subtextTop || '');
+    setVal('subtextbottom', node.subtextBottom || '');
     setVal('x', node.x);
     setVal('y', node.y);
     setVal('fontsize', node.textSize || this.defaultTextStyle.fontSize);
@@ -1080,10 +1095,83 @@ openPropertyPanel(node) {
   } else if (isConn) {
     // 線（コネクション）を選択した場合
     setVal('label', node.label || '');
+    setVal('arrowdir', node.arrowDirection || 'one-way');
     setVal('routing', node.routing || 'straight');
     setVal('linestyle', node.lineStyle || 'solid');
     setVal('multFrom', node.multiplicityFrom || '');
     setVal('multTo', node.multiplicityTo || '');
+
+    // ポートモード初期化
+    if (!node.portMode) {
+      node.portMode = node.portFrom || node.portTo ? 'dual' : 'single';
+    }
+
+    const singleView = document.getElementById(this.prefix + '-prop-port-single-view');
+    const dualView = document.getElementById(this.prefix + '-prop-port-dual-view');
+    
+    const updatePortModeUI = () => {
+      if (singleView) singleView.style.display = node.portMode === 'single' ? 'block' : 'none';
+      if (dualView) dualView.style.display = node.portMode === 'dual' ? 'block' : 'none';
+    };
+
+    updatePortModeUI();
+
+    // 値をセット
+    const inputCenter = document.getElementById(this.prefix + '-prop-port-center');
+    const inputFrom = document.getElementById(this.prefix + '-prop-port-from');
+    const inputTo = document.getElementById(this.prefix + '-prop-port-to');
+
+    if (inputCenter) inputCenter.value = node.portProtocol || '';
+    if (inputFrom) inputFrom.value = node.portFrom || '';
+    if (inputTo) inputTo.value = node.portTo || '';
+
+    // イベントリスナー (蓄積を防ぐためcloneNode)
+    const setupInput = (el, propName) => {
+      if (!el) return;
+      const newEl = el.cloneNode(true);
+      el.parentNode.replaceChild(newEl, el);
+      newEl.addEventListener('input', (e) => {
+        node[propName] = e.target.value;
+        this.drawConnections();
+      });
+    };
+
+    setupInput(inputCenter, 'portProtocol');
+    setupInput(inputFrom, 'portFrom');
+    setupInput(inputTo, 'portTo');
+
+    // モード切り替えボタン
+    const switchDualBtn = document.getElementById(this.prefix + '-prop-switch-dual-btn');
+    if (switchDualBtn) {
+      const newBtn = switchDualBtn.cloneNode(true);
+      switchDualBtn.parentNode.replaceChild(newBtn, switchDualBtn);
+      newBtn.addEventListener('click', () => {
+        node.portMode = 'dual';
+        if (node.portProtocol && !node.portTo) {
+          node.portTo = node.portProtocol;
+          const toEl = document.getElementById(this.prefix + '-prop-port-to');
+          if (toEl) toEl.value = node.portTo;
+        }
+        updatePortModeUI();
+        this.drawConnections();
+      });
+    }
+
+    const switchSingleBtn = document.getElementById(this.prefix + '-prop-switch-single-btn');
+    if (switchSingleBtn) {
+      const newBtn = switchSingleBtn.cloneNode(true);
+      switchSingleBtn.parentNode.replaceChild(newBtn, switchSingleBtn);
+      newBtn.addEventListener('click', () => {
+        node.portMode = 'single';
+        updatePortModeUI();
+        this.drawConnections();
+      });
+    }
+
+    updatePortModeUI();
+    setupAddBtn('center');
+    setupAddBtn('from');
+    setupAddBtn('to');
 
     // 線の場合の色更新（線の色変更用）
     this.refreshPropertyPanelColorButton('color', 'color');
@@ -1158,6 +1246,10 @@ closePropertyPanel() {
 }
 
 updateNodeDOM(node) {
+  if (node && node.from !== undefined) {
+    this.drawConnections();
+    return;
+  }
   const el = document.getElementById(node.id);
   if (!el) return;
   el.style.left = node.x + 'px';
@@ -1204,6 +1296,34 @@ updateNodeDOM(node) {
       labelEl.textContent = node.label;
       this.applyNodeTextStyle(node, labelEl);
     }
+    const updateSubtext = (className, propName, position) => {
+      let subEl = el.querySelector(`.node-subtext.${className}`);
+      if (node[propName]) {
+        if (!subEl) {
+          subEl = document.createElement('span');
+          subEl.className = `node-subtext ${className}`;
+          const contentEl = el.querySelector('.diagram-node-content');
+          if (contentEl) {
+            if (position === 'top') {
+              contentEl.insertBefore(subEl, contentEl.firstChild);
+            } else {
+              contentEl.appendChild(subEl);
+            }
+          } else {
+            if (position === 'top') {
+              el.insertBefore(subEl, el.firstChild);
+            } else {
+              el.appendChild(subEl);
+            }
+          }
+        }
+        subEl.textContent = node[propName];
+      } else if (subEl) {
+        subEl.remove();
+      }
+    };
+    updateSubtext('top', 'subtextTop', 'top');
+    updateSubtext('bottom', 'subtextBottom', 'bottom');
   }
   this.drawConnections();
 }
@@ -1743,7 +1863,9 @@ renderNode(node) {
     el.style.borderColor = node.color + '60';
     if (node.width) el.style.width = node.width + 'px';
     if (node.height) el.style.height = node.height + 'px';
-    el.innerHTML = `<span class="node-icon">${node.icon}</span><span class="node-label">${node.label}</span>
+    const subtextTopHtml = node.subtextTop ? `<span class="node-subtext top">${this.escapeHtml(node.subtextTop)}</span>` : '';
+    const subtextBottomHtml = node.subtextBottom ? `<span class="node-subtext bottom">${this.escapeHtml(node.subtextBottom)}</span>` : '';
+    el.innerHTML = `<div class="diagram-node-content">${subtextTopHtml}<span class="node-icon">${node.icon}</span><span class="node-label">${this.escapeHtml(node.label)}</span>${subtextBottomHtml}</div>
         <span class="node-port port-top" data-port="top"></span>
         <span class="node-port port-bottom" data-port="bottom"></span>
         <span class="node-port port-left" data-port="left"></span>
@@ -1816,7 +1938,17 @@ renderNode(node) {
         el.classList.add('selected');
         showToast('接続先ノードをクリックしてください');
       } else if (this.connectingFrom.id !== node.id) {
-        this.connections.push({ from: this.connectingFrom.id, to: node.id, connType: this.activeConnType || 'association' });
+        const newConn = {
+          id: this.prefix + '_conn_' + (this.connIdCounter++),
+          from: this.connectingFrom.id,
+          to: node.id,
+          connType: this.activeConnType || 'association',
+          routing: 'straight',
+          label: '',
+          multiplicityFrom: '',
+          multiplicityTo: '',
+        };
+        this.connections.push(newConn);
         this.drawConnections();
         document.getElementById(this.connectingFrom.id)?.classList.remove('selected');
         this.pushUndoAction({
@@ -1980,6 +2112,12 @@ beginInlineRename(node, labelEl) {
   labelEl.addEventListener('blur', onBlur);
   labelEl.addEventListener('keydown', onKeyDown);
 }
+selectConnection(conn) {
+  this.deselectAll();
+  this.selectedConnection = conn;
+  this.drawConnections();
+  this.openPropertyPanel(conn);
+}
 selectNode(node, el) {
   this.deselectAll();
   this.selectedNode = node;
@@ -1988,7 +2126,22 @@ selectNode(node, el) {
 }
 deselectAll() {
   this.selectedNode = null;
+  this.selectedConnection = null;
   this.canvas.querySelectorAll('.diagram-node').forEach(n => n.classList.remove('selected'));
+  this.canvas.querySelectorAll('.diagram-conn-label').forEach(n => n.classList.remove('selected'));
+  this.drawConnections();
+}
+bringToFront() {
+  if (!this.selectedNode) return;
+  const maxZ = Math.max(...this.nodes.map(n => n.zIndex || 10));
+  this.selectedNode.zIndex = maxZ + 1;
+  this.updateNodeDOM(this.selectedNode);
+}
+sendToBack() {
+  if (!this.selectedNode) return;
+  const minZ = Math.min(...this.nodes.map(n => n.zIndex || 10));
+  this.selectedNode.zIndex = Math.max(1, minZ - 1);
+  this.updateNodeDOM(this.selectedNode);
 }
 pushUndoAction(action) {
   if (this.isApplyingUndo || !action) return;
@@ -2032,7 +2185,34 @@ detachNode(nodeId) {
   };
 }
 
-deleteSelectedNode() {
+deleteSelected() {
+  if (this.selectedConnection) {
+    const conn = this.selectedConnection;
+    this.connections = this.connections.filter(c => c.id !== conn.id);
+    this.pushUndoAction({
+      type: 'removeConnection',
+      from: conn.from,
+      to: conn.to,
+      connType: conn.connType,
+      routing: conn.routing,
+      lineStyle: conn.lineStyle,
+      label: conn.label,
+      multiplicityFrom: conn.multiplicityFrom,
+      multiplicityTo: conn.multiplicityTo,
+      portProtocol: conn.portProtocol,
+      arrowDirection: conn.arrowDirection,
+      portMode: conn.portMode,
+      portFrom: conn.portFrom,
+      portTo: conn.portTo,
+    });
+    this.deselectAll();
+    this.drawConnections();
+    if (this.propertyPanelNode && this.propertyPanelNode.id === conn.id) {
+      this.closePropertyPanel();
+    }
+    showToast('選択した線を削除しました');
+    return;
+  }
   if (!this.selectedNode) return;
   const nodeId = this.selectedNode.id;
   const result = this.detachNode(nodeId);
@@ -2048,6 +2228,9 @@ deleteSelectedNode() {
     }
     this.drawConnections();
   }
+}
+deleteSelectedNode() {
+  this.deleteSelected();
 }
 restoreNode(node, connections = []) {
   if (!node) return;
@@ -2106,6 +2289,7 @@ applyHistoryAction(action) {
 
   if (action.type === 'removeConnection') {
     const beforeCount = this.connections.length;
+    const removedConn = this.connections.find(conn => conn.from === action.from && conn.to === action.to);
     this.connections = this.connections.filter(conn => !(conn.from === action.from && conn.to === action.to));
     if (this.connections.length === beforeCount) return null;
     this.drawConnections();
@@ -2113,11 +2297,36 @@ applyHistoryAction(action) {
       type: 'addConnection',
       from: action.from,
       to: action.to,
+      connType: removedConn?.connType || action.connType,
+      routing: removedConn?.routing || action.routing,
+      lineStyle: removedConn?.lineStyle || action.lineStyle,
+      label: removedConn?.label || action.label,
+      multiplicityFrom: removedConn?.multiplicityFrom || action.multiplicityFrom,
+      multiplicityTo: removedConn?.multiplicityTo || action.multiplicityTo,
+      portProtocol: removedConn?.portProtocol || action.portProtocol,
+      arrowDirection: removedConn?.arrowDirection || action.arrowDirection,
+      portMode: removedConn?.portMode || action.portMode,
+      portFrom: removedConn?.portFrom || action.portFrom,
+      portTo: removedConn?.portTo || action.portTo,
     };
   }
 
   if (action.type === 'addConnection') {
-    this.connections.push({ from: action.from, to: action.to });
+    this.connections.push({
+      from: action.from,
+      to: action.to,
+      connType: action.connType,
+      routing: action.routing,
+      lineStyle: action.lineStyle,
+      label: action.label,
+      multiplicityFrom: action.multiplicityFrom,
+      multiplicityTo: action.multiplicityTo,
+      portProtocol: action.portProtocol,
+      arrowDirection: action.arrowDirection,
+      portMode: action.portMode,
+      portFrom: action.portFrom,
+      portTo: action.portTo,
+    });
     this.drawConnections();
     return {
       type: 'removeConnection',
@@ -2593,7 +2802,10 @@ drawConnections() {
       <marker id="x-mark-${p}" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto"><line x1="2" y1="2" x2="8" y2="8" stroke="#7c3aed" stroke-width="2"/><line x1="8" y1="2" x2="2" y2="8" stroke="#7c3aed" stroke-width="2"/></marker>
     </defs>`;
 
+  this.canvas.querySelectorAll('.diagram-conn-label, .diagram-conn-multiplicity').forEach(el => el.remove());
+
   this.connections.forEach(conn => {
+    if (!conn.id) conn.id = this.prefix + '_conn_' + (this.connIdCounter++);
     const fromEl = document.getElementById(conn.from);
     const toEl = document.getElementById(conn.to);
     if (!fromEl || !toEl) return;
@@ -2815,42 +3027,57 @@ drawConnections() {
     }
 
     const connType = conn.connType || 'association';
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    path.setAttribute('x1', x1);
-    path.setAttribute('y1', y1);
-    path.setAttribute('x2', x2);
-    path.setAttribute('y2', y2);
-    path.setAttribute('stroke', '#7c3aed');
-    path.setAttribute('stroke-width', '2');
+    const isSelected = this.selectedConnection === conn;
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', dStr);
+    path.setAttribute('stroke', isSelected ? '#f59e0b' : '#7c3aed');
+    path.setAttribute('stroke-width', isSelected ? '3' : '2');
+    path.setAttribute('fill', 'none');
+    path.setAttribute('pointer-events', 'visibleStroke');
     path.setAttribute('opacity', '0.8');
+    path.style.cursor = 'pointer';
+    path.addEventListener('mousedown', e => {
+      e.stopPropagation();
+      this.selectConnection(conn);
+    });
 
-    switch (connType) {
-      case 'association':
-        // 実線のみ
-        break;
-      case 'aggregation':
-        path.setAttribute('marker-start', `url(#diamond-empty-${p})`);
-        break;
-      case 'composition':
-        path.setAttribute('marker-start', `url(#diamond-fill-${p})`);
-        break;
-      case 'dependency':
-        path.setAttribute('stroke-dasharray', '6 3');
-        path.setAttribute('marker-end', `url(#arrow-open-${p})`);
-        break;
-      case 'generalization':
-        path.setAttribute('marker-end', `url(#triangle-empty-${p})`);
-        break;
-      case 'realization':
-        path.setAttribute('stroke-dasharray', '6 3');
-        path.setAttribute('marker-end', `url(#triangle-empty-${p})`);
-        break;
-      case 'navigable':
-        path.setAttribute('marker-start', `url(#x-mark-${p})`);
-        path.setAttribute('marker-end', `url(#arrow-open-${p})`);
-        break;
-      default:
-        path.setAttribute('marker-end', `url(#arrow-${p})`);
+    const arrowDir = conn.arrowDirection || 'one-way';
+
+    if (arrowDir === 'none') {
+      // 矢印なし
+    } else if (arrowDir === 'two-way') {
+      path.setAttribute('marker-start', `url(#arrow-open-${p})`);
+      path.setAttribute('marker-end', `url(#arrow-${p})`);
+    } else {
+      // one-way
+      switch (connType) {
+        case 'association':
+          // 実線のみ
+          break;
+        case 'aggregation':
+          path.setAttribute('marker-start', `url(#diamond-empty-${p})`);
+          break;
+        case 'composition':
+          path.setAttribute('marker-start', `url(#diamond-fill-${p})`);
+          break;
+        case 'dependency':
+          path.setAttribute('stroke-dasharray', '6 3');
+          path.setAttribute('marker-end', `url(#arrow-open-${p})`);
+          break;
+        case 'generalization':
+          path.setAttribute('marker-end', `url(#triangle-empty-${p})`);
+          break;
+        case 'realization':
+          path.setAttribute('stroke-dasharray', '6 3');
+          path.setAttribute('marker-end', `url(#triangle-empty-${p})`);
+          break;
+        case 'navigable':
+          path.setAttribute('marker-start', `url(#x-mark-${p})`);
+          path.setAttribute('marker-end', `url(#arrow-open-${p})`);
+          break;
+        default:
+          path.setAttribute('marker-end', `url(#arrow-${p})`);
+      }
     }
 
     if (conn.lineStyle === 'dashed') {
@@ -2858,6 +3085,131 @@ drawConnections() {
     }
 
     this.svg.appendChild(path);
+
+    // ポート・プロトコル表示 (モードに応じた表示)
+    const portMode = conn.portMode || 'single';
+
+    if (portMode === 'single') {
+      if (conn.portProtocol && conn.portProtocol.trim() !== '') {
+        const portDiv = document.createElement('div');
+        portDiv.className = 'diagram-conn-port';
+        portDiv.textContent = conn.portProtocol;
+        let px, py;
+        if (conn.manualMid) {
+          px = conn.manualMid.x;
+          py = conn.manualMid.y;
+        } else {
+          px = (x1 + x2) / 2;
+          py = (y1 + y2) / 2;
+        }
+        portDiv.style.left = px + 'px';
+        portDiv.style.top = py + 'px';
+        this.canvas.appendChild(portDiv);
+      }
+    } else {
+      let pxFrom, pyFrom, pxTo, pyTo;
+      if (conn.manualMid) {
+        const mx = conn.manualMid.x;
+        const my = conn.manualMid.y;
+        pxFrom = x1 + (mx - x1) * 0.5;
+        pyFrom = y1 + (my - y1) * 0.5;
+        pxTo = mx + (x2 - mx) * 0.5;
+        pyTo = my + (y2 - my) * 0.5;
+      } else {
+        pxFrom = x1 + (x2 - x1) * 0.25;
+        pyFrom = y1 + (y2 - y1) * 0.25;
+        pxTo = x1 + (x2 - x1) * 0.75;
+        pyTo = y1 + (y2 - y1) * 0.75;
+      }
+
+      if (conn.portFrom && conn.portFrom.trim() !== '') {
+        const portDiv = document.createElement('div');
+        portDiv.className = 'diagram-conn-port';
+        portDiv.textContent = conn.portFrom;
+        portDiv.style.left = pxFrom + 'px';
+        portDiv.style.top = pyFrom + 'px';
+        this.canvas.appendChild(portDiv);
+      }
+
+      if (conn.portTo && conn.portTo.trim() !== '') {
+        const portDiv = document.createElement('div');
+        portDiv.className = 'diagram-conn-port';
+        portDiv.textContent = conn.portTo;
+        portDiv.style.left = pxTo + 'px';
+        portDiv.style.top = pyTo + 'px';
+        this.canvas.appendChild(portDiv);
+      }
+    }
+
+    // ラベル表示
+    if (conn.label) {
+      const labelDiv = document.createElement('div');
+      labelDiv.className = 'diagram-conn-label' + (isSelected ? ' selected' : '');
+      labelDiv.textContent = conn.label;
+      labelDiv.style.left = midX + 'px';
+      labelDiv.style.top = midY + 'px';
+      labelDiv.addEventListener('mousedown', e => {
+        e.stopPropagation();
+        this.selectConnection(conn);
+      });
+      this.canvas.appendChild(labelDiv);
+    }
+
+    // 中点ドラッグハンドル (選択中のみ表示)
+    if (isSelected && routing === 'straight') {
+      const handle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      handle.setAttribute('cx', midX);
+      handle.setAttribute('cy', midY);
+      handle.setAttribute('r', '6');
+      handle.setAttribute('fill', '#f59e0b');
+      handle.setAttribute('stroke', '#fff');
+      handle.setAttribute('stroke-width', '2');
+      handle.style.cursor = 'move';
+      let hDragging = false;
+      handle.addEventListener('mousedown', e => {
+        e.stopPropagation();
+        e.preventDefault();
+        hDragging = true;
+        const onMouseMove = me => {
+          if (!hDragging) return;
+          const rect = this.canvas.getBoundingClientRect();
+          conn.manualMid = {
+            x: me.clientX - rect.left,
+            y: me.clientY - rect.top
+          };
+          this.drawConnections();
+        };
+        const onMouseUp = () => {
+          hDragging = false;
+          document.removeEventListener('mousemove', onMouseMove);
+          document.removeEventListener('mouseup', onMouseUp);
+        };
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+      });
+      this.svg.appendChild(handle);
+    }
+
+    // 多重度ラベル (multiplicityFrom / multiplicityTo)
+    const multOffset = 18;
+    if (conn.multiplicityFrom) {
+      const mfDiv = document.createElement('div');
+      mfDiv.className = 'diagram-conn-multiplicity';
+      mfDiv.textContent = conn.multiplicityFrom;
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      mfDiv.style.left = (x1 + Math.cos(angle) * 20 + Math.sin(angle) * multOffset) + 'px';
+      mfDiv.style.top = (y1 + Math.sin(angle) * 20 - Math.cos(angle) * multOffset) + 'px';
+      this.canvas.appendChild(mfDiv);
+    }
+    if (conn.multiplicityTo) {
+      const mtDiv = document.createElement('div');
+      mtDiv.className = 'diagram-conn-multiplicity';
+      mtDiv.textContent = conn.multiplicityTo;
+      const angle = Math.atan2(y1 - y2, x1 - x2);
+      mtDiv.style.left = (x2 + Math.cos(angle) * 20 + Math.sin(angle) * multOffset) + 'px';
+      mtDiv.style.top = (y2 + Math.sin(angle) * 20 - Math.cos(angle) * multOffset) + 'px';
+      this.canvas.appendChild(mtDiv);
+    }
   });
 }
 clearAll() {
