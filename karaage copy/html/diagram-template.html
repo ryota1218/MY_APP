@@ -111,29 +111,82 @@
       <button class="property-panel-close" data-action="closePropertyPanel"><i data-lucide="x" class="editor-icon"></i></button>
     </div>
     <div class="property-panel-body">
-      <div class="property-group">
-        <label>名前</label>
-        <input type="text" id="{{prefix}}-prop-label" class="property-input">
+      <div class="property-group" id="{{prefix}}-prop-group-node-only">
+        <div class="property-group">
+          <label>名前 (メイン名)</label>
+          <input type="text" id="{{prefix}}-prop-label" class="property-input">
+        </div>
+        <div class="property-group">
+          <label>上部サブ情報 (ロール等)</label>
+          <input type="text" id="{{prefix}}-prop-subtexttop" class="property-input" placeholder="例: Web Server">
+        </div>
+        <div class="property-group">
+          <label>下部サブ情報 (IP / ドメイン等)</label>
+          <input type="text" id="{{prefix}}-prop-subtextbottom" class="property-input" placeholder="例: 192.168.1.1">
+        </div>
+        <div class="property-group">
+          <label>フォントサイズ</label>
+          <input type="number" id="{{prefix}}-prop-fontsize" class="property-input" min="10" max="48">
+        </div>
+        <div class="property-group">
+          <label>文字色</label>
+          <input type="color" id="{{prefix}}-prop-textcolor" class="property-input color-input">
+        </div>
+        <div class="property-group">
+          <label>ノード枠色 / 線の色</label>
+          <input type="color" id="{{prefix}}-prop-color" class="property-input color-input">
+        </div>
+        <div class="property-group" id="{{prefix}}-prop-group-zindex">
+          <label>重なり順 (Z-Index)</label>
+          <div style="display:flex; gap: 8px;">
+            <button class="btn btn-sm btn-secondary" style="flex:1;" data-action="bringToFront">最前面へ</button>
+            <button class="btn btn-sm btn-secondary" style="flex:1;" data-action="sendToBack">最背面へ</button>
+          </div>
+        </div>
+        <div style="display:flex; gap: 8px; margin-bottom: 12px;">
+          <div class="property-group" style="flex:1; margin-bottom: 0;">
+            <label>X座標</label>
+            <input type="number" id="{{prefix}}-prop-x" class="property-input">
+          </div>
+          <div class="property-group" style="flex:1; margin-bottom: 0;">
+            <label>Y座標</label>
+            <input type="number" id="{{prefix}}-prop-y" class="property-input">
+          </div>
+        </div>
       </div>
-      <div class="property-group">
-        <label>X座標</label>
-        <input type="number" id="{{prefix}}-prop-x" class="property-input">
-      </div>
-      <div class="property-group">
-        <label>Y座標</label>
-        <input type="number" id="{{prefix}}-prop-y" class="property-input">
-      </div>
-      <div class="property-group">
-        <label>フォントサイズ</label>
-        <input type="number" id="{{prefix}}-prop-fontsize" class="property-input" min="10" max="48">
-      </div>
-      <div class="property-group">
-        <label>文字色</label>
-        <input type="color" id="{{prefix}}-prop-textcolor" class="property-input color-input">
-      </div>
-      <div class="property-group">
-        <label>ノード枠色</label>
-        <input type="color" id="{{prefix}}-prop-color" class="property-input color-input">
+      
+      <div class="property-group" id="{{prefix}}-prop-group-conn-only" style="display:none;">
+        <div id="{{prefix}}-prop-port-mode-container">
+          <!-- シングルモードUI -->
+          <div id="{{prefix}}-prop-port-single-view">
+            <div class="property-group">
+              <label>ポート / プロトコル</label>
+              <input type="text" id="{{prefix}}-prop-port-center" class="property-input" placeholder="例: 443 (HTTPS)">
+            </div>
+            <button type="button" class="btn btn-sm btn-outline" id="{{prefix}}-prop-switch-dual-btn" style="margin-top: 8px; width: 100%; font-size: 11px;">両端(From/To)で別々に設定する</button>
+          </div>
+          
+          <!-- デュアルモードUI -->
+          <div id="{{prefix}}-prop-port-dual-view" style="display:none;">
+            <button type="button" class="btn btn-sm btn-outline" id="{{prefix}}-prop-switch-single-btn" style="margin-bottom: 8px; width: 100%; font-size: 11px;">単一ポート設定に戻す</button>
+            <div class="property-group">
+              <label>ポート / プロトコル (接続元 - From)</label>
+              <input type="text" id="{{prefix}}-prop-port-from" class="property-input" placeholder="例: 50000 (発信)">
+            </div>
+            <div class="property-group" style="margin-top: 8px;">
+              <label>ポート / プロトコル (接続先 - To)</label>
+              <input type="text" id="{{prefix}}-prop-port-to" class="property-input" placeholder="例: 443 (HTTPS)">
+            </div>
+          </div>
+        </div>
+        <div class="property-group">
+          <label>矢印の向き</label>
+          <select id="{{prefix}}-prop-arrowdir" class="property-input">
+            <option value="one-way">片方向 (A → B)</option>
+            <option value="two-way">双方向 (A ↔ B)</option>
+            <option value="none">矢印なし (線のみ)</option>
+          </select>
+        </div>
       </div>
       <div class="property-group" id="{{prefix}}-prop-group-routing" style="display:none;">
         <label>ルーティング</label>
@@ -192,13 +245,7 @@
           <option value="extend">拡張 (&lt;&lt;extend&gt;&gt;)</option>
         </select>
       </div>
-      <div class="property-group" id="{{prefix}}-prop-group-zindex">
-        <label>重なり順 (Z-Index)</label>
-        <div style="display:flex; gap: 8px;">
-          <button class="btn btn-sm btn-secondary" style="flex:1;" data-action="bringToFront">最前面へ</button>
-          <button class="btn btn-sm btn-secondary" style="flex:1;" data-action="sendToBack">最背面へ</button>
-        </div>
-      </div>
+
       <button class="btn btn-sm btn-danger" data-action="deleteSelected" style="width: 100%; margin-top: 16px;">削除</button>
   </div>
 </div>

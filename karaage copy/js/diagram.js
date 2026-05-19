@@ -87,27 +87,194 @@ const umlDiagramTypes = {
   package: {
     label: 'パッケージ図',
     components: [
-      { icon: '<i data-lucide="folder" class="node-lucide-icon"></i>', label: 'パッケージ', color: '#06b6d4' },
-      { icon: '<i data-lucide="box" class="node-lucide-icon"></i>', label: 'クラス', color: '#7c3aed' },
-      { icon: '<i data-lucide="diamond" class="node-lucide-icon"></i>', label: 'インターフェース', color: '#3b82f6' },
-      { icon: '<i data-lucide="link" class="node-lucide-icon"></i>', label: '依存', color: '#f59e0b' },
-      { icon: '<i data-lucide="file-text" class="node-lucide-icon"></i>', label: 'ノート', color: '#64748b' },
+      {
+        icon: `
+          <div class="uml-tool uml-package-tool" style="width:24px; height:18px; position:relative; display:inline-block; margin-top:2px;">
+            <div style="width:12px; height:4px; background:#06b6d4; border-radius:2px 2px 0 0; position:absolute; top:0; left:0;"></div>
+            <div style="width:24px; height:14px; background:#06b6d4; border-radius:0 2px 2px 2px; position:absolute; bottom:0; left:0;"></div>
+          </div>
+        `,
+        label: 'パッケージ',
+        color: '#06b6d4',
+        nodeType: 'uml-package',
+        defaults: { stereotype: '' },
+        size: { w: 240, h: 180 }
+      },
+      {
+        icon: '<i data-lucide="box" class="node-lucide-icon"></i>',
+        label: 'クラス',
+        color: '#7c3aed',
+        nodeType: 'class-box',
+        defaults: { stereotype: '', attributes: ['+ attribute1: type'], methods: ['+ operation1()'] },
+        size: { w: 180, h: 120 }
+      },
+      {
+        icon: '<i data-lucide="component" class="node-lucide-icon"></i>',
+        label: 'コンポーネント',
+        color: '#10b981',
+        nodeType: 'component',
+        size: { w: 180, h: 100 }
+      },
+      {
+        icon: `
+          <div class="uml-tool uml-interface-tool">
+            <div class="uml-lollipop"></div>
+          </div>
+        `,
+        label: 'インターフェース',
+        color: '#3b82f6',
+        nodeType: 'interface',
+        size: { w: 26, h: 26 }
+      },
+      {
+        icon: `
+          <div class="uml-tool uml-collaboration-tool" style="width: 20px; height: 20px; border: 1.5px solid #f59e0b; display:inline-block; margin-top:2px; transform: rotate(45deg);"></div>
+        `,
+        label: 'N項アソシエーション',
+        color: '#f59e0b',
+        nodeType: 'n-ary-association',
+        size: { w: 80, h: 80 }
+      },
+      {
+        icon: '<i data-lucide="type" class="node-lucide-icon"></i>',
+        label: 'テキスト',
+        color: '#e5e7eb',
+        nodeType: 'text-node',
+        defaults: { stereotype: '', label: 'text' },
+        size: { w: 80, h: 30 }
+      },
+      {
+        icon: `
+          <div class="uml-tool uml-note-tool">
+            <div class="uml-note">
+              <div class="fold"></div>
+            </div>
+          </div>
+        `,
+        label: 'ノート',
+        color: '#64748b',
+        nodeType: 'note',
+        size: { w: 160, h: 80 }
+      },
     ],
   },
   composite: {
     label: 'コンポジット構造図',
     components: [
-      { icon: '<i data-lucide="box" class="node-lucide-icon"></i>', label: 'クラス/コンポーネント', color: '#7c3aed' },
-      { icon: '<i data-lucide="plug" class="node-lucide-icon"></i>', label: 'ポート', color: '#10b981' },
-      { icon: '<i data-lucide="square" class="node-lucide-icon"></i>', label: 'パート', color: '#06b6d4' },
-      { icon: '<i data-lucide="diamond" class="node-lucide-icon"></i>', label: 'インターフェース', color: '#3b82f6' },
-      { icon: '<i data-lucide="link-2" class="node-lucide-icon"></i>', label: 'コネクタ', color: '#f59e0b' },
-      { icon: '<i data-lucide="file-text" class="node-lucide-icon"></i>', label: 'ノート', color: '#64748b' },
+      {
+        icon: `
+          <div class="uml-tool uml-component-tool">
+            <div class="uml-mini-component">
+              <div class="tabs">
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+          </div>
+        `,
+        label: '構造化クラス',
+        color: '#7c3aed',
+        nodeType: 'composite-class',
+        defaults: { stereotype: '«structured class»' },
+        size: { w: 320, h: 220 }
+      },
+      {
+        icon: `
+          <div class="uml-tool uml-port-tool">
+            <div class="uml-port-box"></div>
+          </div>
+        `,
+        label: 'ポート',
+        color: '#10b981',
+        nodeType: 'port',
+        size: { w: 26, h: 26 }
+      },
+      {
+        icon: '<i data-lucide="square" class="node-lucide-icon"></i>',
+        label: 'パート',
+        color: '#06b6d4',
+        nodeType: 'composite-part',
+        defaults: { stereotype: '' },
+        size: { w: 180, h: 100 }
+      },
+      {
+        icon: `
+          <div class="uml-tool uml-collaboration-tool" style="width: 24px; height: 14px; border: 1.5px dashed #f59e0b; border-radius: 50%; display:inline-block; margin-top:2px;"></div>
+        `,
+        label: 'コラボレーション',
+        color: '#f59e0b',
+        nodeType: 'composite-collaboration',
+        defaults: { stereotype: '' },
+        size: { w: 200, h: 100 }
+      },
+      {
+        icon: `
+          <div class="uml-tool uml-interface-tool">
+            <div class="uml-lollipop"></div>
+          </div>
+        `,
+        label: 'インターフェース',
+        color: '#3b82f6',
+        nodeType: 'interface',
+        size: { w: 26, h: 26 }
+      },
+      {
+        icon: `
+          <div class="uml-tool uml-note-tool">
+            <div class="uml-note">
+              <div class="fold"></div>
+            </div>
+          </div>
+        `,
+        label: 'ノート',
+        color: '#64748b',
+        nodeType: 'note',
+        size: { w: 160, h: 80 }
+      },
+      {
+        icon: '<i data-lucide="layout" class="node-lucide-icon"></i>',
+        label: 'フレーム(枠)',
+        color: '#8b5cf6',
+        nodeType: 'composite-frame',
+        defaults: { stereotype: '' },
+        size: { w: 320, h: 220 }
+      },
+      {
+        icon: '<i data-lucide="type" class="node-lucide-icon"></i>',
+        label: 'テキスト',
+        color: '#e5e7eb',
+        nodeType: 'text-node',
+        defaults: { stereotype: '', label: 'テキスト' },
+        size: { w: 100, h: 40 }
+      },
     ],
   },
   component: {
     label: 'コンポーネント図',
-  components: [
+
+  // ─────────────────────────────────────────────
+  // ★ コンポーネント図 サイズ設定 (ここで一括管理)
+  //   w = 幅(px), h = 高さ(px)
+  //   サイズを変えたいときはここの数値だけ編集すればOK
+  // ─────────────────────────────────────────────
+  sizes: {
+    component:    { w: 165, h: 60 },  // UML コンポーネント
+    interface:    { w:  26, h:  26 },  // インターフェース (円形)
+    port:         { w:  26, h:  26 },  // ポート (正方形)
+    package:      { w: 165, h: 80 },  // パッケージ
+    subsystem:    { w: 360, h: 260 },  // サブシステム
+    server:       { w: 240, h: 120 },  // サーバー
+    database:     { w: 240, h: 130 },  // データベース
+    messaging:    { w: 220, h: 120 },  // メッセージング
+    auth:         { w: 220, h: 120 },  // 認証/認可
+    search:       { w: 220, h: 120 },  // 検索/キャッシュ
+    business:     { w: 240, h: 120 },  // ビジネス機能
+    note:         { w: 260, h: 180 },  // ノート
+  },
+
+  get components() {
+    const s = this.sizes;
+    return [
 
     // =========================================
     // UML コンポーネント
@@ -126,7 +293,7 @@ const umlDiagramTypes = {
       label:'コンポーネント',
       color:'#8b5cf6',
       nodeType:'component',
-      size:{ w:220, h:120 }
+      size: s.component
     },
 
     // =========================================
@@ -141,7 +308,7 @@ const umlDiagramTypes = {
       label:'インターフェース',
       color:'#3b82f6',
       nodeType:'interface',
-      size:{ w:180, h:90 }
+      size: s.interface
     },
 
     // =========================================
@@ -156,7 +323,7 @@ const umlDiagramTypes = {
       label:'ポート',
       color:'#10b981',
       nodeType:'port',
-      size:{ w:26, h:26 }
+      size: s.port
     },
 
     // =========================================
@@ -173,7 +340,7 @@ const umlDiagramTypes = {
       label:'パッケージ',
       color:'#06b6d4',
       nodeType:'package',
-      size:{ w:320, h:220 }
+      size: s.package
     },
 
     // =========================================
@@ -193,7 +360,8 @@ const umlDiagramTypes = {
       label:'サブシステム',
       color:'#64748b',
       nodeType:'subsystem',
-      size:{ w:360, h:260 }
+      behaviorType:'compositeState',
+      size: s.subsystem
     },
 
     // =========================================
@@ -204,7 +372,7 @@ const umlDiagramTypes = {
       label:'サーバー',
       color:'#10b981',
       nodeType:'component',
-      size:{ w:240, h:120 }
+      size: s.server
     },
 
     // =========================================
@@ -215,7 +383,7 @@ const umlDiagramTypes = {
       label:'データベース',
       color:'#2563eb',
       nodeType:'component',
-      size:{ w:240, h:130 }
+      size: s.database
     },
 
     // =========================================
@@ -226,7 +394,7 @@ const umlDiagramTypes = {
       label:'メッセージング',
       color:'#ef4444',
       nodeType:'component',
-      size:{ w:220, h:120 }
+      size: s.messaging
     },
 
     // =========================================
@@ -237,7 +405,7 @@ const umlDiagramTypes = {
       label:'認証/認可',
       color:'#8b5cf6',
       nodeType:'component',
-      size:{ w:220, h:120 }
+      size: s.auth
     },
 
     // =========================================
@@ -248,7 +416,7 @@ const umlDiagramTypes = {
       label:'検索/キャッシュ',
       color:'#f59e0b',
       nodeType:'component',
-      size:{ w:220, h:120 }
+      size: s.search
     },
 
     // =========================================
@@ -259,7 +427,7 @@ const umlDiagramTypes = {
       label:'ビジネス機能',
       color:'#14b8a6',
       nodeType:'component',
-      size:{ w:240, h:120 }
+      size: s.business
     },
 
     // =========================================
@@ -276,52 +444,94 @@ const umlDiagramTypes = {
       label:'ノート',
       color:'#94a3b8',
       nodeType:'note',
-      size:{ w:260, h:180 }
+      size: s.note
     },
-    ],
+    ];
+  },
   },
   deployment: {
     label: '配置図',
     components: [
-      { icon: '<i data-lucide="monitor" class="node-lucide-icon"></i>', label: 'ノード', color: '#7c3aed' },
-      { icon: '<i data-lucide="smartphone" class="node-lucide-icon"></i>', label: 'デバイス', color: '#a855f7' },
-      { icon: '<i data-lucide="cloud" class="node-lucide-icon"></i>', label: '実行環境', color: '#06b6d4' },
-      { icon: '<i data-lucide="square" class="node-lucide-icon"></i>', label: 'コンポーネント', color: '#10b981' },
-      { icon: '<i data-lucide="hard-drive" class="node-lucide-icon"></i>', label: '成果物', color: '#f59e0b' },
-      { icon: '<i data-lucide="file-text" class="node-lucide-icon"></i>', label: 'ノート', color: '#64748b' },
+      {
+        icon: '<i data-lucide="monitor" class="node-lucide-icon"></i>',
+        label: 'ノード',
+        color: '#7c3aed',
+        nodeType: 'deployment-node',
+        defaults: { stereotype: '«node»' },
+        size: { w: 200, h: 120 }
+      },
+      {
+        icon: '<i data-lucide="smartphone" class="node-lucide-icon"></i>',
+        label: 'デバイス',
+        color: '#a855f7',
+        nodeType: 'deployment-device',
+        defaults: { stereotype: '«device»' },
+        size: { w: 200, h: 120 }
+      },
+      {
+        icon: '<i data-lucide="cloud" class="node-lucide-icon"></i>',
+        label: '実行環境',
+        color: '#06b6d4',
+        nodeType: 'deployment-env',
+        defaults: { stereotype: '«executionEnvironment»' },
+        size: { w: 240, h: 160 }
+      },
+      {
+        icon: `
+          <div class="uml-tool uml-component-tool">
+            <div class="uml-mini-component">
+              <div class="tabs">
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+          </div>
+        `,
+        label: 'コンポーネント',
+        color: '#10b981',
+        nodeType: 'component',
+        size: { w: 160, h: 60 }
+      },
+      {
+        icon: '<i data-lucide="hard-drive" class="node-lucide-icon"></i>',
+        label: '成果物',
+        color: '#f59e0b',
+        nodeType: 'deployment-artifact',
+        defaults: { stereotype: '«artifact»' },
+        size: { w: 140, h: 80 }
+      },
+      {
+        icon: `
+          <div class="uml-tool uml-note-tool">
+            <div class="uml-note">
+              <div class="fold"></div>
+            </div>
+          </div>
+        `,
+        label: 'ノート',
+        color: '#64748b',
+        nodeType: 'note',
+        size: { w: 160, h: 80 }
+      },
     ],
   },
   usecase: {
     label: 'ユースケース図',
-    components: [
-      { icon: '<i data-lucide="user" class="node-lucide-icon"></i>', label: 'アクター', color: '#10b981' },
-      { icon: '<i data-lucide="circle" class="node-lucide-icon"></i>', label: 'ユースケース', color: '#f59e0b' },
-      { icon: '<i data-lucide="rectangle-horizontal" class="node-lucide-icon"></i>', label: 'システム境界', color: '#7c3aed' },
-      { icon: '<i data-lucide="file-text" class="node-lucide-icon"></i>', label: 'ノート', color: '#64748b' },
-    ],
+    get components() {
+      return window.BehaviorDiagramLibrary?.usecase?.getDefaultComponents?.() || [];
+    }
   },
   activity: {
     label: 'アクティビティ図',
-    components: [
-      { icon: '<i data-lucide="play" class="node-lucide-icon"></i>', label: 'アクション', color: '#06b6d4' },
-      { icon: '<i data-lucide="circle" class="node-lucide-icon"></i>', label: '開始ノード', color: '#10b981' },
-      { icon: '<i data-lucide="circle-x" class="node-lucide-icon"></i>', label: '終了ノード', color: '#ef4444' },
-      { icon: '<i data-lucide="diamond" class="node-lucide-icon"></i>', label: '分岐/合流', color: '#f59e0b' },
-      { icon: '<i data-lucide="minus" class="node-lucide-icon"></i>', label: 'フォーク/ジョイン', color: '#8b5cf6' },
-      { icon: '<i data-lucide="square" class="node-lucide-icon"></i>', label: 'オブジェクトノード', color: '#7c3aed' },
-      { icon: '<i data-lucide="file-text" class="node-lucide-icon"></i>', label: 'ノート', color: '#64748b' },
-    ],
+    get components() {
+      return window.BehaviorDiagramLibrary?.activity?.getDefaultComponents?.() || [];
+    }
   },
   state: {
     label: 'ステートマシン図',
-    components: [
-      { icon: '<i data-lucide="git-branch" class="node-lucide-icon"></i>', label: 'ステート', color: '#6366f1' },
-      { icon: '<i data-lucide="play-circle" class="node-lucide-icon"></i>', label: '初期状態', color: '#10b981' },
-      { icon: '<i data-lucide="stop-circle" class="node-lucide-icon"></i>', label: '終了状態', color: '#ef4444' },
-      { icon: '<i data-lucide="diamond" class="node-lucide-icon"></i>', label: '選択', color: '#f59e0b' },
-      { icon: '<i data-lucide="box" class="node-lucide-icon"></i>', label: '複合ステート', color: '#7c3aed' },
-      { icon: '<i data-lucide="file-text" class="node-lucide-icon"></i>', label: 'ノート', color: '#64748b' },
-    ],
+    get components() {
+      return window.BehaviorDiagramLibrary?.state?.getDefaultComponents?.() || [];
+    }
   },
   sequence: {
     label: 'シーケンス図',
@@ -371,7 +581,7 @@ const screenTransitionComponents = [
 ];
 
 /* UMLクラス図の接続タイプ定義 */
-const UML_CONNECTION_TYPES = [
+const CLASS_CONNECTION_TYPES = [
   { key: 'association', label: '関連', icon: '━━' },
   { key: 'aggregation', label: '集約', icon: '◇━' },
   { key: 'composition', label: 'コンポジット', icon: '◆━' },
@@ -379,6 +589,39 @@ const UML_CONNECTION_TYPES = [
   { key: 'generalization', label: '汎化', icon: '━▷' },
   { key: 'realization', label: '実現', icon: '- -▷' },
   { key: 'navigable', label: '誘導可能性', icon: '✕━▸' },
+];
+
+/* UMLコンポーネント図の接続タイプ定義 */
+const COMPONENT_CONNECTION_TYPES = [
+  { key: 'provided', label: '提供インターフェース', icon: '○━' },
+  { key: 'required', label: '要求インターフェース', icon: ')━' },
+  { key: 'dependency', label: '依存', icon: '- -▸' },
+  { key: 'association', label: 'コネクタ', icon: '━━' },
+];
+
+/* UML配置図の接続タイプ定義 */
+const DEPLOYMENT_CONNECTION_TYPES = [
+  { key: 'association', label: '通信パス', icon: '━━' },
+  { key: 'deploy', label: 'デプロイ', icon: '- -▸ «deploy»' },
+  { key: 'manifest', label: 'マニフェスト', icon: '- -▸ «manifest»' },
+  { key: 'dependency', label: '依存', icon: '- -▸' },
+];
+
+/* UMLコンポジット構造図の接続タイプ定義 */
+const COMPOSITE_CONNECTION_TYPES = [
+  { key: 'association', label: 'コネクタ', icon: '━━' },
+  { key: 'dependency', label: '依存', icon: '- -▸' },
+  { key: 'provided', label: '提供インターフェース', icon: '○━' },
+  { key: 'required', label: '要求インターフェース', icon: ')━' },
+];
+
+/* UMLパッケージ図の接続タイプ定義 */
+const PACKAGE_CONNECTION_TYPES = [
+  { key: 'dependency', label: '依存', icon: '- -▸' },
+  { key: 'import', label: 'インポート', icon: '- -▸ «import»' },
+  { key: 'access', label: 'アクセス', icon: '- -▸ «access»' },
+  { key: 'generalization', label: '汎化', icon: '━━▷' },
+  { key: 'association', label: '関連', icon: '━━' },
 ];
 
 class DiagramTool {
@@ -393,11 +636,13 @@ class DiagramTool {
     this.nodes = [];
     this.connections = [];
     this.selectedNode = null;
+    this.selectedConnection = null;
     this.connectingFrom = null;
     this.undoHistory = [];
     this.redoHistory = [];
     this.isApplyingUndo = false;
     this.nodeIdCounter = 0;
+    this.connIdCounter = 0;
     this.quickAddCounter = 0;
     this.defaultTextStyle = { fontSize: 14, color: '#e5e7eb' };
     this.inlineShapeLimit = Number.isFinite(options.inlineShapeLimit)
@@ -681,11 +926,25 @@ class DiagramTool {
 
     const connectButton = document.getElementById(this.prefix + '-connect-mode');
 
-    // クラス図モードの場合: 接続タイプセレクタを生成
-    if (this.umlType === 'class') {
+    // クラス図、コンポーネント図、配置図、コンポジット構造図、またはパッケージ図モードの場合: 接続タイプセレクタを生成
+    if (this.umlType === 'class' || this.umlType === 'component' || this.umlType === 'deployment' || this.umlType === 'composite' || this.umlType === 'package') {
       connectButton.innerHTML = '';
       connectButton.textContent = '';
       connectButton.style.display = 'none';
+
+      let connTypes = CLASS_CONNECTION_TYPES;
+      if (this.umlType === 'component') {
+        connTypes = COMPONENT_CONNECTION_TYPES;
+      } else if (this.umlType === 'deployment') {
+        connTypes = DEPLOYMENT_CONNECTION_TYPES;
+      } else if (this.umlType === 'composite') {
+        connTypes = COMPOSITE_CONNECTION_TYPES;
+      } else if (this.umlType === 'package') {
+        connTypes = PACKAGE_CONNECTION_TYPES;
+      }
+      
+      // デフォルトの接続タイプを配列の先頭にする
+      this.activeConnType = connTypes[0].key;
 
       // 接続タイプセレクタをパレット領域に追加
       const connGroup = document.createElement('div');
@@ -693,7 +952,7 @@ class DiagramTool {
       connGroup.id = this.prefix + '-conn-group';
       connGroup.innerHTML = `
         <select class="uml-conn-select" id="${this.prefix}-conn-select">
-          ${UML_CONNECTION_TYPES.map(t => `<option value="${t.key}">${t.icon}  ${t.label}</option>`).join('')}
+          ${connTypes.map(t => `<option value="${t.key}">${t.icon}  ${t.label}</option>`).join('')}
         </select>
         <button type="button" class="palette-action-btn" id="${this.prefix}-connect-toggle">🔗 接続</button>`;
       connectButton.parentNode.insertBefore(connGroup, connectButton);
@@ -718,7 +977,7 @@ class DiagramTool {
           this.canvas.classList.toggle('timing-connect-active', this.connectMode);
           this._timingDotFrom = null;
         }
-        const typeDef = UML_CONNECTION_TYPES.find(t => t.key === this.activeConnType);
+        const typeDef = connTypes.find(t => t.key === this.activeConnType);
         showToast(this.connectMode ? `接続モード: ON (${typeDef?.label || '関連'})` : '接続モード: OFF');
       });
     } else {
@@ -855,10 +1114,10 @@ class DiagramTool {
       const isEditingField = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable);
       if (isEditingField) return;
       if (e.key !== 'Delete' && e.key !== 'Backspace') return;
-      console.debug('[DiagramTool] keydown', e.key, 'selectedNode=', this.selectedNode && this.selectedNode.id);
-      if (!this.selectedNode) return;
+      console.debug('[DiagramTool] keydown', e.key, 'selectedNode=', this.selectedNode?.id, 'selectedConn=', this.selectedConnection?.id);
+      if (!this.selectedNode && !this.selectedConnection) return;
       e.preventDefault();
-      this.deleteSelectedNode();
+      this.deleteSelected();
     });
   }
 
@@ -871,9 +1130,14 @@ class DiagramTool {
       const el = document.getElementById(this.prefix + '-prop-' + suffix);
       if (el) {
         el.addEventListener('input', (e) => {
-          if (!this.propertyPanelNode) return;
-          this.propertyPanelNode[prop] = parser(e.target.value);
-          this.updateNodeDOM(this.propertyPanelNode);
+          if (this.propertyPanelNode) {
+            this.propertyPanelNode[prop] = parser(e.target.value);
+            if (this.propertyPanelNode.from !== undefined) {
+              this.drawConnections();
+            } else {
+              this.updateNodeDOM(this.propertyPanelNode);
+            }
+          }
         });
       }
     };
@@ -889,6 +1153,9 @@ class DiagramTool {
     bindInput('timingtext', 'timingValue');
     bindInput('multFrom', 'multiplicityFrom');
     bindInput('multTo', 'multiplicityTo');
+    bindInput('subtexttop', 'subtextTop');
+    bindInput('subtextbottom', 'subtextBottom');
+    bindInput('arrowdir', 'arrowDirection');
 
     // プロパティパネルのカラーピッカー初期化
     this.initPropertyPanelColorPicker('textcolor', 'textColor');
@@ -1034,8 +1301,11 @@ openPropertyPanel(node) {
   if (fragmentGroup) fragmentGroup.style.display = (node && node.behaviorType === 'fragment') ? '' : 'none';
   const timingGroup = document.getElementById(this.prefix + '-prop-group-timing');
   if (timingGroup) timingGroup.style.display = (node && (node.behaviorType === 'stateTimeline' || node.behaviorType === 'valueTimeline')) ? '' : 'none';
-  const zindexGroup = document.getElementById(this.prefix + '-prop-group-zindex');
-  if (zindexGroup) zindexGroup.style.display = isNode ? '' : 'none';
+  
+  const nodeOnlyGroup = document.getElementById(this.prefix + '-prop-group-node-only');
+  if (nodeOnlyGroup) nodeOnlyGroup.style.display = isNode ? '' : 'none';
+  const connOnlyGroup = document.getElementById(this.prefix + '-prop-group-conn-only');
+  if (connOnlyGroup) connOnlyGroup.style.display = isConn ? '' : 'none';
 
   const panel = document.getElementById(this.prefix + '-property-panel');
   if (panel) panel.classList.add('open');
@@ -1047,7 +1317,9 @@ openPropertyPanel(node) {
   };
 
   if (isNode) {
-    setVal('label', node.label);
+    setVal('label', node.label || '');
+    setVal('subtexttop', node.subtextTop || '');
+    setVal('subtextbottom', node.subtextBottom || '');
     setVal('x', node.x);
     setVal('y', node.y);
     setVal('fontsize', node.textSize || this.defaultTextStyle.fontSize);
@@ -1069,10 +1341,83 @@ openPropertyPanel(node) {
   } else if (isConn) {
     // 線（コネクション）を選択した場合
     setVal('label', node.label || '');
+    setVal('arrowdir', node.arrowDirection || 'one-way');
     setVal('routing', node.routing || 'straight');
     setVal('linestyle', node.lineStyle || 'solid');
     setVal('multFrom', node.multiplicityFrom || '');
     setVal('multTo', node.multiplicityTo || '');
+
+    // ポートモード初期化
+    if (!node.portMode) {
+      node.portMode = node.portFrom || node.portTo ? 'dual' : 'single';
+    }
+
+    const singleView = document.getElementById(this.prefix + '-prop-port-single-view');
+    const dualView = document.getElementById(this.prefix + '-prop-port-dual-view');
+    
+    const updatePortModeUI = () => {
+      if (singleView) singleView.style.display = node.portMode === 'single' ? 'block' : 'none';
+      if (dualView) dualView.style.display = node.portMode === 'dual' ? 'block' : 'none';
+    };
+
+    updatePortModeUI();
+
+    // 値をセット
+    const inputCenter = document.getElementById(this.prefix + '-prop-port-center');
+    const inputFrom = document.getElementById(this.prefix + '-prop-port-from');
+    const inputTo = document.getElementById(this.prefix + '-prop-port-to');
+
+    if (inputCenter) inputCenter.value = node.portProtocol || '';
+    if (inputFrom) inputFrom.value = node.portFrom || '';
+    if (inputTo) inputTo.value = node.portTo || '';
+
+    // イベントリスナー (蓄積を防ぐためcloneNode)
+    const setupInput = (el, propName) => {
+      if (!el) return;
+      const newEl = el.cloneNode(true);
+      el.parentNode.replaceChild(newEl, el);
+      newEl.addEventListener('input', (e) => {
+        node[propName] = e.target.value;
+        this.drawConnections();
+      });
+    };
+
+    setupInput(inputCenter, 'portProtocol');
+    setupInput(inputFrom, 'portFrom');
+    setupInput(inputTo, 'portTo');
+
+    // モード切り替えボタン
+    const switchDualBtn = document.getElementById(this.prefix + '-prop-switch-dual-btn');
+    if (switchDualBtn) {
+      const newBtn = switchDualBtn.cloneNode(true);
+      switchDualBtn.parentNode.replaceChild(newBtn, switchDualBtn);
+      newBtn.addEventListener('click', () => {
+        node.portMode = 'dual';
+        if (node.portProtocol && !node.portTo) {
+          node.portTo = node.portProtocol;
+          const toEl = document.getElementById(this.prefix + '-prop-port-to');
+          if (toEl) toEl.value = node.portTo;
+        }
+        updatePortModeUI();
+        this.drawConnections();
+      });
+    }
+
+    const switchSingleBtn = document.getElementById(this.prefix + '-prop-switch-single-btn');
+    if (switchSingleBtn) {
+      const newBtn = switchSingleBtn.cloneNode(true);
+      switchSingleBtn.parentNode.replaceChild(newBtn, switchSingleBtn);
+      newBtn.addEventListener('click', () => {
+        node.portMode = 'single';
+        updatePortModeUI();
+        this.drawConnections();
+      });
+    }
+
+    updatePortModeUI();
+    setupAddBtn('center');
+    setupAddBtn('from');
+    setupAddBtn('to');
 
     // 線の場合の色更新（線の色変更用）
     this.refreshPropertyPanelColorButton('color', 'color');
@@ -1147,10 +1492,20 @@ closePropertyPanel() {
 }
 
 updateNodeDOM(node) {
+  if (node && node.from !== undefined) {
+    this.drawConnections();
+    return;
+  }
   const el = document.getElementById(node.id);
   if (!el) return;
   el.style.left = node.x + 'px';
   el.style.top = node.y + 'px';
+
+  const isContainer = node.nodeType === 'subsystem' || node.behaviorType === 'systemBoundary' || node.behaviorType === 'compositeState' ||
+                      node.nodeType === 'deployment-node' || node.nodeType === 'deployment-device' || node.nodeType === 'deployment-env' ||
+                      node.nodeType === 'composite-class' || node.nodeType === 'composite-part' || node.nodeType === 'composite-frame' || node.nodeType === 'uml-package';
+  const defaultZ = isContainer ? 1 : 10;
+  el.style.zIndex = node.zIndex || defaultZ;
 
   if (node.nodeType === 'class-box') {
     el.style.borderColor = (node.color || '#e5e7eb') + '80';
@@ -1193,6 +1548,34 @@ updateNodeDOM(node) {
       labelEl.textContent = node.label;
       this.applyNodeTextStyle(node, labelEl);
     }
+    const updateSubtext = (className, propName, position) => {
+      let subEl = el.querySelector(`.node-subtext.${className}`);
+      if (node[propName]) {
+        if (!subEl) {
+          subEl = document.createElement('span');
+          subEl.className = `node-subtext ${className}`;
+          const contentEl = el.querySelector('.diagram-node-content');
+          if (contentEl) {
+            if (position === 'top') {
+              contentEl.insertBefore(subEl, contentEl.firstChild);
+            } else {
+              contentEl.appendChild(subEl);
+            }
+          } else {
+            if (position === 'top') {
+              el.insertBefore(subEl, el.firstChild);
+            } else {
+              el.appendChild(subEl);
+            }
+          }
+        }
+        subEl.textContent = node[propName];
+      } else if (subEl) {
+        subEl.remove();
+      }
+    };
+    updateSubtext('top', 'subtextTop', 'top');
+    updateSubtext('bottom', 'subtextBottom', 'bottom');
   }
   this.drawConnections();
 }
@@ -1208,15 +1591,27 @@ addNode(comp, x, y, options = {}) {
 
 _createNode(comp, x, y, options = {}, overrides = {}) {
   const id = this.prefix + '_node_' + (this.nodeIdCounter++);
+  let defaultLabel = comp.label;
+  if (comp.nodeType === 'port' || comp.nodeType === 'interface') {
+    defaultLabel = '';
+  }
+  // サイズ定義の統一: テキストなしの図形(ポート/インターフェース)のみサイズを適用し、それ以外は自動フィット(undefined)
+  const isTextlessShape = comp.nodeType === 'port' || comp.nodeType === 'interface';
+  const resolvedWidth = isTextlessShape ? (comp.width || comp.size?.w || undefined) : undefined;
+  const resolvedHeight = isTextlessShape ? (comp.height || comp.size?.h || undefined) : undefined;
   const node = {
     id,
     icon: comp.icon,
-    label: overrides.label || comp.label,
+    label: overrides.label !== undefined ? overrides.label : defaultLabel,
     color: comp.color,
     x,
     y,
     textColor: this.defaultTextStyle.color,
     textSize: this.defaultTextStyle.fontSize,
+    behaviorType: comp.behaviorType,
+    nodeType: comp.nodeType,
+    width: resolvedWidth,
+    height: resolvedHeight,
   };
   if (comp.nodeType === 'class-box') {
     node.nodeType = 'class-box';
@@ -1670,11 +2065,15 @@ _drawTimingWaveLines(waveSvg) {
 }
 
 renderNode(node) {
+  const isContainer = node.nodeType === 'subsystem' || node.behaviorType === 'systemBoundary' || node.behaviorType === 'compositeState' ||
+                      node.nodeType === 'deployment-node' || node.nodeType === 'deployment-device' || node.nodeType === 'deployment-env' ||
+                      node.nodeType === 'composite-class' || node.nodeType === 'composite-part' || node.nodeType === 'composite-frame' || node.nodeType === 'uml-package';
+  const defaultZ = isContainer ? 1 : 10;
   const el = document.createElement('div');
   el.id = node.id;
   el.style.left = node.x + 'px';
   el.style.top = node.y + 'px';
-  el.style.zIndex = node.zIndex || 10;
+  el.style.zIndex = node.zIndex || defaultZ;
   const behaviorPresentation =
     window.TimingDiagramLibrary?.buildNodePresentation?.(node, this.escapeHtml.bind(this)) ||
     window.SequenceDiagramLibrary?.buildNodePresentation?.(node, this.escapeHtml.bind(this)) ||
@@ -1689,8 +2088,215 @@ renderNode(node) {
       node.width ? `width:${node.width}px;` : '',
       node.height ? `height:${node.height}px;` : '',
     ].join('');
-    el.style.cssText = `left:${node.x}px;top:${node.y}px;z-index:${node.zIndex || 10};${sizeStyle}`;
+    el.style.cssText = `left:${node.x}px;top:${node.y}px;z-index:${node.zIndex || defaultZ};${sizeStyle}`;
     el.innerHTML = behaviorPresentation.innerHTML;
+  } else if (node.nodeType === 'deployment-node' || node.nodeType === 'deployment-device' || node.nodeType === 'deployment-env') {
+    // 配置図用 3Dノード / 3Dデバイス / 3D実行環境 (伸縮可能な立体ボックスをSVGで背面に構築)
+    el.className = 'diagram-node uml-deployment-node node-type-' + node.nodeType;
+    el.style.borderColor = 'transparent';
+    el.style.background = 'transparent';
+    if (node.width) el.style.width = node.width + 'px';
+    if (node.height) el.style.height = node.height + 'px';
+    
+    const isEnv = node.nodeType === 'deployment-env';
+    const stereoText = isEnv ? '«executionEnvironment»' : (node.nodeType === 'deployment-device' ? '«device»' : '«node»');
+    const strokeDash = isEnv ? 'stroke-dasharray="4,4"' : '';
+    const color = node.color || '#7c3aed';
+    
+    el.innerHTML = `
+      <svg class="deployment-3d-bg" width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:1; pointer-events:none;">
+        <polygon points="10,0 100,0 90,12 0,12" fill="${color}15" stroke="${color}" stroke-width="1.5" ${strokeDash}/>
+        <polygon points="90,12 100,0 100,88 90,100" fill="${color}0a" stroke="${color}" stroke-width="1.5" ${strokeDash}/>
+        <rect x="0" y="12" width="90" height="88" fill="var(--bg-card, #111827)" stroke="${color}" stroke-width="1.5" rx="3" ${strokeDash}/>
+      </svg>
+      <div class="deployment-3d-content" style="position:relative; z-index:2; width:90%; height:88%; margin-top:12%; padding:14px 10px 10px 10px; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; text-align:center; gap:4px; box-sizing:border-box;">
+        <span class="deployment-stereotype" style="font-size:10px; opacity:0.75; font-family:monospace; color:#e5e7eb; white-space:nowrap;">${stereoText}</span>
+        <div style="display:flex; align-items:center; justify-content:center; gap:6px;">
+          <span class="node-icon" style="opacity:0.9;">${node.icon}</span>
+          <span class="node-label" style="font-weight:600; color:#ffffff;">${this.escapeHtml(node.label)}</span>
+        </div>
+      </div>
+      <span class="node-port port-top" data-port="top" style="top:12% !important;"></span>
+      <span class="node-port port-bottom" data-port="bottom"></span>
+      <span class="node-port port-left" data-port="left"></span>
+      <span class="node-port port-right" data-port="right" style="right:10% !important;"></span>
+    `;
+    const labelEl = el.querySelector('.node-label');
+    this.applyNodeTextStyle(node, labelEl);
+  } else if (node.nodeType === 'deployment-artifact') {
+    // 配置図用 成果物 (右上折れ曲がり書類)
+    el.className = 'diagram-node uml-deployment-artifact node-type-deployment-artifact';
+    el.style.borderColor = 'transparent';
+    el.style.background = 'transparent';
+    if (node.width) el.style.width = node.width + 'px';
+    if (node.height) el.style.height = node.height + 'px';
+    const color = node.color || '#f59e0b';
+    
+    el.innerHTML = `
+      <svg class="deployment-artifact-bg" width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:1; pointer-events:none;">
+        <polygon points="0,0 85,0 100,15 100,100 0,100" fill="var(--bg-card, #111827)" stroke="${color}" stroke-width="1.5" rx="3"/>
+        <polygon points="85,0 85,15 100,15" fill="${color}25" stroke="${color}" stroke-width="1.5"/>
+      </svg>
+      <div class="deployment-artifact-content" style="position:relative; z-index:2; width:100%; height:100%; padding:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:4px; box-sizing:border-box;">
+        <span class="deployment-stereotype" style="font-size:10px; opacity:0.75; font-family:monospace; color:#e5e7eb;">«artifact»</span>
+        <div style="display:flex; align-items:center; justify-content:center; gap:6px;">
+          <span class="node-icon" style="opacity:0.9;">${node.icon}</span>
+          <span class="node-label" style="font-weight:600; color:#ffffff;">${this.escapeHtml(node.label)}</span>
+        </div>
+      </div>
+      <span class="node-port port-top" data-port="top"></span>
+      <span class="node-port port-bottom" data-port="bottom"></span>
+      <span class="node-port port-left" data-port="left"></span>
+      <span class="node-port port-right" data-port="right"></span>
+    `;
+    const labelEl = el.querySelector('.node-label');
+    this.applyNodeTextStyle(node, labelEl);
+  } else if (node.nodeType === 'composite-class') {
+    // コンポジット構造図用 構造化クラス (左上にコンポーネントの2つ突起があるデザイン)
+    el.className = 'diagram-node uml-composite-class node-type-composite-class';
+    el.style.borderColor = node.color || '#7c3aed';
+    if (node.width) el.style.width = node.width + 'px';
+    if (node.height) el.style.height = node.height + 'px';
+    
+    el.innerHTML = `
+      <div class="composite-class-tabs" style="position:absolute; left:12px; top:-8px; display:flex; flex-direction:column; gap:2px; z-index:3;">
+        <span style="display:block; width:12px; height:5px; background:var(--bg-card, #111827); border:1.5px solid ${node.color}; border-bottom:none; border-radius:2px 2px 0 0;"></span>
+        <span style="display:block; width:12px; height:5px; background:var(--bg-card, #111827); border:1.5px solid ${node.color}; border-bottom:none; border-radius:2px 2px 0 0; margin-top:-2px;"></span>
+      </div>
+      <div class="composite-class-content" style="position:relative; z-index:2; width:100%; height:100%; padding:14px 10px 10px 10px; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; text-align:center; gap:4px; box-sizing:border-box;">
+        <span class="composite-stereotype" style="font-size:10px; opacity:0.75; font-family:monospace; color:#e5e7eb;">«structured class»</span>
+        <div style="display:flex; align-items:center; justify-content:center; gap:6px;">
+          <span class="node-label" style="font-weight:600; color:#ffffff;">${this.escapeHtml(node.label)}</span>
+        </div>
+      </div>
+      <span class="node-port port-top" data-port="top"></span>
+      <span class="node-port port-bottom" data-port="bottom"></span>
+      <span class="node-port port-left" data-port="left"></span>
+      <span class="node-port port-right" data-port="right"></span>
+    `;
+    const labelEl = el.querySelector('.node-label');
+    this.applyNodeTextStyle(node, labelEl);
+  } else if (node.nodeType === 'composite-part') {
+    // コンポジット構造図用 パート (実線長方形、文字は中央揃え)
+    el.className = 'diagram-node uml-composite-part node-type-composite-part';
+    el.style.borderColor = node.color || '#06b6d4';
+    if (node.width) el.style.width = node.width + 'px';
+    if (node.height) el.style.height = node.height + 'px';
+    
+    el.innerHTML = `
+      <div class="composite-part-content" style="position:relative; z-index:2; width:100%; height:100%; padding:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:4px; box-sizing:border-box;">
+        <span class="node-label" style="font-weight:600; color:#ffffff;">${this.escapeHtml(node.label)}</span>
+      </div>
+      <span class="node-port port-top" data-port="top"></span>
+      <span class="node-port port-bottom" data-port="bottom"></span>
+      <span class="node-port port-left" data-port="left"></span>
+      <span class="node-port port-right" data-port="right"></span>
+    `;
+    const labelEl = el.querySelector('.node-label');
+    this.applyNodeTextStyle(node, labelEl);
+  } else if (node.nodeType === 'composite-collaboration') {
+    // コンポジット構造図用 コラボレーション (破線の楕円)
+    el.className = 'diagram-node uml-composite-collaboration node-type-composite-collaboration';
+    el.style.borderColor = node.color || '#f59e0b';
+    el.style.borderStyle = 'dashed';
+    el.style.borderRadius = '50%';
+    if (node.width) el.style.width = node.width + 'px';
+    if (node.height) el.style.height = node.height + 'px';
+    
+    el.innerHTML = `
+      <div class="composite-collaboration-content" style="position:relative; z-index:2; width:100%; height:100%; padding:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:4px; box-sizing:border-box;">
+        <span class="node-label" style="font-weight:600; color:#ffffff; font-style:italic;">${this.escapeHtml(node.label)}</span>
+      </div>
+      <span class="node-port port-top" data-port="top"></span>
+      <span class="node-port port-bottom" data-port="bottom"></span>
+      <span class="node-port port-left" data-port="left"></span>
+      <span class="node-port port-right" data-port="right"></span>
+    `;
+    const labelEl = el.querySelector('.node-label');
+    this.applyNodeTextStyle(node, labelEl);
+  } else if (node.nodeType === 'composite-frame') {
+    // 上部に名前帯を持つフレーム
+    el.className = 'diagram-node uml-composite-frame node-type-composite-frame';
+    el.style.borderColor = node.color || '#8b5cf6';
+    if (node.width) el.style.width = node.width + 'px';
+    if (node.height) el.style.height = node.height + 'px';
+    
+    el.innerHTML = `
+      <div class="composite-frame-header" style="width:100%; height:28px; border-bottom:1.5px solid ${node.color || '#8b5cf6'}; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.03); box-sizing:border-box;">
+        <span class="node-label" style="font-weight:600; color:#ffffff;">${this.escapeHtml(node.label)}</span>
+      </div>
+      <div class="composite-frame-content" style="width:100%; height:calc(100% - 28px);"></div>
+      <span class="node-port port-top" data-port="top"></span>
+      <span class="node-port port-bottom" data-port="bottom"></span>
+      <span class="node-port port-left" data-port="left"></span>
+      <span class="node-port port-right" data-port="right"></span>
+    `;
+    const labelEl = el.querySelector('.node-label');
+    this.applyNodeTextStyle(node, labelEl);
+  } else if (node.nodeType === 'text-node') {
+    // テキスト要素 (背景透過、枠線なし)
+    el.className = 'diagram-node uml-text-node node-type-text-node';
+    el.style.borderColor = 'transparent';
+    el.style.background = 'transparent';
+    if (node.width) el.style.width = node.width + 'px';
+    if (node.height) el.style.height = node.height + 'px';
+    
+    el.innerHTML = `
+      <div class="text-node-content" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; text-align:center;">
+        <span class="node-label" style="font-weight:600; color:#ffffff;">${this.escapeHtml(node.label)}</span>
+      </div>
+      <span class="node-port port-top" data-port="top"></span>
+      <span class="node-port port-bottom" data-port="bottom"></span>
+      <span class="node-port port-left" data-port="left"></span>
+      <span class="node-port port-right" data-port="right"></span>
+    `;
+    const labelEl = el.querySelector('.node-label');
+    this.applyNodeTextStyle(node, labelEl);
+  } else if (node.nodeType === 'uml-package') {
+    // パッケージ図用 パッケージ (フォルダ形状)
+    el.className = 'diagram-node uml-package node-type-uml-package';
+    el.style.borderColor = 'transparent';
+    el.style.background = 'transparent';
+    if (node.width) el.style.width = node.width + 'px';
+    if (node.height) el.style.height = node.height + 'px';
+    const color = node.color || '#06b6d4';
+    
+    el.innerHTML = `
+      <div class="uml-package-tab" style="position:absolute; left:0; top:0; height:24px; padding:0 12px; background:var(--bg-card, #111827); border:2px solid ${color}; border-bottom:none; border-radius:6px 6px 0 0; display:flex; align-items:center; z-index:2; box-sizing:border-box;">
+        <span class="node-label" style="font-weight:700; font-size:12px; color:#ffffff; white-space:nowrap;">${this.escapeHtml(node.label)}</span>
+      </div>
+      <div class="uml-package-body" style="position:absolute; left:0; top:22px; width:100%; height:calc(100% - 22px); background:var(--bg-card, #111827); border:2px solid ${color}; border-radius:0 6px 6px 6px; z-index:1; padding:10px; box-sizing:border-box; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+      </div>
+      <span class="node-port port-top" data-port="top"></span>
+      <span class="node-port port-bottom" data-port="bottom"></span>
+      <span class="node-port port-left" data-port="left"></span>
+      <span class="node-port port-right" data-port="right"></span>
+    `;
+    const labelEl = el.querySelector('.uml-package-tab .node-label');
+    this.applyNodeTextStyle(node, labelEl);
+  } else if (node.nodeType === 'n-ary-association') {
+    // パッケージ図用 N項アソシエーション (ひし形ハブ)
+    el.className = 'diagram-node uml-n-ary node-type-n-ary';
+    el.style.borderColor = 'transparent';
+    el.style.background = 'transparent';
+    if (node.width) el.style.width = node.width + 'px';
+    if (node.height) el.style.height = node.height + 'px';
+    const color = node.color || '#f59e0b';
+    
+    el.innerHTML = `
+      <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:1; pointer-events:none;">
+        <polygon points="50,0 100,50 50,100 0,50" fill="var(--bg-card, #111827)" stroke="${color}" stroke-width="2"/>
+      </svg>
+      <div class="n-ary-content" style="position:relative; z-index:2; width:100%; height:100%; display:flex; align-items:center; justify-content:center; text-align:center; padding:10px; box-sizing:border-box;">
+        <span class="node-label" style="font-weight:600; color:#ffffff; font-size:12px;">${this.escapeHtml(node.label)}</span>
+      </div>
+      <span class="node-port port-top" data-port="top"></span>
+      <span class="node-port port-bottom" data-port="bottom"></span>
+      <span class="node-port port-left" data-port="left"></span>
+      <span class="node-port port-right" data-port="right"></span>
+    `;
+    const labelEl = el.querySelector('.node-label');
+    this.applyNodeTextStyle(node, labelEl);
   } else if (node.nodeType === 'class-box') {
     // UMLクラス図の3コンパートメントノード
     el.className = 'diagram-node uml-class-box';
@@ -1716,8 +2322,13 @@ renderNode(node) {
   } else {
     // 通常のノード
     el.className = 'diagram-node';
+    if (node.nodeType) el.classList.add('node-type-' + node.nodeType);
     el.style.borderColor = node.color + '60';
-    el.innerHTML = `<span class="node-icon">${node.icon}</span><span class="node-label">${node.label}</span>
+    if (node.width) el.style.width = node.width + 'px';
+    if (node.height) el.style.height = node.height + 'px';
+    const subtextTopHtml = node.subtextTop ? `<span class="node-subtext top">${this.escapeHtml(node.subtextTop)}</span>` : '';
+    const subtextBottomHtml = node.subtextBottom ? `<span class="node-subtext bottom">${this.escapeHtml(node.subtextBottom)}</span>` : '';
+    el.innerHTML = `<div class="diagram-node-content">${subtextTopHtml}<span class="node-icon">${node.icon}</span><span class="node-label">${this.escapeHtml(node.label)}</span>${subtextBottomHtml}</div>
         <span class="node-port port-top" data-port="top"></span>
         <span class="node-port port-bottom" data-port="bottom"></span>
         <span class="node-port port-left" data-port="left"></span>
@@ -1726,7 +2337,10 @@ renderNode(node) {
     this.applyNodeTextStyle(node, labelEl);
   }
 
-  const isResizable = node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary' || node.behaviorType === 'fragment' || node.behaviorType === 'execSpec' || window.TimingDiagramLibrary?.isTimingNode(node);
+  const isResizable = node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary' || node.behaviorType === 'fragment' || node.behaviorType === 'execSpec' || window.TimingDiagramLibrary?.isTimingNode(node) ||
+                      node.nodeType === 'deployment-node' || node.nodeType === 'deployment-device' || node.nodeType === 'deployment-env' || node.nodeType === 'deployment-artifact' ||
+                      node.nodeType === 'composite-class' || node.nodeType === 'composite-part' || node.nodeType === 'composite-collaboration' || node.nodeType === 'composite-frame' || node.nodeType === 'text-node' ||
+                      node.nodeType === 'uml-package' || node.nodeType === 'n-ary-association';
   if (isResizable) {
     ['right', 'bottom', 'bottom-right'].forEach(dir => {
       const handle = document.createElement('span');
@@ -1748,7 +2362,10 @@ renderNode(node) {
       const startY = e.clientY;
       const startWidth = node.width || el.getBoundingClientRect().width;
       const startHeight = node.height || el.getBoundingClientRect().height;
-      const isResizable = node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary' || node.behaviorType === 'fragment' || node.behaviorType === 'execSpec' || window.TimingDiagramLibrary?.isTimingNode(node);
+      const isResizable = node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary' || node.behaviorType === 'fragment' || node.behaviorType === 'execSpec' || window.TimingDiagramLibrary?.isTimingNode(node) ||
+                          node.nodeType === 'deployment-node' || node.nodeType === 'deployment-device' || node.nodeType === 'deployment-env' || node.nodeType === 'deployment-artifact' ||
+                          node.nodeType === 'composite-class' || node.nodeType === 'composite-part' || node.nodeType === 'composite-collaboration' || node.nodeType === 'composite-frame' || node.nodeType === 'text-node' ||
+                          node.nodeType === 'uml-package' || node.nodeType === 'n-ary-association';
       let minWidth = 120, minHeight = 80;
       if (node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary') { minWidth = 200; minHeight = 100; }
       else if (node.behaviorType === 'fragment') { minWidth = 150; minHeight = 80; }
@@ -1790,7 +2407,21 @@ renderNode(node) {
         el.classList.add('selected');
         showToast('接続先ノードをクリックしてください');
       } else if (this.connectingFrom.id !== node.id) {
-        this.connections.push({ from: this.connectingFrom.id, to: node.id, connType: this.activeConnType || 'association' });
+        let initialLabel = '';
+        if (this.activeConnType === 'deploy') initialLabel = '«deploy»';
+        else if (this.activeConnType === 'manifest') initialLabel = '«manifest»';
+
+        const newConn = {
+          id: this.prefix + '_conn_' + (this.connIdCounter++),
+          from: this.connectingFrom.id,
+          to: node.id,
+          connType: this.activeConnType || 'association',
+          routing: 'straight',
+          label: initialLabel,
+          multiplicityFrom: '',
+          multiplicityTo: '',
+        };
+        this.connections.push(newConn);
         this.drawConnections();
         document.getElementById(this.connectingFrom.id)?.classList.remove('selected');
         this.pushUndoAction({
@@ -1954,6 +2585,12 @@ beginInlineRename(node, labelEl) {
   labelEl.addEventListener('blur', onBlur);
   labelEl.addEventListener('keydown', onKeyDown);
 }
+selectConnection(conn) {
+  this.deselectAll();
+  this.selectedConnection = conn;
+  this.drawConnections();
+  this.openPropertyPanel(conn);
+}
 selectNode(node, el) {
   this.deselectAll();
   this.selectedNode = node;
@@ -1962,7 +2599,52 @@ selectNode(node, el) {
 }
 deselectAll() {
   this.selectedNode = null;
+  this.selectedConnection = null;
   this.canvas.querySelectorAll('.diagram-node').forEach(n => n.classList.remove('selected'));
+  this.canvas.querySelectorAll('.diagram-conn-label').forEach(n => n.classList.remove('selected'));
+  this.drawConnections();
+}
+bringToFront() {
+  if (!this.selectedNode) return;
+  const isContainer = this.selectedNode.nodeType === 'subsystem' || this.selectedNode.behaviorType === 'systemBoundary' || this.selectedNode.behaviorType === 'compositeState' ||
+                      this.selectedNode.nodeType === 'deployment-node' || this.selectedNode.nodeType === 'deployment-device' || this.selectedNode.nodeType === 'deployment-env' ||
+                      this.selectedNode.nodeType === 'composite-class' || this.selectedNode.nodeType === 'composite-part' || this.selectedNode.nodeType === 'composite-frame' || this.selectedNode.nodeType === 'uml-package';
+
+  if (isContainer) {
+    const containerNodes = this.nodes.filter(n => n.nodeType === 'subsystem' || n.behaviorType === 'systemBoundary' || n.behaviorType === 'compositeState' ||
+                                                  n.nodeType === 'deployment-node' || n.nodeType === 'deployment-device' || n.nodeType === 'deployment-env' ||
+                                                  n.nodeType === 'composite-class' || n.nodeType === 'composite-part' || n.nodeType === 'composite-frame' || n.nodeType === 'uml-package');
+    const maxZ = Math.max(...containerNodes.map(n => n.zIndex || 1));
+    this.selectedNode.zIndex = Math.min(5, maxZ + 1);
+  } else {
+    const normalNodes = this.nodes.filter(n => !(n.nodeType === 'subsystem' || n.behaviorType === 'systemBoundary' || n.behaviorType === 'compositeState' ||
+                                                  n.nodeType === 'deployment-node' || n.nodeType === 'deployment-device' || n.nodeType === 'deployment-env' ||
+                                                  n.nodeType === 'composite-class' || n.nodeType === 'composite-part' || n.nodeType === 'composite-frame' || n.nodeType === 'uml-package'));
+    const maxZ = Math.max(...normalNodes.map(n => n.zIndex || 10));
+    this.selectedNode.zIndex = maxZ + 1;
+  }
+  this.updateNodeDOM(this.selectedNode);
+}
+sendToBack() {
+  if (!this.selectedNode) return;
+  const isContainer = this.selectedNode.nodeType === 'subsystem' || this.selectedNode.behaviorType === 'systemBoundary' || this.selectedNode.behaviorType === 'compositeState' ||
+                      this.selectedNode.nodeType === 'deployment-node' || this.selectedNode.nodeType === 'deployment-device' || this.selectedNode.nodeType === 'deployment-env' ||
+                      this.selectedNode.nodeType === 'composite-class' || this.selectedNode.nodeType === 'composite-part' || this.selectedNode.nodeType === 'composite-frame' || this.selectedNode.nodeType === 'uml-package';
+
+  if (isContainer) {
+    const containerNodes = this.nodes.filter(n => n.nodeType === 'subsystem' || n.behaviorType === 'systemBoundary' || n.behaviorType === 'compositeState' ||
+                                                  n.nodeType === 'deployment-node' || n.nodeType === 'deployment-device' || n.nodeType === 'deployment-env' ||
+                                                  n.nodeType === 'composite-class' || n.nodeType === 'composite-part' || n.nodeType === 'composite-frame' || n.nodeType === 'uml-package');
+    const minZ = Math.min(...containerNodes.map(n => n.zIndex || 1));
+    this.selectedNode.zIndex = Math.max(1, minZ - 1);
+  } else {
+    const normalNodes = this.nodes.filter(n => !(n.nodeType === 'subsystem' || n.behaviorType === 'systemBoundary' || n.behaviorType === 'compositeState' ||
+                                                  n.nodeType === 'deployment-node' || n.nodeType === 'deployment-device' || n.nodeType === 'deployment-env' ||
+                                                  n.nodeType === 'composite-class' || n.nodeType === 'composite-part' || n.nodeType === 'composite-frame' || n.nodeType === 'uml-package'));
+    const minZ = Math.min(...normalNodes.map(n => n.zIndex || 10));
+    this.selectedNode.zIndex = Math.max(10, minZ - 1);
+  }
+  this.updateNodeDOM(this.selectedNode);
 }
 pushUndoAction(action) {
   if (this.isApplyingUndo || !action) return;
@@ -2006,7 +2688,34 @@ detachNode(nodeId) {
   };
 }
 
-deleteSelectedNode() {
+deleteSelected() {
+  if (this.selectedConnection) {
+    const conn = this.selectedConnection;
+    this.connections = this.connections.filter(c => c.id !== conn.id);
+    this.pushUndoAction({
+      type: 'removeConnection',
+      from: conn.from,
+      to: conn.to,
+      connType: conn.connType,
+      routing: conn.routing,
+      lineStyle: conn.lineStyle,
+      label: conn.label,
+      multiplicityFrom: conn.multiplicityFrom,
+      multiplicityTo: conn.multiplicityTo,
+      portProtocol: conn.portProtocol,
+      arrowDirection: conn.arrowDirection,
+      portMode: conn.portMode,
+      portFrom: conn.portFrom,
+      portTo: conn.portTo,
+    });
+    this.deselectAll();
+    this.drawConnections();
+    if (this.propertyPanelNode && this.propertyPanelNode.id === conn.id) {
+      this.closePropertyPanel();
+    }
+    showToast('選択した線を削除しました');
+    return;
+  }
   if (!this.selectedNode) return;
   const nodeId = this.selectedNode.id;
   const result = this.detachNode(nodeId);
@@ -2022,6 +2731,9 @@ deleteSelectedNode() {
     }
     this.drawConnections();
   }
+}
+deleteSelectedNode() {
+  this.deleteSelected();
 }
 restoreNode(node, connections = []) {
   if (!node) return;
@@ -2080,6 +2792,7 @@ applyHistoryAction(action) {
 
   if (action.type === 'removeConnection') {
     const beforeCount = this.connections.length;
+    const removedConn = this.connections.find(conn => conn.from === action.from && conn.to === action.to);
     this.connections = this.connections.filter(conn => !(conn.from === action.from && conn.to === action.to));
     if (this.connections.length === beforeCount) return null;
     this.drawConnections();
@@ -2087,11 +2800,36 @@ applyHistoryAction(action) {
       type: 'addConnection',
       from: action.from,
       to: action.to,
+      connType: removedConn?.connType || action.connType,
+      routing: removedConn?.routing || action.routing,
+      lineStyle: removedConn?.lineStyle || action.lineStyle,
+      label: removedConn?.label || action.label,
+      multiplicityFrom: removedConn?.multiplicityFrom || action.multiplicityFrom,
+      multiplicityTo: removedConn?.multiplicityTo || action.multiplicityTo,
+      portProtocol: removedConn?.portProtocol || action.portProtocol,
+      arrowDirection: removedConn?.arrowDirection || action.arrowDirection,
+      portMode: removedConn?.portMode || action.portMode,
+      portFrom: removedConn?.portFrom || action.portFrom,
+      portTo: removedConn?.portTo || action.portTo,
     };
   }
 
   if (action.type === 'addConnection') {
-    this.connections.push({ from: action.from, to: action.to });
+    this.connections.push({
+      from: action.from,
+      to: action.to,
+      connType: action.connType,
+      routing: action.routing,
+      lineStyle: action.lineStyle,
+      label: action.label,
+      multiplicityFrom: action.multiplicityFrom,
+      multiplicityTo: action.multiplicityTo,
+      portProtocol: action.portProtocol,
+      arrowDirection: action.arrowDirection,
+      portMode: action.portMode,
+      portFrom: action.portFrom,
+      portTo: action.portTo,
+    });
     this.drawConnections();
     return {
       type: 'removeConnection',
@@ -2560,14 +3298,19 @@ drawConnections() {
   // SVGマーカー定義（各接続タイプ用）
   this.svg.innerHTML = `<defs>
       <marker id="arrow-${p}" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#7c3aed"/></marker>
-      <marker id="arrow-open-${p}" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polyline points="0 0, 10 3.5, 0 7" fill="none" stroke="#7c3aed" stroke-width="1.5"/></marker>
-      <marker id="diamond-empty-${p}" markerWidth="14" markerHeight="10" refX="14" refY="5" orient="auto"><polygon points="0 5, 7 0, 14 5, 7 10" fill="none" stroke="#7c3aed" stroke-width="1.5"/></marker>
-      <marker id="diamond-fill-${p}" markerWidth="14" markerHeight="10" refX="14" refY="5" orient="auto"><polygon points="0 5, 7 0, 14 5, 7 10" fill="#7c3aed" stroke="#7c3aed" stroke-width="1"/></marker>
-      <marker id="triangle-empty-${p}" markerWidth="12" markerHeight="10" refX="12" refY="5" orient="auto"><polygon points="0 0, 12 5, 0 10" fill="none" stroke="#7c3aed" stroke-width="1.5"/></marker>
-      <marker id="x-mark-${p}" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto"><line x1="2" y1="2" x2="8" y2="8" stroke="#7c3aed" stroke-width="2"/><line x1="8" y1="2" x2="2" y2="8" stroke="#7c3aed" stroke-width="2"/></marker>
+      <marker id="arrow-open-${p}" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" style="fill:var(--bg-card, #111827)" stroke="#7c3aed" stroke-width="1.5"/></marker>
+      <marker id="diamond-empty-${p}" markerWidth="14" markerHeight="10" refX="0" refY="5" orient="auto"><polygon points="0 5, 7 0, 14 5, 7 10" style="fill:var(--bg-card, #111827)" stroke="#7c3aed" stroke-width="1.5"/></marker>
+      <marker id="lollipop-${p}" markerWidth="14" markerHeight="14" refX="0" refY="7" orient="auto"><circle cx="7" cy="7" r="6" style="fill:var(--bg-card, #111827)" stroke="#7c3aed" stroke-width="1.5"/></marker>
+      <marker id="socket-${p}" markerWidth="10" markerHeight="16" refX="8" refY="8" orient="auto"><path d="M 0 1 A 7 7 0 0 1 0 15" fill="none" stroke="#7c3aed" stroke-width="1.5"/></marker>
+      <marker id="diamond-fill-${p}" markerWidth="14" markerHeight="10" refX="0" refY="5" orient="auto"><polygon points="0 5, 7 0, 14 5, 7 10" fill="#7c3aed" stroke="#7c3aed" stroke-width="1"/></marker>
+      <marker id="triangle-empty-${p}" markerWidth="12" markerHeight="10" refX="12" refY="5" orient="auto"><polygon points="0 0, 12 5, 0 10" style="fill:var(--bg-card, #111827)" stroke="#7c3aed" stroke-width="1.5"/></marker>
+      <marker id="x-mark-${p}" markerWidth="10" markerHeight="10" refX="0" refY="5" orient="auto"><circle cx="5" cy="5" r="4" style="fill:var(--bg-card, #111827)" stroke="none"/><line x1="2" y1="2" x2="8" y2="8" stroke="#7c3aed" stroke-width="2"/><line x1="8" y1="2" x2="2" y2="8" stroke="#7c3aed" stroke-width="2"/></marker>
     </defs>`;
 
+  this.canvas.querySelectorAll('.diagram-conn-label, .diagram-conn-multiplicity').forEach(el => el.remove());
+
   this.connections.forEach(conn => {
+    if (!conn.id) conn.id = this.prefix + '_conn_' + (this.connIdCounter++);
     const fromEl = document.getElementById(conn.from);
     const toEl = document.getElementById(conn.to);
     if (!fromEl || !toEl) return;
@@ -2610,6 +3353,17 @@ drawConnections() {
     // シーケンス図水平補正: Y座標を揃える
     if (isSeqMessage) {
       y2 = y1;
+    }
+
+    // オフセット計算（斜め配置でもベクトル方向に沿って短縮し、マーカーが浮いたりめり込んだりするのを防ぐ）
+    if (conn.connType === 'required') {
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      if (len > 0) {
+        x1 += (dx / len) * 8;
+        y1 += (dy / len) * 8;
+      }
     }
 
     let dStr = '';
@@ -2789,42 +3543,68 @@ drawConnections() {
     }
 
     const connType = conn.connType || 'association';
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    path.setAttribute('x1', x1);
-    path.setAttribute('y1', y1);
-    path.setAttribute('x2', x2);
-    path.setAttribute('y2', y2);
-    path.setAttribute('stroke', '#7c3aed');
-    path.setAttribute('stroke-width', '2');
+    const isSelected = this.selectedConnection === conn;
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', dStr);
+    path.setAttribute('stroke', isSelected ? '#f59e0b' : '#7c3aed');
+    path.setAttribute('stroke-width', isSelected ? '3' : '2');
+    path.setAttribute('fill', 'none');
+    path.setAttribute('pointer-events', 'visibleStroke');
     path.setAttribute('opacity', '0.8');
+    path.style.cursor = 'pointer';
+    path.addEventListener('mousedown', e => {
+      e.stopPropagation();
+      this.selectConnection(conn);
+    });
 
-    switch (connType) {
-      case 'association':
-        // 実線のみ
-        break;
-      case 'aggregation':
-        path.setAttribute('marker-start', `url(#diamond-empty-${p})`);
-        break;
-      case 'composition':
-        path.setAttribute('marker-start', `url(#diamond-fill-${p})`);
-        break;
-      case 'dependency':
-        path.setAttribute('stroke-dasharray', '6 3');
-        path.setAttribute('marker-end', `url(#arrow-open-${p})`);
-        break;
-      case 'generalization':
-        path.setAttribute('marker-end', `url(#triangle-empty-${p})`);
-        break;
-      case 'realization':
-        path.setAttribute('stroke-dasharray', '6 3');
-        path.setAttribute('marker-end', `url(#triangle-empty-${p})`);
-        break;
-      case 'navigable':
-        path.setAttribute('marker-start', `url(#x-mark-${p})`);
-        path.setAttribute('marker-end', `url(#arrow-open-${p})`);
-        break;
-      default:
-        path.setAttribute('marker-end', `url(#arrow-${p})`);
+    const arrowDir = conn.arrowDirection || 'one-way';
+
+    if (arrowDir === 'none') {
+      // 矢印なし
+    } else if (arrowDir === 'two-way') {
+      path.setAttribute('marker-start', `url(#arrow-open-${p})`);
+      path.setAttribute('marker-end', `url(#arrow-${p})`);
+    } else {
+      // one-way
+      switch (connType) {
+        case 'association':
+          // 実線のみ
+          break;
+        case 'aggregation':
+          path.setAttribute('marker-start', `url(#diamond-empty-${p})`);
+          break;
+        case 'provided':
+          path.setAttribute('marker-start', `url(#lollipop-${p})`);
+          break;
+        case 'required':
+          path.setAttribute('marker-start', `url(#socket-${p})`);
+          break;
+        case 'composition':
+          path.setAttribute('marker-start', `url(#diamond-fill-${p})`);
+          break;
+        case 'dependency':
+        case 'deploy':
+        case 'manifest':
+          path.setAttribute('stroke-dasharray', '6 3');
+          path.setAttribute('marker-end', `url(#arrow-open-${p})`);
+          break;
+        case 'dashed':
+          path.setAttribute('stroke-dasharray', '6 3');
+          break;
+        case 'generalization':
+          path.setAttribute('marker-end', `url(#triangle-empty-${p})`);
+          break;
+        case 'realization':
+          path.setAttribute('stroke-dasharray', '6 3');
+          path.setAttribute('marker-end', `url(#triangle-empty-${p})`);
+          break;
+        case 'navigable':
+          path.setAttribute('marker-start', `url(#x-mark-${p})`);
+          path.setAttribute('marker-end', `url(#arrow-open-${p})`);
+          break;
+        default:
+          path.setAttribute('marker-end', `url(#arrow-${p})`);
+      }
     }
 
     if (conn.lineStyle === 'dashed') {
@@ -2832,6 +3612,131 @@ drawConnections() {
     }
 
     this.svg.appendChild(path);
+
+    // ポート・プロトコル表示 (モードに応じた表示)
+    const portMode = conn.portMode || 'single';
+
+    if (portMode === 'single') {
+      if (conn.portProtocol && conn.portProtocol.trim() !== '') {
+        const portDiv = document.createElement('div');
+        portDiv.className = 'diagram-conn-port';
+        portDiv.textContent = conn.portProtocol;
+        let px, py;
+        if (conn.manualMid) {
+          px = conn.manualMid.x;
+          py = conn.manualMid.y;
+        } else {
+          px = (x1 + x2) / 2;
+          py = (y1 + y2) / 2;
+        }
+        portDiv.style.left = px + 'px';
+        portDiv.style.top = py + 'px';
+        this.canvas.appendChild(portDiv);
+      }
+    } else {
+      let pxFrom, pyFrom, pxTo, pyTo;
+      if (conn.manualMid) {
+        const mx = conn.manualMid.x;
+        const my = conn.manualMid.y;
+        pxFrom = x1 + (mx - x1) * 0.5;
+        pyFrom = y1 + (my - y1) * 0.5;
+        pxTo = mx + (x2 - mx) * 0.5;
+        pyTo = my + (y2 - my) * 0.5;
+      } else {
+        pxFrom = x1 + (x2 - x1) * 0.25;
+        pyFrom = y1 + (y2 - y1) * 0.25;
+        pxTo = x1 + (x2 - x1) * 0.75;
+        pyTo = y1 + (y2 - y1) * 0.75;
+      }
+
+      if (conn.portFrom && conn.portFrom.trim() !== '') {
+        const portDiv = document.createElement('div');
+        portDiv.className = 'diagram-conn-port';
+        portDiv.textContent = conn.portFrom;
+        portDiv.style.left = pxFrom + 'px';
+        portDiv.style.top = pyFrom + 'px';
+        this.canvas.appendChild(portDiv);
+      }
+
+      if (conn.portTo && conn.portTo.trim() !== '') {
+        const portDiv = document.createElement('div');
+        portDiv.className = 'diagram-conn-port';
+        portDiv.textContent = conn.portTo;
+        portDiv.style.left = pxTo + 'px';
+        portDiv.style.top = pyTo + 'px';
+        this.canvas.appendChild(portDiv);
+      }
+    }
+
+    // ラベル表示
+    if (conn.label) {
+      const labelDiv = document.createElement('div');
+      labelDiv.className = 'diagram-conn-label' + (isSelected ? ' selected' : '');
+      labelDiv.textContent = conn.label;
+      labelDiv.style.left = midX + 'px';
+      labelDiv.style.top = midY + 'px';
+      labelDiv.addEventListener('mousedown', e => {
+        e.stopPropagation();
+        this.selectConnection(conn);
+      });
+      this.canvas.appendChild(labelDiv);
+    }
+
+    // 中点ドラッグハンドル (選択中のみ表示)
+    if (isSelected && routing === 'straight') {
+      const handle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      handle.setAttribute('cx', midX);
+      handle.setAttribute('cy', midY);
+      handle.setAttribute('r', '6');
+      handle.setAttribute('fill', '#f59e0b');
+      handle.setAttribute('stroke', '#fff');
+      handle.setAttribute('stroke-width', '2');
+      handle.style.cursor = 'move';
+      let hDragging = false;
+      handle.addEventListener('mousedown', e => {
+        e.stopPropagation();
+        e.preventDefault();
+        hDragging = true;
+        const onMouseMove = me => {
+          if (!hDragging) return;
+          const rect = this.canvas.getBoundingClientRect();
+          conn.manualMid = {
+            x: me.clientX - rect.left,
+            y: me.clientY - rect.top
+          };
+          this.drawConnections();
+        };
+        const onMouseUp = () => {
+          hDragging = false;
+          document.removeEventListener('mousemove', onMouseMove);
+          document.removeEventListener('mouseup', onMouseUp);
+        };
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+      });
+      this.svg.appendChild(handle);
+    }
+
+    // 多重度ラベル (multiplicityFrom / multiplicityTo)
+    const multOffset = 18;
+    if (conn.multiplicityFrom) {
+      const mfDiv = document.createElement('div');
+      mfDiv.className = 'diagram-conn-multiplicity';
+      mfDiv.textContent = conn.multiplicityFrom;
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      mfDiv.style.left = (x1 + Math.cos(angle) * 20 + Math.sin(angle) * multOffset) + 'px';
+      mfDiv.style.top = (y1 + Math.sin(angle) * 20 - Math.cos(angle) * multOffset) + 'px';
+      this.canvas.appendChild(mfDiv);
+    }
+    if (conn.multiplicityTo) {
+      const mtDiv = document.createElement('div');
+      mtDiv.className = 'diagram-conn-multiplicity';
+      mtDiv.textContent = conn.multiplicityTo;
+      const angle = Math.atan2(y1 - y2, x1 - x2);
+      mtDiv.style.left = (x2 + Math.cos(angle) * 20 + Math.sin(angle) * multOffset) + 'px';
+      mtDiv.style.top = (y2 + Math.sin(angle) * 20 - Math.cos(angle) * multOffset) + 'px';
+      this.canvas.appendChild(mtDiv);
+    }
   });
 }
 clearAll() {
@@ -2914,6 +3819,29 @@ swapComponents(newComponents, umlType) {
   this.components = newComponents;
   this.umlType = umlType || null;
   this.quickAddCounter = 0;
+
+  // 接続モードとカーソルのリセット
+  this.connectMode = false;
+  if (this.canvas) {
+    this.canvas.style.cursor = 'default';
+    this.canvas.classList.remove('timing-connect-active');
+  }
+
+  // 図の種類に応じたデフォルト接続タイプのリセット
+  if (this.umlType === 'component' && typeof COMPONENT_CONNECTION_TYPES !== 'undefined') {
+    this.activeConnType = COMPONENT_CONNECTION_TYPES[0].key;
+  } else if (this.umlType === 'class' && typeof CLASS_CONNECTION_TYPES !== 'undefined') {
+    this.activeConnType = CLASS_CONNECTION_TYPES[0].key;
+  } else if (this.umlType === 'deployment' && typeof DEPLOYMENT_CONNECTION_TYPES !== 'undefined') {
+    this.activeConnType = DEPLOYMENT_CONNECTION_TYPES[0].key;
+  } else if (this.umlType === 'composite' && typeof COMPOSITE_CONNECTION_TYPES !== 'undefined') {
+    this.activeConnType = COMPOSITE_CONNECTION_TYPES[0].key;
+  } else if (this.umlType === 'package' && typeof PACKAGE_CONNECTION_TYPES !== 'undefined') {
+    this.activeConnType = PACKAGE_CONNECTION_TYPES[0].key;
+  } else {
+    this.activeConnType = 'association';
+  }
+
   this.initPalette();
   this.applyUmlMode();
 }
