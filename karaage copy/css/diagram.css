@@ -736,6 +736,144 @@ svg.connections circle {
 .node-port.port-left { left: -6px; top: 50%; transform: translateY(-50%); }
 .node-port.port-right { right: -6px; top: 50%; transform: translateY(-50%); }
 
+/* ポート・インターフェース形状用の極小化＆半透明コネクタスタイル */
+.node-type-port .node-port,
+.node-type-interface .node-port {
+  width: 6px;
+  height: 6px;
+  opacity: 0.15;
+  background: var(--accent);
+  border: 1px solid var(--bg-secondary);
+  transition: opacity 0.2s, transform 0.2s;
+}
+.node-type-port .node-port:hover,
+.node-type-interface .node-port:hover {
+  opacity: 1;
+  transform: scale(1.8);
+}
+.node-type-port .node-port.port-top,
+.node-type-interface .node-port.port-top { top: -3px; }
+.node-type-port .node-port.port-bottom,
+.node-type-interface .node-port.port-bottom { bottom: -3px; }
+.node-type-port .node-port.port-left,
+.node-type-interface .node-port.port-left { left: -3px; }
+.node-type-port .node-port.port-right,
+.node-type-interface .node-port.port-right { right: -3px; }
+
+/* ===== UML Deployment Diagram (3D Nodes & Artifacts) ===== */
+.uml-deployment-node {
+  border-radius: 0;
+  overflow: visible;
+  transition: filter 0.2s ease;
+}
+.uml-deployment-node:hover {
+  filter: drop-shadow(0 0 8px rgba(124, 58, 237, 0.4));
+}
+.uml-deployment-node.selected {
+  filter: drop-shadow(0 0 12px rgba(124, 58, 237, 0.65));
+}
+
+.uml-deployment-artifact {
+  border-radius: 0;
+  overflow: visible;
+  transition: filter 0.2s ease;
+}
+.uml-deployment-artifact:hover {
+  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.4));
+}
+.uml-deployment-artifact.selected {
+  filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.65));
+}
+
+/* ===== UML Composite Structure Diagram ===== */
+.uml-composite-class {
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.uml-composite-class:hover {
+  border-color: #7c3aed;
+}
+.uml-composite-class.selected {
+  border-color: #7c3aed;
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
+}
+
+.uml-composite-part {
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.uml-composite-part:hover {
+  border-color: #06b6d4;
+}
+.uml-composite-part.selected {
+  border-color: #06b6d4;
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+}
+
+.uml-composite-collaboration {
+  border: 2px dashed var(--border);
+  background: rgba(245, 158, 11, 0.03);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.uml-composite-collaboration:hover {
+  border-color: #f59e0b;
+}
+.uml-composite-collaboration.selected {
+  border-color: #f59e0b;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+}
+
+.uml-package {
+  transition: filter 0.2s ease;
+}
+.uml-package:hover {
+  filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.4));
+}
+.uml-package.selected {
+  filter: drop-shadow(0 0 12px rgba(6, 182, 212, 0.65));
+}
+
+.uml-n-ary {
+  transition: filter 0.2s ease;
+}
+.uml-n-ary:hover {
+  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.4));
+}
+.uml-n-ary.selected {
+  filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.65));
+}
+
+.uml-composite-frame {
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  overflow: hidden;
+}
+.uml-composite-frame:hover {
+  border-color: #8b5cf6;
+}
+.uml-composite-frame.selected {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+}
+
+.uml-text-node {
+  background: transparent !important;
+  border: none !important;
+  transition: filter 0.2s ease;
+}
+.uml-text-node:hover {
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
+}
+.uml-text-node.selected {
+  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.65));
+}
+
 /* ===== UML Class Box (3-compartment) ===== */
 .uml-class-box {
   display: flex;
