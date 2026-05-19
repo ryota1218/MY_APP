@@ -542,10 +542,10 @@ const umlDiagramTypes = {
   communication: {
     label: 'コミュニケーション図',
     components: [
-      { icon: '<i data-lucide="square" class="node-lucide-icon"></i>', label: 'オブジェクト', color: '#14b8a6' },
-      { icon: '<i data-lucide="mail" class="node-lucide-icon"></i>', label: 'メッセージ', color: '#06b6d4' },
-      { icon: '<i data-lucide="link-2" class="node-lucide-icon"></i>', label: 'リンク', color: '#7c3aed' },
-      { icon: '<i data-lucide="file-text" class="node-lucide-icon"></i>', label: 'ノート', color: '#64748b' },
+      { icon: '<i data-lucide="square" class="node-lucide-icon"></i>', label: 'オブジェクト', color: '#14b8a6', nodeType: 'uml-object' },
+      { icon: '<i data-lucide="user" class="node-lucide-icon"></i>', label: 'アクター', color: '#f59e0b', nodeType: 'actor' },
+      { icon: '<i data-lucide="file-text" class="node-lucide-icon"></i>', label: 'ノート', color: '#64748b', nodeType: 'note' },
+      { icon: '<i data-lucide="type" class="node-lucide-icon"></i>', label: 'テキスト', color: '#38bdf8', nodeType: 'text-node', size: { w: 80, h: 30 } },
     ],
   },
   timing: {
@@ -622,6 +622,13 @@ const PACKAGE_CONNECTION_TYPES = [
   { key: 'access', label: 'アクセス', icon: '- -▸ «access»' },
   { key: 'generalization', label: '汎化', icon: '━━▷' },
   { key: 'association', label: '関連', icon: '━━' },
+];
+
+/* UMLコミュニケーション図の接続タイプ定義 */
+const COMMUNICATION_CONNECTION_TYPES = [
+  { key: 'sync-msg', label: '同期メッセージ', icon: '━━▶' },
+  { key: 'async-msg', label: '非同期メッセージ', icon: '━━▷' },
+  { key: 'reply-msg', label: '応答メッセージ', icon: '- - ▷' },
 ];
 
 class DiagramTool {
@@ -926,8 +933,8 @@ class DiagramTool {
 
     const connectButton = document.getElementById(this.prefix + '-connect-mode');
 
-    // クラス図、コンポーネント図、配置図、コンポジット構造図、またはパッケージ図モードの場合: 接続タイプセレクタを生成
-    if (this.umlType === 'class' || this.umlType === 'component' || this.umlType === 'deployment' || this.umlType === 'composite' || this.umlType === 'package') {
+    // クラス図、コンポーネント図、配置図、コンポジット構造図、パッケージ図、またはコミュニケーション図モードの場合: 接続タイプセレクタを生成
+    if (this.umlType === 'class' || this.umlType === 'component' || this.umlType === 'deployment' || this.umlType === 'composite' || this.umlType === 'package' || this.umlType === 'communication') {
       connectButton.innerHTML = '';
       connectButton.textContent = '';
       connectButton.style.display = 'none';
@@ -941,6 +948,8 @@ class DiagramTool {
         connTypes = COMPOSITE_CONNECTION_TYPES;
       } else if (this.umlType === 'package') {
         connTypes = PACKAGE_CONNECTION_TYPES;
+      } else if (this.umlType === 'communication') {
+        connTypes = COMMUNICATION_CONNECTION_TYPES;
       }
       
       // デフォルトの接続タイプを配列の先頭にする
@@ -1595,10 +1604,10 @@ _createNode(comp, x, y, options = {}, overrides = {}) {
   if (comp.nodeType === 'port' || comp.nodeType === 'interface') {
     defaultLabel = '';
   }
-  // サイズ定義の統一: テキストなしの図形(ポート/インターフェース)のみサイズを適用し、それ以外は自動フィット(undefined)
-  const isTextlessShape = comp.nodeType === 'port' || comp.nodeType === 'interface';
-  const resolvedWidth = isTextlessShape ? (comp.width || comp.size?.w || undefined) : undefined;
-  const resolvedHeight = isTextlessShape ? (comp.height || comp.size?.h || undefined) : undefined;
+  // サイズ定義の統一: パッケージ図形 (uml-package) およびテキストなし図形(ポート/インターフェース)のみ強制サイズを適用し、他はテキスト自動フィット
+  const shouldApplySize = comp.nodeType === 'uml-package' || comp.nodeType === 'port' || comp.nodeType === 'interface';
+  const resolvedWidth = shouldApplySize ? (comp.width || comp.size?.w || undefined) : undefined;
+  const resolvedHeight = shouldApplySize ? (comp.height || comp.size?.h || undefined) : undefined;
   const node = {
     id,
     icon: comp.icon,
@@ -2289,6 +2298,24 @@ renderNode(node) {
       </svg>
       <div class="n-ary-content" style="position:relative; z-index:2; width:100%; height:100%; display:flex; align-items:center; justify-content:center; text-align:center; padding:10px; box-sizing:border-box;">
         <span class="node-label" style="font-weight:600; color:#ffffff; font-size:12px;">${this.escapeHtml(node.label)}</span>
+      </div>
+      <span class="node-port port-top" data-port="top"></span>
+      <span class="node-port port-bottom" data-port="bottom"></span>
+      <span class="node-port port-left" data-port="left"></span>
+      <span class="node-port port-right" data-port="right"></span>
+    `;
+    const labelEl = el.querySelector('.node-label');
+    this.applyNodeTextStyle(node, labelEl);
+  } else if (node.nodeType === 'uml-object') {
+    // コミュニケーション図用 オブジェクト (実線長方形、テキストにアンダーライン)
+    el.className = 'diagram-node uml-object node-type-uml-object';
+    el.style.borderColor = node.color || '#14b8a6';
+    if (node.width) el.style.width = node.width + 'px';
+    if (node.height) el.style.height = node.height + 'px';
+    
+    el.innerHTML = `
+      <div class="uml-object-content" style="position:relative; z-index:2; width:100%; height:100%; padding:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; box-sizing:border-box;">
+        <span class="node-label" style="font-weight:600; color:#ffffff; text-decoration: underline;">${this.escapeHtml(node.label)}</span>
       </div>
       <span class="node-port port-top" data-port="top"></span>
       <span class="node-port port-bottom" data-port="bottom"></span>
@@ -3299,6 +3326,7 @@ drawConnections() {
   this.svg.innerHTML = `<defs>
       <marker id="arrow-${p}" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#7c3aed"/></marker>
       <marker id="arrow-open-${p}" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" style="fill:var(--bg-card, #111827)" stroke="#7c3aed" stroke-width="1.5"/></marker>
+      <marker id="arrow-vee-${p}" markerWidth="12" markerHeight="10" refX="10" refY="5" orient="auto"><path d="M 0 1 L 10 5 L 0 9" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></marker>
       <marker id="diamond-empty-${p}" markerWidth="14" markerHeight="10" refX="0" refY="5" orient="auto"><polygon points="0 5, 7 0, 14 5, 7 10" style="fill:var(--bg-card, #111827)" stroke="#7c3aed" stroke-width="1.5"/></marker>
       <marker id="lollipop-${p}" markerWidth="14" markerHeight="14" refX="0" refY="7" orient="auto"><circle cx="7" cy="7" r="6" style="fill:var(--bg-card, #111827)" stroke="#7c3aed" stroke-width="1.5"/></marker>
       <marker id="socket-${p}" markerWidth="10" markerHeight="16" refX="8" refY="8" orient="auto"><path d="M 0 1 A 7 7 0 0 1 0 15" fill="none" stroke="#7c3aed" stroke-width="1.5"/></marker>
@@ -3307,7 +3335,7 @@ drawConnections() {
       <marker id="x-mark-${p}" markerWidth="10" markerHeight="10" refX="0" refY="5" orient="auto"><circle cx="5" cy="5" r="4" style="fill:var(--bg-card, #111827)" stroke="none"/><line x1="2" y1="2" x2="8" y2="8" stroke="#7c3aed" stroke-width="2"/><line x1="8" y1="2" x2="2" y2="8" stroke="#7c3aed" stroke-width="2"/></marker>
     </defs>`;
 
-  this.canvas.querySelectorAll('.diagram-conn-label, .diagram-conn-multiplicity').forEach(el => el.remove());
+  this.canvas.querySelectorAll('.diagram-conn-label, .diagram-conn-multiplicity, .diagram-conn-port').forEach(el => el.remove());
 
   this.connections.forEach(conn => {
     if (!conn.id) conn.id = this.prefix + '_conn_' + (this.connIdCounter++);
@@ -3370,7 +3398,30 @@ drawConnections() {
     let midX, midY;
     const routing = conn.routing || 'straight';
 
-    if (routing === 'orthogonal') {
+    if (conn.from === conn.to) {
+      // 自己ループ（同一ノード内のメッセージ呼び出し）
+      const nodeW = fr.width || 120;
+      const nodeH = fr.height || 60;
+      // ノードの上部から出て、上部に戻る「コ」の字型のループ
+      const topCenterX = cx1;
+      const topCenterY = cy1 - nodeH / 2;
+      
+      const loopH = 30; // ループの飛び出し高さ
+      const loopW = 40; // ループの横幅
+      
+      const lx1 = topCenterX - loopW / 2;
+      const ly1 = topCenterY;
+      const lx2 = topCenterX - loopW / 2;
+      const ly2 = topCenterY - loopH;
+      const lx3 = topCenterX + loopW / 2;
+      const ly3 = topCenterY - loopH;
+      const lx4 = topCenterX + loopW / 2;
+      const ly4 = topCenterY;
+      
+      dStr = `M ${lx1} ${ly1} L ${lx2} ${ly2} L ${lx3} ${ly3} L ${lx4} ${ly4}`;
+      midX = topCenterX;
+      midY = topCenterY - loopH - 12; // ラベルをループの上に配置
+    } else if (routing === 'orthogonal') {
       // 障害物回避 直交ルーティング
       const PAD = 15; // ノードからの迂回余白
       const STUB = 10; // ノードから出る際の直進距離
@@ -3568,7 +3619,18 @@ drawConnections() {
       // one-way
       switch (connType) {
         case 'association':
+        case 'link':
           // 実線のみ
+          break;
+        case 'sync-msg':
+          path.setAttribute('marker-end', `url(#arrow-${p})`);
+          break;
+        case 'async-msg':
+          path.setAttribute('marker-end', `url(#arrow-vee-${p})`);
+          break;
+        case 'reply-msg':
+          path.setAttribute('stroke-dasharray', '6 3');
+          path.setAttribute('marker-end', `url(#arrow-vee-${p})`);
           break;
         case 'aggregation':
           path.setAttribute('marker-start', `url(#diamond-empty-${p})`);
@@ -3667,6 +3729,7 @@ drawConnections() {
         this.canvas.appendChild(portDiv);
       }
     }
+
 
     // ラベル表示
     if (conn.label) {
@@ -3838,6 +3901,8 @@ swapComponents(newComponents, umlType) {
     this.activeConnType = COMPOSITE_CONNECTION_TYPES[0].key;
   } else if (this.umlType === 'package' && typeof PACKAGE_CONNECTION_TYPES !== 'undefined') {
     this.activeConnType = PACKAGE_CONNECTION_TYPES[0].key;
+  } else if (this.umlType === 'communication' && typeof COMMUNICATION_CONNECTION_TYPES !== 'undefined') {
+    this.activeConnType = COMMUNICATION_CONNECTION_TYPES[0].key;
   } else {
     this.activeConnType = 'association';
   }

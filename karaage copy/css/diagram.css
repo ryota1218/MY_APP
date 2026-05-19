@@ -847,6 +847,20 @@ svg.connections circle {
   filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.65));
 }
 
+.uml-object {
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.uml-object:hover {
+  border-color: #14b8a6;
+}
+.uml-object.selected {
+  border-color: #14b8a6;
+  box-shadow: 0 0 20px rgba(20, 184, 166, 0.4);
+}
+
 .uml-composite-frame {
   border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
