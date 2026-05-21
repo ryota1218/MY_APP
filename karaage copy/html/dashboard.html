@@ -1,6 +1,46 @@
+<link rel="stylesheet" href="css/dashboard.css">
 <!-- Dashboard -->
 <div class="section-header">
-  <h1>ダッシュボード</h1>
-  <p>上流工程の各ツールにすばやくアクセスできます</p>
 </div>
-<div class="card-grid" id="dashboard-cards"></div>
+<div class="dashboard-layout">
+  <!-- 1. プロジェクト名エリア（上段左寄り） -->
+  <div class="dashboard-row top">
+    <div class="project-info-badge">
+      <i data-lucide="folder" class="icon-sm"></i>
+      <span class="label">プロジェクト:</span>
+      <span id="current-project-display">karaage_copy</span>
+    </div>
+  </div>
+
+  <!-- 2 & 3. 中段エリア -->
+  <div class="dashboard-row middle">
+    <!-- 図の総数（中段左） -->
+    <div class="card stats-block">
+      <h3>図の総数</h3>
+      <div class="stats-number" id="total-diagrams-stat">0</div>
+    </div>
+    <!-- ガントチャート（中段右） -->
+    <div class="card gantt-preview-block">
+      <div class="block-header">
+        <h3>ガントチャート</h3>
+        <a data-tool="gantt" class="text-link">詳細を開く</a>
+      </div>
+      <div id="dashboard-gantt-preview" class="gantt-mini-view">
+        <!-- スケジュール概要が表示されます -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. 作成した図（下段） -->
+  <div class="card main-diagrams-block">
+    <div class="block-header">
+      <h2>作成した図</h2>
+      <button class="btn btn-sm btn-secondary" id="diagram-filter-btn">
+        <i data-lucide="filter"></i> フィルタ
+      </button>
+    </div>
+    <div class="card-grid" id="dashboard-cards">
+      <!-- ここに動的に図面カードが生成されます -->
+    </div>
+  </div>
+</div>
