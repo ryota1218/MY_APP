@@ -547,63 +547,87 @@ class GanttTool {
     "></div>
   `;
 
-  // バー
+  // バー（タスクリストの表示順・可視状態に合わせて描画）
   const startDayNum = Math.floor(start.getTime() / 86400000);
-  bars.innerHTML = todayLine + this.tasks.filter(task => !task.phase).map(task => {
-    const taskStartDayNum = this.getDayNumber(task.start);
-    const taskEndDayNum = this.getDayNumber(task.end);
+  let rowsHtml = '';
 
-    if (!task.phase) {
-      const parentPhase = this.tasks.find(p => p.phase && this.getDayNumber(p.start) <= taskStartDayNum && this.getDayNumber(p.end) >= taskEndDayNum);
-      const parentPhaseId = parentPhase ? parentPhase.id : null;
-      if (parentPhaseId && !this.expandedPhases.has(parentPhaseId)) {
-        return '';
-      }
-    }
+  // 左のタスクリストと同じ表示順（フェーズ行、展開時に子タスク）で可視行を構成
+  this.tasks.forEach(t => {
+    if (!t.phase) return; // フェーズ単位で扱う
 
-    // 開始位置：タスク開始日 - 基準開始日
-    const startOffset = (taskStartDayNum - startDayNum) * dayWidth;
-    // 工期：終了日 - 開始日 + 1日
-    const duration = (taskEndDayNum - taskStartDayNum) + 1;
-    const width = duration * dayWidth;
+    // フェーズ行
+    const phase = t;
+    const phaseStartDayNum = this.getDayNumber(phase.start);
+    const phaseEndDayNum = this.getDayNumber(phase.end);
+    const phaseStartOffset = (phaseStartDayNum - startDayNum) * dayWidth;
+    const phaseDuration = (phaseEndDayNum - phaseStartDayNum) + 1;
+    const phaseWidth = phaseDuration * dayWidth;
 
-    // 実績情報に基づくスタイリング
-    let barColor = task.color;
-    let barOpacity = '1';
-    let strokeColor = task.color;
-    let statusBadge = '';
-
-    if (task.actualEnd) {
-      // 完了済み
-      barOpacity = '0.6';
-      statusBadge = '<div style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: #10b981; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 3px; font-weight: 600;">✓</div>';
-    } else if (task.actualStart && !task.actualEnd) {
-      // 進行中
-      strokeColor = '#f59e0b';
-      statusBadge = '<div style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: #f59e0b; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 3px; font-weight: 600;">進行中</div>';
-    }
-
-    return `
-      <div class="gantt-bar-row" style="height:32px; display: flex; align-items: center;">
-        <div class="gantt-bar ${task.phase?'phase-bar':''}"
-             data-id="${task.id}"
-             style="
-               position: relative;
-               left:${startOffset}px;
-               width:${width}px;
-               background: linear-gradient(135deg, ${barColor}, ${barColor}cc);
-               opacity: ${barOpacity};
-               border-left: 3px solid ${strokeColor};
-               box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-             ">
-          <span style="display: block; padding: 2px 4px; font-size: 0.75rem; font-weight: 500; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-            ${task.phase ? '' : task.name}
-          </span>
-          ${statusBadge}
+    rowsHtml += `
+      <div class="gantt-bar-row" style="height:32px; display:flex; align-items:center; position:relative;">
+        <div class="gantt-phase-bar" data-id="${phase.id}" style="
+          position: absolute;
+          left:${phaseStartOffset}px;
+          width:${phaseWidth}px;
+          height:28px;
+          margin-left:4px;
+          background: linear-gradient(90deg, ${phase.color}33, ${phase.color}11);
+          border-left: 6px solid ${phase.color};
+          border-radius: 4px;
+          display: flex; align-items: center; padding-left: 8px; box-sizing: border-box;
+        ">
+          <span style="font-weight:700; color:${phase.color}; mix-blend-mode: normal;">${phase.name}</span>
         </div>
       </div>
     `;
-  }).join('');
+
+    // フェーズが展開されている場合のみ、その配下タスクを同順で追加
+    if (this.expandedPhases.has(phase.id)) {
+      const childTasks = this.tasks.filter(tt => !tt.phase && this.getDayNumber(tt.start) >= phaseStartDayNum && this.getDayNumber(tt.end) <= phaseEndDayNum);
+      for (const task of childTasks) {
+        const taskStartDayNum = this.getDayNumber(task.start);
+        const taskEndDayNum = this.getDayNumber(task.end);
+        const startOffset = (taskStartDayNum - startDayNum) * dayWidth;
+        const duration = (taskEndDayNum - taskStartDayNum) + 1;
+        const width = duration * dayWidth;
+
+        let barColor = task.color;
+        let barOpacity = '1';
+        let strokeColor = task.color;
+        let statusBadge = '';
+
+        if (task.actualEnd) {
+          barOpacity = '0.6';
+          statusBadge = '<div style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: #10b981; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 3px; font-weight: 600;">✓</div>';
+        } else if (task.actualStart && !task.actualEnd) {
+          strokeColor = '#f59e0b';
+          statusBadge = '<div style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: #f59e0b; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 3px; font-weight: 600;">進行中</div>';
+        }
+
+        rowsHtml += `
+          <div class="gantt-bar-row" style="height:32px; display: flex; align-items: center; position:relative;">
+            <div class="gantt-bar" data-id="${task.id}" style="
+              position: relative;
+              left:${startOffset}px;
+              width:${width}px;
+              background: linear-gradient(135deg, ${barColor}, ${barColor}cc);
+              opacity: ${barOpacity};
+              border-left: 3px solid ${strokeColor};
+              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+              border-radius: 4px;
+            ">
+              <span style="display: block; padding: 2px 8px; font-size: 0.75rem; font-weight: 500; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                ${task.name}
+              </span>
+              ${statusBadge}
+            </div>
+          </div>
+        `;
+      }
+    }
+  });
+
+  bars.innerHTML = todayLine + rowsHtml;
 }
 
 enableDrag() {
@@ -1049,6 +1073,34 @@ enableDrag() {
 
       this.render();
       showToast('タスクを追加しました');
+    });
+  }
+
+  deleteSelected() {
+    if (this.selected.size === 0) {
+      showToast('削除するタスクを選択してください');
+      return;
+    }
+
+    // フェーズは削除対象外（または任意に削除可）。ここでは選択された非フェーズタスクを削除。
+    const toDelete = Array.from(this.selected).filter(id => {
+      const t = this.tasks.find(x => x.id === id);
+      return t && !t.phase;
+    });
+
+    if (toDelete.length === 0) {
+      showToast('タスク（フェーズ以外）を選択してください');
+      return;
+    }
+
+    // 確認モーダル
+    showModal('選択タスクの削除', `<div>選択された ${toDelete.length} 件のタスクを削除します。よろしいですか？</div>`, () => {
+      this.tasks = this.tasks.filter(t => !toDelete.includes(t.id));
+      // 選択状態をクリア
+      toDelete.forEach(id => this.selected.delete(id));
+      this.updateDeleteButtonVisibility();
+      this.render();
+      showToast('選択タスクを削除しました');
     });
   }
 
