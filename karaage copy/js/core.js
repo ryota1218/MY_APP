@@ -161,30 +161,112 @@ class App {
     if (tool === 'gantt' && !this.gantt) this.gantt = new GanttTool();
   }
   initDashboard() {
-    const features = [
-      { id:'proposal', icon:'💡', title:'技術スタック提案', desc:'プロジェクトに最適な言語・フレームワーク・サービスをAIが提案' },
-      { id:'requirements', icon:'📋', title:'要件定義書作成', desc:'テンプレートベースで要件定義書を効率的に作成・出力' },
-      { id:'architecture', icon:'🏗️', title:'システム構成図', desc:'ドラッグ&ドロップでシステムアーキテクチャを設計' },
-      { id:'uml', icon:'📐', title:'UML図', desc:'クラス図・ユースケース図・シーケンス図などのUMLダイアグラムを作成' },
-      { id:'screen-transition', icon:'🔄', title:'画面遷移図', desc:'アプリケーションの画面フローとユーザー操作の遷移を設計' },
-      { id:'layout', icon:'📐', title:'画面レイアウト', desc:'ワイヤーフレームをドラッグ&ドロップで構築' },
-      { id:'erdiagram', icon:'🗃️', title:'E-R図', desc:'エンティティとリレーションシップを直感的に設計' },
-      { id:'gantt', icon:'📅', title:'ガントチャート', desc:'プロジェクトスケジュールを視覚的に管理' },
-    ];
+    console.log("Dashboard initialized.");
+    this.dashboardFilters = { name: '', type: '', date: '', status: '' };
+    
+    const filterBtn = document.getElementById('diagram-filter-btn');
+    if (filterBtn) {
+      filterBtn.onclick = () => this.showFilterModal();
+    }
+
+    this.renderDashboardCards();
+  }
+
+  showFilterModal() {
+    const bodyHtml = `
+      <div class="form-group">
+        <label>図名</label>
+        <input type="text" id="filter-name" class="form-input" value="${this.dashboardFilters.name}" placeholder="名前で検索...">
+      </div>
+      <div class="form-group">
+        <label>種類</label>
+        <select id="filter-type" class="form-input">
+          <option value="">すべて</option>
+          <option value="architecture">システム構成図</option>
+          <option value="uml">UML図</option>
+          <option value="screen-transition">画面遷移図</option>
+          <option value="layout">画面レイアウト</option>
+          <option value="erdiagram">E-R図</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>更新日時</label>
+        <input type="date" id="filter-date" class="form-input" value="${this.dashboardFilters.date}">
+      </div>
+      <div class="form-group">
+        <label>ステータス</label>
+        <select id="filter-status" class="form-input">
+          <option value="">すべて</option>
+          <option value="creating" ${this.dashboardFilters.status === 'creating' ? 'selected' : ''}>作成中</option>
+          <option value="completed" ${this.dashboardFilters.status === 'completed' ? 'selected' : ''}>完了</option>
+          <option value="on_hold" ${this.dashboardFilters.status === 'on_hold' ? 'selected' : ''}>保留</option>
+        </select>
+      </div>
+    `;
+
+    showModal('フィルタ設定', bodyHtml, () => {
+      this.dashboardFilters = {
+        name: document.getElementById('filter-name').value,
+        type: document.getElementById('filter-type').value,
+        date: document.getElementById('filter-date').value,
+        status: document.getElementById('filter-status').value
+      };
+      this.renderDashboardCards();
+      showToast('フィルタを適用しました');
+    });
+  }
+
+  renderDashboardCards() {
     const container = document.getElementById('dashboard-cards');
-    container.innerHTML = features.map(f => `
-      <div class="card feature-card" data-nav="${f.id}">
-        <div class="card-icon">${f.icon}</div>
-        <h3>${f.title}</h3>
-        <p>${f.desc}</p>
-        <span class="card-arrow">→</span>
+    if (!container) return;
+
+    const keys = [
+      { key: 'arch_diagrams', type: 'architecture', label: 'システム構成図' },
+      { key: 'uml_diagrams', type: 'uml', label: 'UML図' },
+      { key: 'st_diagrams', type: 'screen-transition', label: '画面遷移図' },
+      { key: 'layout_screens', type: 'layout', label: '画面レイアウト' },
+      { key: 'er_diagrams', type: 'erdiagram', label: 'E-R図' }
+    ];
+
+    let allItems = [];
+    keys.forEach(k => {
+      const data = localStorage.getItem(k.key);
+      if (data) {
+        const items = JSON.parse(data).map(item => ({ ...item, toolType: k.type, toolLabel: k.label }));
+        allItems = [...allItems, ...items];
+      }
+    });
+
+    const filtered = allItems.filter(item => {
+      const matchName = !this.dashboardFilters.name || item.title?.toLowerCase().includes(this.dashboardFilters.name.toLowerCase());
+      const matchType = !this.dashboardFilters.type || item.toolType === this.dashboardFilters.type;
+      const matchDate = !this.dashboardFilters.date || item.updated_at?.startsWith(this.dashboardFilters.date);
+      const matchStatus = !this.dashboardFilters.status || item.status === this.dashboardFilters.status;
+      return matchName && matchType && matchDate && matchStatus;
+    });
+
+    if (filtered.length === 0) {
+      container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">該当する図面が見つかりません</div>';
+      return;
+    }
+
+    container.innerHTML = filtered.map(item => `
+      <div class="card diagram-card" onclick="window.app.navigateTo('${item.toolType}')">
+        <div class="diagram-type-tag">${item.toolLabel}</div>
+        <h3>${item.title || '無題の図面'}</h3>
+        <div class="diagram-meta">
+          <span><i data-lucide="calendar" class="icon-xs"></i> ${item.updated_at ? item.updated_at.split(' ')[0] : '-'}</span>
+          <span class="status-badge status-${item.status || 'creating'}">${this.getStatusLabel(item.status)}</span>
+        </div>
       </div>
     `).join('');
-    container.querySelectorAll('.feature-card').forEach(c => {
-      c.addEventListener('click', () => {
-        document.querySelector(`.sidebar nav a[data-tool="${c.dataset.nav}"]`).click();
-      });
-    });
+    
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+  }
+
+  getStatusLabel(status) {
+    const labels = { creating: '作成中', completed: '完了', on_hold: '保留' };
+    return labels[status] || '作成中';
   }
 }
 
