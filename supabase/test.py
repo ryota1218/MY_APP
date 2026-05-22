@@ -5,7 +5,6 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
-# Supabase情報
 url = "https://ylgumuwmpnnqzrfleyoc.supabase.co"
 key = "sb_publishable_iCBqRPHEWGq036pC_UXXww_a9tVqDAR"
 
@@ -17,14 +16,7 @@ def home():
 
 @app.route("/test")
 def users():
-
-    response = (
-        supabase
-        .table("test")
-        .select("*")
-        .execute()
-    )
-
+    response = supabase.table("test").select("*").execute()
     return jsonify(response.data)
 
 if __name__ == "__main__":
