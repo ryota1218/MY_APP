@@ -29,6 +29,7 @@ class App {
   async init() {
     await this.loadSections();
     this.initNav();
+    this.gantt = new GanttTool(); // 起動時にガントデータをロード/保存する
     this.initDashboard();
     this.proposal = new ProposalTool();
     this.requirements = new RequirementsTool();
@@ -160,7 +161,7 @@ class App {
     if (tool === 'erdiagram' && !this.erdiagram) this.erdiagram = new ERDiagramTool();
     if (tool === 'gantt' && !this.gantt) this.gantt = new GanttTool();
   }
-  initDashboard() {
+  async initDashboard() {
     console.log("Dashboard initialized.");
     this.dashboardFilters = { name: '', type: '', date: '', status: '' };
     
@@ -169,7 +170,8 @@ class App {
       filterBtn.onclick = () => this.showFilterModal();
     }
 
-    this.renderDashboardCards();
+    await this.refreshDashboardData();
+    this.renderDashboardGantt();
   }
 
   showFilterModal() {
@@ -211,15 +213,16 @@ class App {
         date: document.getElementById('filter-date').value,
         status: document.getElementById('filter-status').value
       };
-      this.renderDashboardCards();
+      this.renderDashboardCards(); // フィルタ適用時は保持しているデータから再描画
       showToast('フィルタを適用しました');
     });
   }
 
-  renderDashboardCards() {
-    const container = document.getElementById('dashboard-cards');
-    if (!container) return;
-
+  /**
+   * データベース（現在はlocalStorage）から図面データを取得する
+   * DB実装時はここをAPIリクエストに置き換えます
+   */
+  async fetchDiagrams() {
     const keys = [
       { key: 'arch_diagrams', type: 'architecture', label: 'システム構成図' },
       { key: 'uml_diagrams', type: 'uml', label: 'UML図' },
@@ -236,8 +239,33 @@ class App {
         allItems = [...allItems, ...items];
       }
     });
+    return allItems;
+  }
 
-    const filtered = allItems.filter(item => {
+  /**
+   * ダッシュボードのデータを最新の状態に更新する
+   */
+  async refreshDashboardData() {
+    this.allDiagrams = await this.fetchDiagrams();
+    this.updateStats();
+    this.renderDashboardCards();
+  }
+
+  /**
+   * 統計情報（図の総数）を更新する
+   */
+  updateStats() {
+    const totalStatEl = document.getElementById('total-diagrams-stat');
+    if (totalStatEl && this.allDiagrams) {
+      totalStatEl.textContent = this.allDiagrams.length;
+    }
+  }
+
+  renderDashboardCards() {
+    const container = document.getElementById('dashboard-cards');
+    if (!container || !this.allDiagrams) return;
+
+    const filtered = this.allDiagrams.filter(item => {
       const matchName = !this.dashboardFilters.name || item.title?.toLowerCase().includes(this.dashboardFilters.name.toLowerCase());
       const matchType = !this.dashboardFilters.type || item.toolType === this.dashboardFilters.type;
       const matchDate = !this.dashboardFilters.date || item.updated_at?.startsWith(this.dashboardFilters.date);
@@ -267,6 +295,125 @@ class App {
   getStatusLabel(status) {
     const labels = { creating: '作成中', completed: '完了', on_hold: '保留' };
     return labels[status] || '作成中';
+  }
+
+  /**
+   * ダッシュボードに直近1週間の簡易ガントチャートを表示
+   */
+  renderDashboardGantt() {
+    const container = document.getElementById('dashboard-gantt-preview');
+    if (!container) return;
+
+    // 厳密にUTCで日付を処理するためのヘルパー
+    const parseDate = (dateStr) => {
+      const [year, month, day] = dateStr.split('-').map(Number);
+      return new Date(Date.UTC(year, month - 1, day));
+    };
+    const formatDate = (date) => {
+      const year = date.getUTCFullYear();
+      const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(date.getUTCDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    const getDayNumber = (dateStr) => {
+      const d = parseDate(dateStr);
+      return Math.floor(d.getTime() / 86400000);
+    };
+
+    const saved = localStorage.getItem('gantt_tasks');
+    const allTasks = saved ? JSON.parse(saved) : [];
+    const tasks = allTasks; // フェーズも含めて取得
+
+    const miniDayWidth = 40; // 1日あたりの幅を広げて、日付と曜日が折り返さないように調整
+    const numDaysToShow = 7; // Always show 7 days
+
+    const now = new Date();
+    const miniStartDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())); // 今日から開始
+    const miniEndDate = new Date(miniStartDate);
+    miniEndDate.setUTCDate(miniEndDate.getUTCDate() + numDaysToShow - 1);
+
+    const miniStartDayNum = getDayNumber(formatDate(miniStartDate));
+
+    // Header (days) generation
+    let daysHtml = '';
+    for (let i = 0; i < numDaysToShow; i++) {
+      const d = new Date(miniStartDate);
+      d.setUTCDate(d.getUTCDate() + i);
+      const isWeekend = d.getUTCDay() === 0 || d.getUTCDay() === 6;
+      daysHtml += `<div class="mini-day-cell ${isWeekend ? 'weekend' : ''}" style="width: ${miniDayWidth}px;">${d.getUTCDate()}&nbsp;<span>${['日', '月', '火', '水', '木', '金', '土'][d.getUTCDay()]}</span></div>`;
+    }
+
+    // 表示期間に含まれるフェーズと、未完了のタスクを抽出
+    const filteredTasks = tasks.filter(t => {
+      // タスク（フェーズ以外）の場合、完了済みは表示しない
+      if (!t.phase && t.actualEnd) return false;
+
+      const startNum = getDayNumber(t.start);
+      const endNum = getDayNumber(t.end);
+      const viewEndNum = miniStartDayNum + numDaysToShow - 1;
+
+      // 「今日以降に終了する」かつ「1週間以内に開始する（または継続中）」タスクのみ
+      return endNum >= miniStartDayNum && startNum <= viewEndNum;
+    }).sort((a, b) => {
+      const diff = getDayNumber(a.start) - getDayNumber(b.start);
+      if (diff !== 0) return diff;
+      // 開始日が同じならフェーズを先に表示する
+      return (b.phase ? 1 : 0) - (a.phase ? 1 : 0);
+    });
+
+    let rowsHtml = '';
+
+    filteredTasks.forEach(t => {
+      const taskStartDayNum = getDayNumber(t.start);
+      const taskEndDayNum = getDayNumber(t.end);
+
+      // Calculate bar position and width relative to the miniStartDate
+      let startOffsetDays = taskStartDayNum - miniStartDayNum;
+      let durationDays = (taskEndDayNum - taskStartDayNum) + 1;
+
+      // Adjust if task starts before the view window
+      if (startOffsetDays < 0) {
+        durationDays += startOffsetDays; // Reduce duration by the amount it's outside
+        startOffsetDays = 0; // Start at the beginning of the view window
+      }
+      // Adjust if task ends after the view window
+      if (startOffsetDays + durationDays > numDaysToShow) {
+        durationDays = numDaysToShow - startOffsetDays;
+      }
+
+      const left = startOffsetDays * miniDayWidth;
+      const width = durationDays * miniDayWidth;
+
+      const barColor = t.color || '#7c3aed';
+      const strokeColor = t.actualEnd ? barColor : (t.actualStart ? '#f59e0b' : barColor);
+
+      // フェーズ行の場合はバーを表示せず、見出しとしての役割に限定する
+      // もしフェーズの期間も視覚化したい場合は、barHtml を生成するように変更可能です
+      const barHtml = t.phase ? '' : 
+        `<div class="mini-gantt-bar" style="left:${left}px; width:${width}px; background:linear-gradient(135deg, ${barColor}, ${barColor}cc); border-left:2px solid ${strokeColor}; opacity:${t.actualEnd ? 0.6 : 1};"></div>`;
+
+      rowsHtml += `
+        <div class="mini-gantt-row ${t.phase ? 'phase-row' : ''}">
+          <div class="mini-task-label">${t.phase ? '<strong>' + t.name + '</strong>' : t.name}</div>
+          <div class="mini-timeline-area" style="width: ${numDaysToShow * miniDayWidth}px; background-size: ${miniDayWidth}px 100%;">
+            ${barHtml}
+          </div>
+        </div>`;
+    });
+
+    // The overall width of the timeline content (days header and bars)
+    const timelineContentWidth = numDaysToShow * miniDayWidth;
+
+    container.innerHTML = `
+      <div class="mini-gantt-wrapper">
+        <div class="mini-gantt-header-row">
+          <div class="mini-task-label header">タスク名</div>
+          <div class="mini-days-header-content" style="width: ${timelineContentWidth}px;">${daysHtml}</div>
+        </div>
+        <div class="mini-gantt-body-content">
+          ${rowsHtml || '<div style="grid-column: 1 / -1; text-align:center;color:#9ca3af;font-size:0.8rem; padding: 20px;">今週の予定はありません</div>'}
+        </div>
+      </div>`;
   }
 }
 
