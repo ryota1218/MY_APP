@@ -3858,6 +3858,179 @@ autoLayout() {
   this.drawConnections();
   showToast('自動配置しました');
 }
+
+/**
+ * AI自動配置＆自動接続
+ * Pythonバックエンド（FastAPI + Gemini API）にノード情報を送信し、
+ * AIが計算した最適な配置座標と接続情報を受け取って適用する。
+ */
+async aiAutoLayout() {
+  // ノードがない場合は何もしない
+  if (!this.nodes || this.nodes.length === 0) {
+    showToast('配置するノードがありません');
+    return;
+  }
+
+  // 操作前のスナップショットを保存（Undo対応）
+  const snapshot = this.captureSnapshot();
+
+  // diagram_type の決定
+  let diagramType = 'architecture';
+  if (this.prefix === 'st') {
+    diagramType = 'screen-transition';
+  } else if (this.prefix === 'uml' && this.umlType) {
+    diagramType = this.umlType;
+  } else if (this.prefix === 'er') {
+    diagramType = 'erdiagram';
+  }
+
+  // リクエストボディの構築
+  const requestBody = {
+    diagram_type: diagramType,
+    nodes: this.nodes.map(n => ({
+      id: n.id,
+      label: n.label,
+      x: n.x,
+      y: n.y,
+      width: n.width || 160,
+      height: n.height || 50,
+    })),
+    existing_connections: this.connections.map(c => ({
+      from: c.from,
+      to: c.to,
+      label: c.label || '',
+    })),
+    canvas_width: this.canvas.clientWidth || 1200,
+    canvas_height: this.canvas.clientHeight || 800,
+  };
+
+  // ローディング表示
+  showToast('🤖 AIが最適な配置を計算中...');
+
+  try {
+    const response = await fetch('http://localhost:8000/api/ai-layout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || `サーバーエラー (${response.status})`);
+    }
+
+    const result = await response.json();
+
+    // ── ノードのアニメーション移動 ──
+    if (result.nodes && result.nodes.length > 0) {
+      const duration = 400; // アニメーション時間（ms）
+      const startTime = performance.now();
+
+      // 各ノードの開始位置を記録
+      const startPositions = {};
+      const targetPositions = {};
+      result.nodes.forEach(rn => {
+        const node = this.nodes.find(n => n.id === rn.id);
+        if (node) {
+          startPositions[rn.id] = { x: node.x, y: node.y };
+          targetPositions[rn.id] = { x: rn.x, y: rn.y };
+        }
+      });
+
+      // イーズアウト関数
+      const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+
+      const animate = (currentTime) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easedProgress = easeOutCubic(progress);
+
+        // 各ノードの位置を更新
+        Object.keys(startPositions).forEach(nodeId => {
+          const node = this.nodes.find(n => n.id === nodeId);
+          const el = document.getElementById(nodeId);
+          if (!node || !el) return;
+
+          const start = startPositions[nodeId];
+          const target = targetPositions[nodeId];
+
+          node.x = start.x + (target.x - start.x) * easedProgress;
+          node.y = start.y + (target.y - start.y) * easedProgress;
+          el.style.left = node.x + 'px';
+          el.style.top = node.y + 'px';
+        });
+
+        this.drawConnections();
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        }
+      };
+
+      requestAnimationFrame(animate);
+    }
+
+    // 適切なデフォルトルーティング（直角か直線か）を判定
+    const isOrthogonalPreferred = ['architecture', 'class', 'component', 'deployment', 'activity', 'package', 'erdiagram', 'screen-transition'].includes(diagramType);
+    const defaultRouting = isOrthogonalPreferred ? 'orthogonal' : 'straight';
+
+    // 既存のすべての接続に対してもルーティングを自動適用
+    this.connections.forEach(c => {
+      c.routing = defaultRouting;
+    });
+
+    // ── 新しい接続の追加 ──
+    if (result.connections && result.connections.length > 0) {
+      // 既存の接続のセットを作成（重複チェック用）
+      const existingSet = new Set(
+        this.connections.map(c => `${c.from}__${c.to}`)
+      );
+
+      let addedCount = 0;
+      result.connections.forEach(conn => {
+        const fromId = conn.from;
+        const toId = conn.to;
+        const key = `${fromId}__${toId}`;
+        const reverseKey = `${toId}__${fromId}`;
+
+        // 重複チェック（順方向・逆方向の両方）
+        if (!existingSet.has(key) && !existingSet.has(reverseKey)) {
+          // connIdCounter を使って一意のIDを付与
+          const connId = this.prefix + '_conn_' + (this.connIdCounter++);
+          this.connections.push({
+            id: connId,
+            from: fromId,
+            to: toId,
+            label: conn.label || '',
+            connType: this.activeConnType || 'association',
+            routing: defaultRouting,
+          });
+          existingSet.add(key);
+          addedCount++;
+        }
+      });
+
+      // アニメーション完了後に接続を再描画
+      setTimeout(() => {
+        this.drawConnections();
+      }, 450);
+    }
+
+    // Undo用のアクションを保存
+    this.pushUndoAction({ type: 'clearAll', snapshot });
+
+    showToast(`✨ AI配置完了！ ノード${result.nodes?.length || 0}個配置、接続${result.connections?.length || 0}本追加`);
+
+  } catch (error) {
+    console.error('[AI AutoLayout] Error:', error);
+
+    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+      showToast('⚠️ AIサーバーに接続できません。backend/main.py を起動してください');
+    } else {
+      showToast(`⚠️ AI配置エラー: ${error.message}`);
+    }
+  }
+}
 exportSVG() {
   const svgClone = this.svg.cloneNode(true);
   const w = this.canvas.offsetWidth, h = this.canvas.offsetHeight;

@@ -576,6 +576,23 @@
   stroke-width: 1.8;
 }
 
+/* AI Auto Layout Button — subtle gradient to differentiate */
+.editor-header-btn.ai-layout-btn {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(6, 182, 212, 0.1));
+  border-color: rgba(124, 58, 237, 0.3);
+  color: #a78bfa;
+}
+.editor-header-btn.ai-layout-btn:hover {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.3), rgba(6, 182, 212, 0.2));
+  border-color: rgba(124, 58, 237, 0.55);
+  color: #c4b5fd;
+  box-shadow: 0 0 12px rgba(124, 58, 237, 0.25);
+}
+.editor-header-btn.ai-layout-btn:active {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.4), rgba(6, 182, 212, 0.3));
+  transform: scale(0.93);
+}
+
 .instant-label-tooltip {
   position: fixed;
   z-index: 9999;
