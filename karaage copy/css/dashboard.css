@@ -28,7 +28,14 @@
   display: grid;
   grid-template-columns: 1fr 2.5fr; /* 図の総数を少し狭く、ガントを広く */
   gap: 20px;
-  height: 200px; /* 画像の比率に合わせた高さ */
+  min-height: 200px; /* 固定高さだとコンテンツが溢れて下の要素と重なるため、最小高さに変更 */
+}
+
+@media (max-width: 900px) {
+  .dashboard-row.middle {
+    grid-template-columns: 1fr; /* 画面幅が狭い場合は縦並びにして、要素の重なりや潰れを防ぐ */
+    height: auto;
+  }
 }
 
 /* 4. 下段エリア */
@@ -126,3 +133,115 @@
 .status-creating { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
 .status-completed { background: rgba(16, 185, 129, 0.2); color: #34d399; }
 .status-on_hold { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+
+/* --- 前半のスタイルはそのまま維持 --- */
+
+/* ミニガントチャート用 */
+.gantt-mini-view {
+  height: 220px; /* 表示領域の高さを固定 */
+  padding: 0;
+  background: #ffffff;
+  border: 1px solid #333;
+  border-radius: 4px;
+  overflow: auto; /* 縦・横両方のスクロールを有効化 */
+  color: #333;
+}
+
+/* ミニガントチャート専用のスクロールバー設定 */
+.gantt-mini-view::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.gantt-mini-view::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+.gantt-mini-view::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+.mini-gantt-wrapper {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  grid-template-columns: 120px 1fr; /* タスク名列を少し広げる */
+  flex-grow: 1;
+}
+
+.mini-gantt-header-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  grid-template-columns: 120px 1fr;
+  background: #f3f4f6;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  height: 36px;
+}
+
+.mini-task-label {
+  padding: 6px 8px;
+  padding: 8px 12px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  border-right: 1px solid #e5e7eb;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mini-days-header-content {
+  display: flex; /* 子要素（mini-day-cell）を横に並べる */
+  flex-direction: row;
+  border-left: 1px solid #e5e7eb;
+}
+
+.mini-day-cell {
+  flex-shrink: 0; /* 幅を固定するために縮小を禁止 */
+  display: flex; /* 日付と曜日を横並びにする */
+  align-items: center;
+  justify-content: center;
+  gap: 4px; /* 日付と曜日の間のスペース */
+  white-space: nowrap; /* セル内での改行を禁止 */
+  text-align: center;
+  font-size: 0.6rem;
+  line-height: 1.2;
+  padding: 4px 0;
+  border-right: 1px solid #e5e7eb;
+}
+
+.mini-day-cell.weekend { background: #f9fafb; }
+
+.mini-gantt-row {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  grid-template-columns: 120px 1fr;
+  border-bottom: 1px solid #f3f4f6;
+  height: 30px;
+  align-items: center;
+}
+
+/* フェーズ行のスタイル */
+.mini-gantt-row.phase-row {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.mini-timeline-area {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  background-image: linear-gradient(to right, #e5e7eb 1px, transparent 1px);
+  /* background-size は JS で設定されるため CSS からは削除/コメントアウト */
+  background-size: calc(100% / 7) 100%; /* 7日間で均等割り */
+}
+
+.mini-gantt-bar {
+  position: absolute;
+  top: 6px;
+  height: 18px;
+  border-radius: 2px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  box-sizing: border-box;
+}
