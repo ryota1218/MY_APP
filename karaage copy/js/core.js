@@ -16,6 +16,7 @@ const SECTIONS = [
   { id: 'layout',       file: 'html/layout.html' },
   { id: 'erdiagram',    file: 'html/erdiagram.html' },
   { id: 'gantt',        file: 'html/gantt.html' },
+  { id: 'login',        file: 'html/login.html' },
 ];
 
 class App {
@@ -33,6 +34,9 @@ class App {
     this.initDashboard();
     this.proposal = new ProposalTool();
     this.requirements = new RequirementsTool();
+
+    // ログイン状態をUIに反映（各セクションのHTMLがロードされた後に実行）
+    if (window.Auth) window.Auth.updateUI();
   }
 
   /**
@@ -69,13 +73,12 @@ class App {
 
   initNav() {
     // --- Standard nav links (excluding submenu items) ---
-    document.querySelectorAll('.sidebar nav > a, .sidebar nav > div:not(.nav-has-submenu) a').forEach(a => {
-      if (a.closest('.nav-submenu')) return; // skip submenu items, handled separately
-      a.addEventListener('click', () => {
-        const tool = a.dataset.tool;
+    document.querySelectorAll('.sidebar nav > a, .sidebar nav > div:not(.nav-has-submenu) a, #auth-action-btn').forEach(el => {
+      if (el.closest('.nav-submenu')) return; // サブメニュー内は別途処理
+      el.addEventListener('click', () => {
+        const tool = el.dataset.tool;
         if (!tool) return;
         this.navigateTo(tool);
-        // Close any open submenus
         document.querySelectorAll('.nav-has-submenu.open').forEach(m => m.classList.remove('open'));
       });
     });
@@ -144,15 +147,25 @@ class App {
   }
 
   navigateTo(tool) {
-    document.querySelectorAll('.sidebar nav a').forEach(x => x.classList.remove('active'));
+    console.log('Navigating to:', tool);
+    
+    // サイドバーのリンク状態を更新
+    document.querySelectorAll('.sidebar nav a, #auth-action-btn').forEach(x => x.classList.remove('active'));
     // Find and activate the correct sidebar link
     const navLink = document.querySelector(`.sidebar nav a[data-tool="${tool}"]:not(.nav-submenu a)`) ||
                     document.querySelector(`.sidebar nav a[data-tool="${tool}"]`);
     if (navLink) navLink.classList.add('active');
-    document.querySelectorAll('.tool-section').forEach(s => s.classList.remove('active'));
-    const section = document.getElementById(tool);
-    if (section) section.classList.add('active');
+    
+    // セクションの表示切り替え
+    document.querySelectorAll('.tool-section').forEach(s => {
+      s.classList.toggle('active', s.id === tool);
+    });
+    
     this.currentTool = tool;
+
+    // アイコンの再描画（動的に読み込まれた要素のため）
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
     // Lazy init
     if (tool === 'architecture' && !this.architecture) this.architecture = new DiagramTool('arch', archComponents, { paletteMode: 'dropdown' });
     if (tool === 'uml' && !this.uml) this.uml = new DiagramTool('uml', umlComponents, { paletteMode: 'dropdown' });
