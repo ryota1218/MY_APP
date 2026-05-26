@@ -9,7 +9,7 @@
   <script>
     // ログイン状態を確認し、未ログインの場合はログイン画面へ強制遷移させます
     if (localStorage.getItem('isLoggedIn') !== 'true') {
-      window.location.href = 'html/login.html';
+      window.location.href = 'html/login.html' + window.location.search;
     }
   </script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
@@ -88,5 +88,18 @@
   <script src="js/layout.js"></script>
   <script src="js/erdiagram.js"></script>
   <script src="js/gantt.js"></script>
+  <script>
+    // URLパラメータを確認して指定のツールを表示する
+    window.addEventListener('load', () => {
+      const params = new URLSearchParams(window.location.search);
+      const tool = params.get('tool');
+      if (tool && tool !== 'dashboard') {
+        const navLink = document.querySelector(`nav a[data-tool="${tool}"]`);
+        if (navLink) {
+          navLink.click();
+        }
+      }
+    });
+  </script>
 </body>
 </html>
