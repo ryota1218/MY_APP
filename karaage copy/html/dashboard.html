@@ -1,3 +1,7 @@
+<script>
+  // index.htmlを経由せず直接開かれた場合は、メイン画面へリダイレクト
+  if (!window.app) window.location.href = '../index.html?tool=dashboard';
+</script>
 <link rel="stylesheet" href="css/dashboard.css">
 <!-- Dashboard -->
 <div class="section-header">
