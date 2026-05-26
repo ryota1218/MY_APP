@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ログイン | UpStream</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    .login-page {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      width: 100%;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .login-card {
+      background: rgba(30, 30, 30, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+    .login-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 1.5rem;
+      letter-spacing: -0.5px;
+    }
+    .login-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .login-header h2 {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+      color: var(--accent);
+    }
+    .login-header p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    .form-group {
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      padding-right: 40px; /* アイコン用のスペース */
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: white;
+      border-radius: 4px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-group input:focus {
+      border-color: var(--accent);
+      outline: none;
+    }
+    .password-toggle {
+      position: absolute;
+      right: 12px;
+      top: 38px;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 24px;
+    }
+    .password-toggle:hover {
+      color: var(--accent);
+    }
+    .login-error-message {
+      color: #ef4444;
+      font-size: 0.8rem;
+      margin-bottom: 15px;
+      min-height: 1.2rem;
+    }
+    .btn-submit-container {
+      display: flex;
+      justify-content: center;
+      margin: 20px 0 10px;
+    }
+    .btn-submit-container .btn {
+      min-width: 180px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+    .toggle-auth {
+      margin-top: 1rem;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    .toggle-auth a {
+      color: #8b5cf6;
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .login-footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #333;
+      text-align: center;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-header">
+      <div class="login-logo">
+        <i data-lucide="triangle"></i>
+        <span>UpStream</span>
+      </div>
+      <h2 id="auth-title">ログイン</h2>
+      <p id="auth-desc">UpStream アカウントにログインしてください</p>
+    </div>
+
+    <!-- ログインフォーム -->
+    <form id="login-form" class="login-form">
+      <!-- 将来的なCSRFトークンの挿入場所 -->
+      <div class="form-group">
+        <label for="username">メールアドレス</label>
+        <input type="email" id="username" class="form-input" placeholder="admin@example.com" required autocomplete="username" maxlength="255">
+      </div>
+      <div class="form-group">
+        <label for="password">パスワード</label>
+        <input type="password" id="password" class="form-input" placeholder="password" required autocomplete="current-password" minlength="8" maxlength="128">
+        <span class="password-toggle" id="toggle-login-password">
+          <i data-lucide="eye"></i>
+        </span>
+      </div>
+      <div id="login-error" class="login-error-message"></div>
+      <div class="btn-submit-container">
+        <button type="submit" class="btn btn-primary">ログイン</button>
+      </div>
+      <div class="toggle-auth">
+        アカウントをお持ちでないですか？ <a id="show-register">新規登録</a>
+      </div>
+    </form>
+
+    <!-- 新規登録フォーム -->
+    <form id="register-form" class="login-form" style="display: none;">
+      <div class="form-group">
+        <label for="reg-email">メールアドレス</label>
+        <input type="email" id="reg-email" class="form-input" placeholder="user@example.com" required autocomplete="email" maxlength="255">
+      </div>
+      <div class="form-group">
+        <label for="reg-password">パスワード</label>
+        <input type="password" id="reg-password" class="form-input" placeholder="8文字以上" required autocomplete="new-password" minlength="8" maxlength="128">
+        <span class="password-toggle" id="toggle-reg-password">
+          <i data-lucide="eye"></i>
+        </span>
+      </div>
+      <div id="register-error" class="login-error-message"></div>
+      <div class="btn-submit-container">
+        <button type="submit" class="btn btn-primary">アカウント作成</button>
+      </div>
+      <div class="toggle-auth">
+        既にアカウントをお持ちですか？ <a id="show-login">ログイン</a>
+      </div>
+    </form>
+
+    <div class="login-footer">
+      <p>プロトタイプ用アカウント: <code>admin@example.com</code> / <code>password</code></p>
+    </div>
+  </div>
+</div>
+
+  <script src="../js/auth.js"></script>
+  <script>
+    // アイコンを表示用に生成
+    lucide.createIcons();
+
+    // 表示の切り替えロジック
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const authTitle = document.getElementById('auth-title');
+    const authDesc = document.getElementById('auth-desc');
+
+    // パスワード表示切り替えの共通関数
+    function setupPasswordToggle(toggleId, inputId) {
+      const toggle = document.getElementById(toggleId);
+      const input = document.getElementById(inputId);
+      toggle.onclick = () => {
+        const isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+        
+        // ラッパーの中にあるアイコン要素（i または svg）を探して属性を更新
+        const icon = toggle.querySelector('i, svg');
+        icon.setAttribute('data-lucide', isPassword ? 'eye-off' : 'eye');
+        lucide.createIcons();
+      };
+    }
+    setupPasswordToggle('toggle-login-password', 'password');
+    setupPasswordToggle('toggle-reg-password', 'reg-password');
+
+    document.getElementById('show-register').onclick = () => {
+      loginForm.style.display = 'none';
+      registerForm.style.display = 'block';
+      authTitle.textContent = '新規登録';
+      authDesc.textContent = '新しいアカウントを作成してください';
+    };
+
+    document.getElementById('show-login').onclick = () => {
+      loginForm.style.display = 'block';
+      registerForm.style.display = 'none';
+      authTitle.textContent = 'ログイン';
+      authDesc.textContent = 'UpStream アカウントにログインしてください';
+    };
+
+    // 既にログイン済みの場合はトップページへリダイレクト
+    if (localStorage.getItem('isLoggedIn') === 'true' || localStorage.getItem('upstream_user')) {
+      window.location.href = '../index.html' + window.location.search;
+    }
+  </script>
+</body>
+</html>

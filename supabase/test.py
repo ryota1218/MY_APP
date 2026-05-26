@@ -17,6 +17,9 @@ app.add_middleware(
 url = "https://ylgumuwmpnnqzrfleyoc.supabase.co"
 key = "sb_publishable_iCBqRPHEWGq036pC_UXXww_a9tVqDAR"
 
+url = "https://ylgumuwmpnnqzrfleyoc.supabase.co"
+key = "sb_publishable_iCBqRPHEWGq036pC_UXXww_a9tVqDAR"
+
 supabase: Client = create_client(url, key)
 
 @app.get("/")
@@ -38,6 +41,7 @@ def users():
             status_code=500,
             detail=f"Supabaseからのデータ取得に失敗しました: {str(e)}"
         )
+
 
 if __name__ == "__main__":
     import uvicorn

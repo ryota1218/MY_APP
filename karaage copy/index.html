@@ -6,6 +6,12 @@
   <meta name="description" content="上流工程サポートツール - 要件定義、システム構成図、UML、画面レイアウト、E-R図、ガントチャートを効率的に作成">
   <title>UpStream | 上流工程サポートツール</title>
   <link rel="stylesheet" href="css/style.css">
+  <script>
+    // ログイン状態を確認し、未ログインの場合はログイン画面へ強制遷移させます
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
+      window.location.href = 'html/login.html' + window.location.search;
+    }
+  </script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
@@ -47,7 +53,16 @@
       <a data-tool="erdiagram"><span class="nav-icon"><i data-lucide="database"></i></span><span>E-R図</span></a>
       <a data-tool="gantt"><span class="nav-icon"><i data-lucide="calendar"></i></span><span>ガントチャート</span></a>
     </nav>
-    <div class="sidebar-footer">UpStream v1.0 © 2026</div>
+    <div class="sidebar-footer">
+      <div id="user-status-area" class="user-status-area">
+        <div class="user-info">
+          <i data-lucide="circle-user" class="icon-sm"></i>
+          <span id="display-user-name">ゲスト</span>
+        </div>
+        <button id="auth-action-btn" class="btn-auth-link" data-tool="login">ログイン</button>
+      </div>
+      <div class="version-info">UpStream v1.0 © 2026</div>
+    </div>
   </aside>
 
   <!-- Sidebar toggle handle (floating button at the vertical center of the sidebar's right edge) -->
@@ -66,6 +81,7 @@
   <!-- Menu overlay for mobile hamburger -->
   <div id="menu-overlay"></div>
 
+  <script src="js/auth.js"></script>
   <script src="js/core.js"></script>
   <script src="js/proposal.js"></script>
   <script src="js/requirements.js"></script>
@@ -77,5 +93,18 @@
   <script src="js/layout.js"></script>
   <script src="js/erdiagram.js"></script>
   <script src="js/gantt.js"></script>
+  <script>
+    // URLパラメータを確認して指定のツールを表示する
+    window.addEventListener('load', () => {
+      const params = new URLSearchParams(window.location.search);
+      const tool = params.get('tool');
+      if (tool && tool !== 'dashboard') {
+        const navLink = document.querySelector(`nav a[data-tool="${tool}"]`);
+        if (navLink) {
+          navLink.click();
+        }
+      }
+    });
+  </script>
 </body>
 </html>
