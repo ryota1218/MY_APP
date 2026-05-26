@@ -331,8 +331,13 @@ class LayoutTool {
   }
   toggleSidebar() {
     // デスクトップ用の折りたたみとモバイル用のメニュー開閉の両方をトグル
-    document.body.classList.toggle('sidebar-collapsed');
+    const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
     document.body.classList.toggle('menu-open');
+    if (isCollapsed) {
+      document.body.dataset.sidebarCollapsedByUser = 'true';
+    } else {
+      document.body.dataset.sidebarCollapsedByUser = 'false';
+    }
   }
   togglePaletteDropdown() {
     const dropdown = document.getElementById('layout-palette-dropdown');

@@ -145,12 +145,21 @@ class App {
       });
     });
   }
-
+  
+  
   navigateTo(tool) {
     console.log('Navigating to:', tool);
     
+    // ツール切り替え時、開いている右側パネルを閉じ、左側サイドバーを元の表示に復元する
+    document.body.classList.remove('sidebar-collapsed');
+    delete document.body.dataset.sidebarCollapsedByUser;
+    document.querySelectorAll('.diagram-property-panel, .diagram-ai-chat-panel').forEach(panel => {
+      panel.classList.remove('open');
+    });
+
     // サイドバーのリンク状態を更新
     document.querySelectorAll('.sidebar nav a, #auth-action-btn').forEach(x => x.classList.remove('active'));
+
     // Find and activate the correct sidebar link
     const navLink = document.querySelector(`.sidebar nav a[data-tool="${tool}"]:not(.nav-submenu a)`) ||
                     document.querySelector(`.sidebar nav a[data-tool="${tool}"]`);
@@ -551,6 +560,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (ham) ham.addEventListener('click', toggleMenu);
   if (overlay) overlay.addEventListener('click', closeMenu);
+
+  // Floating Sidebar toggle handle click event
+  const toggleHandle = document.getElementById('sidebar-toggle-handle');
+  if (toggleHandle) {
+    toggleHandle.addEventListener('click', () => {
+      const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
+      if (isCollapsed) {
+        document.body.dataset.sidebarCollapsedByUser = 'true';
+      } else {
+        document.body.dataset.sidebarCollapsedByUser = 'false';
+      }
+    });
+  }
 
   // Close menu when navigation link clicked (mobile)
   document.querySelectorAll('.sidebar nav a').forEach(a => {
