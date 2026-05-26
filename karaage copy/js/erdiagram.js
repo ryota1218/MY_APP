@@ -76,7 +76,12 @@ class ERDiagramTool {
   paste() { showToast('貼り付けは未実装です'); }
 
   toggleSidebar() {
-    document.body.classList.toggle('sidebar-collapsed');
+    const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
+    if (isCollapsed) {
+      document.body.dataset.sidebarCollapsedByUser = 'true';
+    } else {
+      document.body.dataset.sidebarCollapsedByUser = 'false';
+    }
   }
 
   toggleNameView() {

@@ -6,6 +6,8 @@ const archComponents = [
   { icon: '<i data-lucide="monitor" class="node-lucide-icon"></i>', label: 'アプリサーバー', color: '#3b82f6' },
   { icon: '<i data-lucide="zap" class="node-lucide-icon"></i>', label: 'Lambda/Function', color: '#f59e0b' },
   { icon: '<i data-lucide="container" class="node-lucide-icon"></i>', label: 'コンテナ', color: '#06b6d4' },
+  // ── グループ / 境界 ──
+  { icon: '<i data-lucide="rectangle-horizontal" class="node-lucide-icon"></i>', label: 'グループ境界', color: '#64748b', nodeType: 'group-boundary' },
   // ── データ / ストレージ ──
   { icon: '<i data-lucide="database" class="node-lucide-icon"></i>', label: 'データベース', color: '#06b6d4' },
   { icon: '<i data-lucide="hard-drive" class="node-lucide-icon"></i>', label: 'ストレージ', color: '#6366f1' },
@@ -1039,7 +1041,12 @@ class DiagramTool {
     const sidebarToggle = document.getElementById(this.prefix + '-sidebar-toggle');
     if (sidebarToggle) {
       sidebarToggle.addEventListener('click', () => {
-        document.body.classList.toggle('sidebar-collapsed');
+        const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
+        if (isCollapsed) {
+          document.body.dataset.sidebarCollapsedByUser = 'true';
+        } else {
+          document.body.dataset.sidebarCollapsedByUser = 'false';
+        }
       });
     }
 
@@ -1319,6 +1326,11 @@ openPropertyPanel(node) {
   const panel = document.getElementById(this.prefix + '-property-panel');
   if (panel) panel.classList.add('open');
 
+  // 押し出し式連動: 右のプロパティが開いたら左のサイドバーを隠し、右のチャットも閉じる
+  document.body.classList.add('sidebar-collapsed');
+  const aiPanel = document.getElementById(this.prefix + '-ai-chat-panel');
+  if (aiPanel) aiPanel.classList.remove('open');
+
   // Populate fields
   const setVal = (suffix, val) => {
     const el = document.getElementById(this.prefix + '-prop-' + suffix);
@@ -1498,6 +1510,15 @@ closePropertyPanel() {
   this.propertyPanelNode = null;
   const panel = document.getElementById(this.prefix + '-property-panel');
   if (panel) panel.classList.remove('open');
+
+  // 押し出し式連動: チャットパネルも閉じていれば、左のサイドバーを復元する
+  const aiPanel = document.getElementById(this.prefix + '-ai-chat-panel');
+  const isAIChatOpen = aiPanel && aiPanel.classList.contains('open');
+  if (!isAIChatOpen) {
+    if (document.body.dataset.sidebarCollapsedByUser !== 'true') {
+      document.body.classList.remove('sidebar-collapsed');
+    }
+  }
 }
 
 updateNodeDOM(node) {
@@ -1512,7 +1533,8 @@ updateNodeDOM(node) {
 
   const isContainer = node.nodeType === 'subsystem' || node.behaviorType === 'systemBoundary' || node.behaviorType === 'compositeState' ||
                       node.nodeType === 'deployment-node' || node.nodeType === 'deployment-device' || node.nodeType === 'deployment-env' ||
-                      node.nodeType === 'composite-class' || node.nodeType === 'composite-part' || node.nodeType === 'composite-frame' || node.nodeType === 'uml-package';
+                      node.nodeType === 'composite-class' || node.nodeType === 'composite-part' || node.nodeType === 'composite-frame' || node.nodeType === 'uml-package' ||
+                      node.nodeType === 'group-boundary';
   const defaultZ = isContainer ? 1 : 10;
   el.style.zIndex = node.zIndex || defaultZ;
 
@@ -1604,10 +1626,10 @@ _createNode(comp, x, y, options = {}, overrides = {}) {
   if (comp.nodeType === 'port' || comp.nodeType === 'interface') {
     defaultLabel = '';
   }
-  // サイズ定義の統一: パッケージ図形 (uml-package) およびテキストなし図形(ポート/インターフェース)のみ強制サイズを適用し、他はテキスト自動フィット
-  const shouldApplySize = comp.nodeType === 'uml-package' || comp.nodeType === 'port' || comp.nodeType === 'interface';
-  const resolvedWidth = shouldApplySize ? (comp.width || comp.size?.w || undefined) : undefined;
-  const resolvedHeight = shouldApplySize ? (comp.height || comp.size?.h || undefined) : undefined;
+  // サイズ定義の統一: パッケージ図形 (uml-package)、グループ境界(group-boundary) およびテキストなし図形(ポート/インターフェース)のみ強制サイズを適用し、他はテキスト自動フィット
+  const shouldApplySize = comp.nodeType === 'uml-package' || comp.nodeType === 'port' || comp.nodeType === 'interface' || comp.nodeType === 'group-boundary';
+  const resolvedWidth = shouldApplySize ? (comp.width || comp.size?.w || (comp.nodeType === 'group-boundary' ? 320 : undefined)) : undefined;
+  const resolvedHeight = shouldApplySize ? (comp.height || comp.size?.h || (comp.nodeType === 'group-boundary' ? 200 : undefined)) : undefined;
   const node = {
     id,
     icon: comp.icon,
@@ -2076,7 +2098,8 @@ _drawTimingWaveLines(waveSvg) {
 renderNode(node) {
   const isContainer = node.nodeType === 'subsystem' || node.behaviorType === 'systemBoundary' || node.behaviorType === 'compositeState' ||
                       node.nodeType === 'deployment-node' || node.nodeType === 'deployment-device' || node.nodeType === 'deployment-env' ||
-                      node.nodeType === 'composite-class' || node.nodeType === 'composite-part' || node.nodeType === 'composite-frame' || node.nodeType === 'uml-package';
+                      node.nodeType === 'composite-class' || node.nodeType === 'composite-part' || node.nodeType === 'composite-frame' || node.nodeType === 'uml-package' ||
+                      node.nodeType === 'group-boundary';
   const defaultZ = isContainer ? 1 : 10;
   const el = document.createElement('div');
   el.id = node.id;
@@ -2259,6 +2282,29 @@ renderNode(node) {
       <span class="node-port port-left" data-port="left"></span>
       <span class="node-port port-right" data-port="right"></span>
     `;
+    this.applyNodeTextStyle(node, labelEl);
+  } else if (node.nodeType === 'group-boundary') {
+    // グループ境界 (枠線、薄い背景、最背面)
+    el.className = 'diagram-node group-boundary-node node-type-group-boundary';
+    el.style.borderColor = node.color || '#64748b';
+    el.style.borderStyle = 'dashed';
+    el.style.borderRadius = '8px';
+    const baseColor = node.color || '#64748b';
+    el.style.background = baseColor + '0d'; // 5% opacity tint
+    if (node.width) el.style.width = node.width + 'px';
+    if (node.height) el.style.height = node.height + 'px';
+    
+    el.innerHTML = `
+      <div class="group-boundary-header" style="position:absolute; left:12px; top:-10px; padding:2px 8px; background:var(--bg-primary, #0a0e1a); border:1px solid ${baseColor}; border-radius:4px; z-index:3; font-size:11px; font-weight:700; color:${baseColor}; display:flex; align-items:center; gap:6px;">
+        <span class="node-icon" style="opacity:0.9; display:inline-flex; align-items:center;">${node.icon}</span>
+        <span class="node-label">${this.escapeHtml(node.label)}</span>
+      </div>
+      <div class="group-boundary-content" style="width:100%; height:100%;"></div>
+      <span class="node-port port-top" data-port="top"></span>
+      <span class="node-port port-bottom" data-port="bottom"></span>
+      <span class="node-port port-left" data-port="left"></span>
+      <span class="node-port port-right" data-port="right"></span>
+    `;
     const labelEl = el.querySelector('.node-label');
     this.applyNodeTextStyle(node, labelEl);
   } else if (node.nodeType === 'uml-package') {
@@ -2367,7 +2413,7 @@ renderNode(node) {
   const isResizable = node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary' || node.behaviorType === 'fragment' || node.behaviorType === 'execSpec' || window.TimingDiagramLibrary?.isTimingNode(node) ||
                       node.nodeType === 'deployment-node' || node.nodeType === 'deployment-device' || node.nodeType === 'deployment-env' || node.nodeType === 'deployment-artifact' ||
                       node.nodeType === 'composite-class' || node.nodeType === 'composite-part' || node.nodeType === 'composite-collaboration' || node.nodeType === 'composite-frame' || node.nodeType === 'text-node' ||
-                      node.nodeType === 'uml-package' || node.nodeType === 'n-ary-association';
+                      node.nodeType === 'uml-package' || node.nodeType === 'n-ary-association' || node.nodeType === 'group-boundary';
   if (isResizable) {
     ['right', 'bottom', 'bottom-right'].forEach(dir => {
       const handle = document.createElement('span');
@@ -2392,9 +2438,9 @@ renderNode(node) {
       const isResizable = node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary' || node.behaviorType === 'fragment' || node.behaviorType === 'execSpec' || window.TimingDiagramLibrary?.isTimingNode(node) ||
                           node.nodeType === 'deployment-node' || node.nodeType === 'deployment-device' || node.nodeType === 'deployment-env' || node.nodeType === 'deployment-artifact' ||
                           node.nodeType === 'composite-class' || node.nodeType === 'composite-part' || node.nodeType === 'composite-collaboration' || node.nodeType === 'composite-frame' || node.nodeType === 'text-node' ||
-                          node.nodeType === 'uml-package' || node.nodeType === 'n-ary-association';
+                          node.nodeType === 'uml-package' || node.nodeType === 'n-ary-association' || node.nodeType === 'group-boundary';
       let minWidth = 120, minHeight = 80;
-      if (node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary') { minWidth = 200; minHeight = 100; }
+      if (node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary' || node.nodeType === 'group-boundary') { minWidth = 200; minHeight = 100; }
       else if (node.behaviorType === 'fragment') { minWidth = 150; minHeight = 80; }
       else if (node.behaviorType === 'execSpec') { minWidth = 16; minHeight = 20; }
       else if (node.behaviorType === 'timingLifeline') { minWidth = 200; minHeight = 40; }
@@ -2468,7 +2514,7 @@ renderNode(node) {
     oy = e.clientY - node.y;
     e.preventDefault();
     // Nesting: コンテナノードの場合、内部の子ノードを特定
-    const isContainer = node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary' || node.behaviorType === 'fragment';
+    const isContainer = node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary' || node.behaviorType === 'fragment' || node.nodeType === 'group-boundary';
     // ライフラインの場合、実行仕様・破棄マークを子要素として追従させる
     const isLifeline = window.SequenceDiagramLibrary?.isLifeline?.(node) || window.TimingDiagramLibrary?.isTimingLifeline?.(node);
     let childSnapshots = [];
@@ -2635,18 +2681,21 @@ bringToFront() {
   if (!this.selectedNode) return;
   const isContainer = this.selectedNode.nodeType === 'subsystem' || this.selectedNode.behaviorType === 'systemBoundary' || this.selectedNode.behaviorType === 'compositeState' ||
                       this.selectedNode.nodeType === 'deployment-node' || this.selectedNode.nodeType === 'deployment-device' || this.selectedNode.nodeType === 'deployment-env' ||
-                      this.selectedNode.nodeType === 'composite-class' || this.selectedNode.nodeType === 'composite-part' || this.selectedNode.nodeType === 'composite-frame' || this.selectedNode.nodeType === 'uml-package';
+                      this.selectedNode.nodeType === 'composite-class' || this.selectedNode.nodeType === 'composite-part' || this.selectedNode.nodeType === 'composite-frame' || this.selectedNode.nodeType === 'uml-package' ||
+                      this.selectedNode.nodeType === 'group-boundary';
 
   if (isContainer) {
     const containerNodes = this.nodes.filter(n => n.nodeType === 'subsystem' || n.behaviorType === 'systemBoundary' || n.behaviorType === 'compositeState' ||
                                                   n.nodeType === 'deployment-node' || n.nodeType === 'deployment-device' || n.nodeType === 'deployment-env' ||
-                                                  n.nodeType === 'composite-class' || n.nodeType === 'composite-part' || n.nodeType === 'composite-frame' || n.nodeType === 'uml-package');
+                                                  n.nodeType === 'composite-class' || n.nodeType === 'composite-part' || n.nodeType === 'composite-frame' || n.nodeType === 'uml-package' ||
+                                                  n.nodeType === 'group-boundary');
     const maxZ = Math.max(...containerNodes.map(n => n.zIndex || 1));
     this.selectedNode.zIndex = Math.min(5, maxZ + 1);
   } else {
     const normalNodes = this.nodes.filter(n => !(n.nodeType === 'subsystem' || n.behaviorType === 'systemBoundary' || n.behaviorType === 'compositeState' ||
                                                   n.nodeType === 'deployment-node' || n.nodeType === 'deployment-device' || n.nodeType === 'deployment-env' ||
-                                                  n.nodeType === 'composite-class' || n.nodeType === 'composite-part' || n.nodeType === 'composite-frame' || n.nodeType === 'uml-package'));
+                                                  n.nodeType === 'composite-class' || n.nodeType === 'composite-part' || n.nodeType === 'composite-frame' || n.nodeType === 'uml-package' ||
+                                                  n.nodeType === 'group-boundary'));
     const maxZ = Math.max(...normalNodes.map(n => n.zIndex || 10));
     this.selectedNode.zIndex = maxZ + 1;
   }
@@ -2656,18 +2705,21 @@ sendToBack() {
   if (!this.selectedNode) return;
   const isContainer = this.selectedNode.nodeType === 'subsystem' || this.selectedNode.behaviorType === 'systemBoundary' || this.selectedNode.behaviorType === 'compositeState' ||
                       this.selectedNode.nodeType === 'deployment-node' || this.selectedNode.nodeType === 'deployment-device' || this.selectedNode.nodeType === 'deployment-env' ||
-                      this.selectedNode.nodeType === 'composite-class' || this.selectedNode.nodeType === 'composite-part' || this.selectedNode.nodeType === 'composite-frame' || this.selectedNode.nodeType === 'uml-package';
+                      this.selectedNode.nodeType === 'composite-class' || this.selectedNode.nodeType === 'composite-part' || this.selectedNode.nodeType === 'composite-frame' || this.selectedNode.nodeType === 'uml-package' ||
+                      this.selectedNode.nodeType === 'group-boundary';
 
   if (isContainer) {
     const containerNodes = this.nodes.filter(n => n.nodeType === 'subsystem' || n.behaviorType === 'systemBoundary' || n.behaviorType === 'compositeState' ||
                                                   n.nodeType === 'deployment-node' || n.nodeType === 'deployment-device' || n.nodeType === 'deployment-env' ||
-                                                  n.nodeType === 'composite-class' || n.nodeType === 'composite-part' || n.nodeType === 'composite-frame' || n.nodeType === 'uml-package');
+                                                  n.nodeType === 'composite-class' || n.nodeType === 'composite-part' || n.nodeType === 'composite-frame' || n.nodeType === 'uml-package' ||
+                                                  n.nodeType === 'group-boundary');
     const minZ = Math.min(...containerNodes.map(n => n.zIndex || 1));
     this.selectedNode.zIndex = Math.max(1, minZ - 1);
   } else {
     const normalNodes = this.nodes.filter(n => !(n.nodeType === 'subsystem' || n.behaviorType === 'systemBoundary' || n.behaviorType === 'compositeState' ||
                                                   n.nodeType === 'deployment-node' || n.nodeType === 'deployment-device' || n.nodeType === 'deployment-env' ||
-                                                  n.nodeType === 'composite-class' || n.nodeType === 'composite-part' || n.nodeType === 'composite-frame' || n.nodeType === 'uml-package'));
+                                                  n.nodeType === 'composite-class' || n.nodeType === 'composite-part' || n.nodeType === 'composite-frame' || n.nodeType === 'uml-package' ||
+                                                  n.nodeType === 'group-boundary'));
     const minZ = Math.min(...normalNodes.map(n => n.zIndex || 10));
     this.selectedNode.zIndex = Math.max(10, minZ - 1);
   }
@@ -3847,6 +3899,212 @@ openPaletteMenu() {
     setTimeout(retry, 60);
   }
 }
+
+toggleAIChat() {
+  const panel = document.getElementById(this.prefix + '-ai-chat-panel');
+  if (!panel) return;
+
+  const isOpen = panel.classList.toggle('open');
+  if (isOpen) {
+    this.closePropertyPanel();
+    
+    // 押し出し式連動: 右のチャットが開いたら左のサイドバーを隠す
+    document.body.classList.add('sidebar-collapsed');
+    
+    const msgArea = document.getElementById(this.prefix + '-ai-chat-messages');
+    if (msgArea) msgArea.scrollTop = msgArea.scrollHeight;
+    this.initAIChatListeners();
+  } else {
+    // 押し出し式連動: チャットが閉じ、かつプロパティも閉じていれば左のサイドバーを復元
+    const propPanel = document.getElementById(this.prefix + '-property-panel');
+    const isPropOpen = propPanel && propPanel.classList.contains('open');
+    if (!isPropOpen) {
+      if (document.body.dataset.sidebarCollapsedByUser !== 'true') {
+        document.body.classList.remove('sidebar-collapsed');
+      }
+    }
+  }
+}
+
+initAIChatListeners() {
+  if (this.aiChatListenersInitialized) return;
+
+  const sendBtn = document.getElementById(this.prefix + '-ai-chat-send-btn');
+  const input = document.getElementById(this.prefix + '-ai-chat-input');
+  if (!sendBtn || !input) return;
+
+  sendBtn.addEventListener('click', () => {
+    this.sendAIChatMessage();
+  });
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      this.sendAIChatMessage();
+    }
+  });
+
+  this.aiChatListenersInitialized = true;
+  this.chatHistory = [];
+}
+
+async sendAIChatMessage() {
+  const input = document.getElementById(this.prefix + '-ai-chat-input');
+  const msgArea = document.getElementById(this.prefix + '-ai-chat-messages');
+  if (!input || !msgArea) return;
+
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+
+  const userMsgDiv = document.createElement('div');
+  userMsgDiv.className = 'ai-chat-msg user';
+  userMsgDiv.innerHTML = `<div class="ai-chat-bubble">${this.escapeHTML(text)}</div>`;
+  msgArea.appendChild(userMsgDiv);
+  msgArea.scrollTop = msgArea.scrollHeight;
+
+  const loaderMsgDiv = document.createElement('div');
+  loaderMsgDiv.className = 'ai-chat-msg assistant';
+  loaderMsgDiv.innerHTML = `
+    <div class="ai-chat-bubble" style="color: #9ca3af; display: flex; align-items: center; gap: 8px;">
+      <span class="icon-spin" style="display:inline-block; width:12px; height:12px; border:2px solid #a78bfa; border-top-color:transparent; border-radius:50%; animation: spin 1s linear infinite;"></span>
+      <span>AIが配置を再計算しています...</span>
+    </div>
+  `;
+  msgArea.appendChild(loaderMsgDiv);
+  msgArea.scrollTop = msgArea.scrollHeight;
+
+  let diagramType = 'architecture';
+  if (this.prefix === 'st') {
+    diagramType = 'screen-transition';
+  } else if (this.prefix === 'uml' && this.umlType) {
+    diagramType = this.umlType;
+  } else if (this.prefix === 'er') {
+    diagramType = 'erdiagram';
+  }
+
+  const requestBody = {
+    diagram_type: diagramType,
+    nodes: this.nodes.map(n => ({
+      id: n.id,
+      label: n.label,
+      x: n.x,
+      y: n.y,
+      width: n.width || 160,
+      height: n.height || 50,
+    })),
+    existing_connections: this.connections.map(c => ({
+      from: c.from,
+      to: c.to,
+      label: c.label || '',
+    })),
+    canvas_width: this.canvas.clientWidth || 1200,
+    canvas_height: this.canvas.clientHeight || 800,
+    user_instruction: text,
+    chat_history: this.chatHistory || []
+  };
+
+  const apiBaseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:8000'
+    : '';
+
+  try {
+    const response = await fetch(`${apiBaseUrl}/api/ai-chat-layout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody),
+    });
+
+    loaderMsgDiv.remove();
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || `サーバーエラー (${response.status})`);
+    }
+
+    const result = await response.json();
+
+    if (result.nodes && result.nodes.length > 0) {
+      const duration = 400;
+      const startTime = performance.now();
+      const startPositions = {};
+      const targetPositions = {};
+
+      result.nodes.forEach(rn => {
+        const node = this.nodes.find(n => n.id === rn.id);
+        if (node) {
+          startPositions[rn.id] = { x: node.x, y: node.y };
+          targetPositions[rn.id] = { x: rn.x, y: rn.y };
+        }
+      });
+
+      const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+      const animate = (currentTime) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easedProgress = easeOutCubic(progress);
+
+        Object.keys(startPositions).forEach(nodeId => {
+          const node = this.nodes.find(n => n.id === nodeId);
+          const el = document.getElementById(nodeId);
+          if (!node || !el) return;
+          const start = startPositions[nodeId];
+          const target = targetPositions[nodeId];
+          node.x = start.x + (target.x - start.x) * easedProgress;
+          node.y = start.y + (target.y - start.y) * easedProgress;
+          el.style.left = node.x + 'px';
+          el.style.top = node.y + 'px';
+        });
+
+        this.drawConnections();
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        }
+      };
+      requestAnimationFrame(animate);
+    }
+
+    const assistantMsgDiv = document.createElement('div');
+    assistantMsgDiv.className = 'ai-chat-msg assistant';
+    assistantMsgDiv.innerHTML = `
+      <div class="ai-chat-bubble">
+        指示されたレイアウト調整を適用しました！
+        <ul>
+          <li>指示: <em>「${this.escapeHTML(text)}」</em></li>
+          <li>移動されたノード数: <strong>${result.nodes?.length || 0}</strong> 個</li>
+        </ul>
+      </div>
+    `;
+    msgArea.appendChild(assistantMsgDiv);
+    msgArea.scrollTop = msgArea.scrollHeight;
+
+    this.chatHistory.push({ role: 'user', content: text });
+    this.chatHistory.push({ role: 'model', content: `指示されたレイアウト調整を適用しました！移動ノード数: ${result.nodes?.length || 0}` });
+
+  } catch (error) {
+    console.error('[AI Chat Layout] Error:', error);
+    loaderMsgDiv.remove();
+
+    const errorMsgDiv = document.createElement('div');
+    errorMsgDiv.className = 'ai-chat-msg assistant';
+    errorMsgDiv.innerHTML = `
+      <div class="ai-chat-bubble" style="border-color: #f87171; background-color: rgba(239, 68, 68, 0.05);">
+        <span style="color: #f87171; font-weight: 600;">⚠️ エラーが発生しました</span><br>
+        ${this.escapeHTML(error.message)}
+      </div>
+    `;
+    msgArea.appendChild(errorMsgDiv);
+    msgArea.scrollTop = msgArea.scrollHeight;
+  }
+}
+
+escapeHTML(str) {
+  return str.replace(/[&<>'"]/g,
+    tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+  );
+}
+
 autoLayout() {
   const cols = Math.ceil(Math.sqrt(this.nodes.length));
   this.nodes.forEach((n, i) => {
@@ -3908,7 +4166,12 @@ async aiAutoLayout() {
   showToast('🤖 AIが最適な配置を計算中...');
 
   try {
-    const response = await fetch('http://localhost:8000/api/ai-layout', {
+    // ローカル開発環境（localhost）ならポート8000を使用、本番（Vercel）は同じドメイン内の相対パスを使用
+    const apiBaseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:8000'
+      : '';
+
+    const response = await fetch(`${apiBaseUrl}/api/ai-layout`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody),
@@ -4002,7 +4265,8 @@ async aiAutoLayout() {
             from: fromId,
             to: toId,
             label: conn.label || '',
-            connType: this.activeConnType || 'association',
+            connType: conn.connType || this.activeConnType || 'association',
+            lineStyle: conn.lineStyle || 'solid',
             routing: defaultRouting,
           });
           existingSet.add(key);
