@@ -664,8 +664,20 @@ class LayoutTool {
     this.pushUndoAction({ type: 'clearAll', snapshot });
     showToast('キャンバスをクリアしました');
   }
+  exportJSON() {
+    FileIO.exportJSON(this);
+  }
+
+  importJSON() {
+    FileIO.importJSON(this);
+  }
+
+  importJSONFromText() {
+    FileIO.importJSONFromText(this);
+  }
+
   exportPNG() {
-    showToast('レイアウトデータを保存しました');
+    showToast('PNGエクスポートは現在モック実装です', 'info');
   }
   initCanvasConfig() {
     const section = this.canvas.closest('.tool-section');

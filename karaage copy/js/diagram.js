@@ -1341,6 +1341,25 @@ openPropertyPanel(node) {
     setVal('label', node.label || '');
     setVal('subtexttop', node.subtextTop || '');
     setVal('subtextbottom', node.subtextBottom || '');
+
+    // アクティビティ図専用のUI調整
+    const isActivity = this.umlType === 'activity';
+    const topGroup = document.getElementById(this.prefix + '-prop-subtexttop')?.closest('.property-group');
+    const bottomGroup = document.getElementById(this.prefix + '-prop-subtextbottom')?.closest('.property-group');
+    if (topGroup) topGroup.style.display = isActivity ? 'none' : '';
+    if (bottomGroup) bottomGroup.style.display = isActivity ? 'none' : '';
+
+    const labelInput = document.getElementById(this.prefix + '-prop-label');
+    if (labelInput) {
+      const labelTextEl = labelInput.closest('.property-group')?.querySelector('label');
+      if (isActivity && (node.behaviorType === 'decision' || node.behaviorType === 'merge')) {
+        if (labelTextEl) labelTextEl.textContent = "判定条件 (メイン名)";
+        labelInput.placeholder = "例: 休日か";
+      } else {
+        if (labelTextEl) labelTextEl.textContent = "名前 (メイン名)";
+        labelInput.placeholder = "";
+      }
+    }
     setVal('x', node.x);
     setVal('y', node.y);
     setVal('fontsize', node.textSize || this.defaultTextStyle.fontSize);
@@ -1502,6 +1521,14 @@ openPropertyPanel(node) {
     if (labelInput) {
       labelInput.focus({ preventScroll: true });
       labelInput.select();
+      
+      // アクティビティ図の判定ノードで、デフォルト名なら自動クリアして即座に入力可能にする
+      const isActivity = this.umlType === 'activity';
+      const isDecisionNode = node && (node.behaviorType === 'decision' || node.behaviorType === 'merge');
+      if (isActivity && isDecisionNode && (labelInput.value === '判定/分岐' || labelInput.value === '合流')) {
+        labelInput.value = '';
+        labelInput.dispatchEvent(new Event('input'));
+      }
     }
   }, 300);
 }
@@ -3389,6 +3416,81 @@ drawConnections() {
 
   this.canvas.querySelectorAll('.diagram-conn-label, .diagram-conn-multiplicity, .diagram-conn-port').forEach(el => el.remove());
 
+  // ── 全ノードの接続点分散用: 各面（上下左右）の接続数を事前集計 ──
+  const isBarNode = (node) => {
+    if (!node) return false;
+    const bt = node.behaviorType;
+    return bt === 'fork' || bt === 'join' || bt === 'stateFork' || bt === 'stateJoin';
+  };
+
+  const nodeSideCounts = {}; 
+
+  this.connections.forEach(conn => {
+    const fromNode = this.nodes.find(n => n.id === conn.from);
+    const toNode = this.nodes.find(n => n.id === conn.to);
+    const fromEl = document.getElementById(conn.from);
+    const toEl = document.getElementById(conn.to);
+    if (!fromEl || !toEl) return;
+    const cr = this.canvas.getBoundingClientRect();
+    const fr = fromEl.getBoundingClientRect();
+    const tr = toEl.getBoundingClientRect();
+    const cx1 = fr.left + fr.width / 2 - cr.left;
+    const cy1 = fr.top + fr.height / 2 - cr.top;
+    const cx2 = tr.left + tr.width / 2 - cr.left;
+    const cy2 = tr.top + tr.height / 2 - cr.top;
+
+    const isHorizontal = Math.abs(cx2 - cx1) > Math.abs(cy2 - cy1);
+    
+    if (!nodeSideCounts[conn.from]) nodeSideCounts[conn.from] = { top: 0, bottom: 0, left: 0, right: 0, topIdx: 0, bottomIdx: 0, leftIdx: 0, rightIdx: 0 };
+    if (!nodeSideCounts[conn.to]) nodeSideCounts[conn.to] = { top: 0, bottom: 0, left: 0, right: 0, topIdx: 0, bottomIdx: 0, leftIdx: 0, rightIdx: 0 };
+    
+    // from側
+    if (isBarNode(fromNode)) {
+      if (cy2 >= cy1) nodeSideCounts[conn.from].bottom++;
+      else nodeSideCounts[conn.from].top++;
+    } else {
+      if (isHorizontal) {
+        if (cx1 < cx2) nodeSideCounts[conn.from].right++;
+        else nodeSideCounts[conn.from].left++;
+      } else {
+        if (cy1 < cy2) nodeSideCounts[conn.from].bottom++;
+        else nodeSideCounts[conn.from].top++;
+      }
+    }
+
+    // to側
+    if (isBarNode(toNode)) {
+      if (cy1 <= cy2) nodeSideCounts[conn.to].top++;
+      else nodeSideCounts[conn.to].bottom++;
+    } else {
+      if (isHorizontal) {
+        if (cx1 < cx2) nodeSideCounts[conn.to].left++;
+        else nodeSideCounts[conn.to].right++;
+      } else {
+        if (cy1 < cy2) nodeSideCounts[conn.to].top++;
+        else nodeSideCounts[conn.to].bottom++;
+      }
+    }
+  });
+
+  const getOffset = (nodeId, side, length, isBar) => {
+    const counts = nodeSideCounts[nodeId];
+    if (!counts) return 0;
+    const total = counts[side];
+    if (total <= 1) return 0;
+    const idx = counts[side + 'Idx']++;
+    
+    if (isBar) {
+      const margin = length * 0.15;
+      const usable = length - margin * 2;
+      return margin + usable * (idx + 1) / (total + 1) - (length / 2);
+    }
+    
+    const maxSpread = length * 0.6;
+    const spacing = Math.min(24, maxSpread / Math.max(1, total - 1));
+    return -(total - 1) * spacing / 2 + idx * spacing;
+  };
+
   this.connections.forEach(conn => {
     if (!conn.id) conn.id = this.prefix + '_conn_' + (this.connIdCounter++);
     const fromEl = document.getElementById(conn.from);
@@ -3412,21 +3514,61 @@ drawConnections() {
     const isSeqMessage = seqLib && this.umlType === 'sequence' &&
       (seqLib.isSequenceNode(fromNode) && seqLib.isSequenceNode(toNode));
 
-    if (isHorizontal) {
-      if (cx1 < cx2) {
-        x1 = cx1 + fr.width / 2; // from right
-        x2 = cx2 - tr.width / 2; // to left
+    // fromNodeの接続点計算
+    if (isBarNode(fromNode)) {
+      if (cy2 >= cy1) {
+        y1 = cy1 + fr.height / 2;
+        x1 += getOffset(conn.from, 'bottom', fr.width, true);
       } else {
-        x1 = cx1 - fr.width / 2; // from left
-        x2 = cx2 + tr.width / 2; // to right
+        y1 = cy1 - fr.height / 2;
+        x1 += getOffset(conn.from, 'top', fr.width, true);
       }
     } else {
-      if (cy1 < cy2) {
-        y1 = cy1 + fr.height / 2; // from bottom
-        y2 = cy2 - tr.height / 2; // to top
+      if (isHorizontal) {
+        if (cx1 < cx2) {
+          x1 = cx1 + fr.width / 2;
+          y1 += getOffset(conn.from, 'right', fr.height, false);
+        } else {
+          x1 = cx1 - fr.width / 2;
+          y1 += getOffset(conn.from, 'left', fr.height, false);
+        }
       } else {
-        y1 = cy1 - fr.height / 2; // from top
-        y2 = cy2 + tr.height / 2; // to bottom
+        if (cy1 < cy2) {
+          y1 = cy1 + fr.height / 2;
+          x1 += getOffset(conn.from, 'bottom', fr.width, false);
+        } else {
+          y1 = cy1 - fr.height / 2;
+          x1 += getOffset(conn.from, 'top', fr.width, false);
+        }
+      }
+    }
+
+    // toNodeの接続点計算
+    if (isBarNode(toNode)) {
+      if (cy1 <= cy2) {
+        y2 = cy2 - tr.height / 2;
+        x2 += getOffset(conn.to, 'top', tr.width, true);
+      } else {
+        y2 = cy2 + tr.height / 2;
+        x2 += getOffset(conn.to, 'bottom', tr.width, true);
+      }
+    } else {
+      if (isHorizontal) {
+        if (cx1 < cx2) {
+          x2 = cx2 - tr.width / 2;
+          y2 += getOffset(conn.to, 'left', tr.height, false);
+        } else {
+          x2 = cx2 + tr.width / 2;
+          y2 += getOffset(conn.to, 'right', tr.height, false);
+        }
+      } else {
+        if (cy1 < cy2) {
+          y2 = cy2 - tr.height / 2;
+          x2 += getOffset(conn.to, 'top', tr.width, false);
+        } else {
+          y2 = cy2 + tr.height / 2;
+          x2 += getOffset(conn.to, 'bottom', tr.width, false);
+        }
       }
     }
 
@@ -4296,23 +4438,19 @@ async aiAutoLayout() {
   }
 }
 exportSVG() {
-  const svgClone = this.svg.cloneNode(true);
-  const w = this.canvas.offsetWidth, h = this.canvas.offsetHeight;
-  svgClone.setAttribute('width', w);
-  svgClone.setAttribute('height', h);
-  svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-  // Add nodes as foreignObject
-  this.nodes.forEach(n => {
-    const fo = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
-    fo.setAttribute('x', n.x); fo.setAttribute('y', n.y);
-    fo.setAttribute('width', '160'); fo.setAttribute('height', '50');
-    fo.innerHTML = `<div xmlns="http://www.w3.org/1999/xhtml" style="background:#1f2937;border:2px solid ${n.color};border-radius:8px;padding:10px;display:flex;align-items:center;gap:8px;font-family:sans-serif;color:#e5e7eb;font-size:14px;">${n.icon} ${n.label}</div>`;
-    svgClone.appendChild(fo);
-  });
-  const blob = new Blob([svgClone.outerHTML], { type: 'image/svg+xml' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob); a.download = this.prefix + '_diagram.svg'; a.click();
-  showToast('SVGをエクスポートしました');
+  FileIO.exportSVG(this);
+}
+
+exportJSON() {
+  FileIO.exportJSON(this);
+}
+
+importJSON() {
+  FileIO.importJSON(this);
+}
+
+importJSONFromText() {
+  FileIO.importJSONFromText(this);
 }
 swapComponents(newComponents, umlType) {
   if (!newComponents || !newComponents.length) return;

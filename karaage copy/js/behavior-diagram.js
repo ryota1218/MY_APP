@@ -57,21 +57,26 @@
       return {
         className: 'diagram-node behavior-node behavior-node-diamond',
         style: buildNodeStyleString({
-          ...baseStyle,
-          'min-width': variant.minWidth,
-          padding: '12px 16px',
+          'min-width': '110px',
+          width: '110px',
+          height: '110px',
+          border: 'none',
+          background: 'transparent',
+          'box-shadow': 'none',
           display: 'flex',
           'flex-direction': 'column',
           'align-items': 'center',
-          gap: '8px',
+          'justify-content': 'center',
+          gap: '2px',
         }),
         innerHTML: `
-          <div class="behavior-node-diamond-mark" style="width:72px;height:72px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);border:2px solid ${node.color};background:rgba(255,255,255,0.03);display:grid;place-items:center;color:${node.color};">${icon}</div>
-          <span class="node-label">${label}</span>
-          <span class="node-port port-top" data-port="top"></span>
-          <span class="node-port port-bottom" data-port="bottom"></span>
-          <span class="node-port port-left" data-port="left"></span>
-          <span class="node-port port-right" data-port="right"></span>`,
+          <div class="behavior-node-diamond-bg" style="position:absolute;top:50%;left:50%;width:74px;height:74px;transform:translate(-50%,-50%) rotate(45deg);border:2px solid ${node.color};background:var(--bg-secondary);z-index:-1;border-radius:4px;"></div>
+          <div style="display:grid;place-items:center;color:${node.color};z-index:1;">${icon}</div>
+          <span class="node-label" style="text-align:center;font-size:11px;z-index:1;max-width:80px;line-height:1.2;word-break:break-word;">${label}</span>
+          <span class="node-port port-top" data-port="top" style="top:-2px;"></span>
+          <span class="node-port port-bottom" data-port="bottom" style="bottom:-2px;"></span>
+          <span class="node-port port-left" data-port="left" style="left:-2px;"></span>
+          <span class="node-port port-right" data-port="right" style="right:-2px;"></span>`,
       };
     }
 
