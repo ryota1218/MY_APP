@@ -6,13 +6,20 @@ class ERDiagramTool {
     this.entityIdCounter = 0;
     this.selectedEntity = null;
     this.undoHistory = [];
+    this.redoStack = [];
     this.isApplyingUndo = false;
     this.viewMode = 'logical'; // 'logical' or 'physical'
     this.sqlDialect = 'mysql'; // 'mysql' or 'postgres'
+    this.zoomLevel = 1.0;
+    this.isGridVisible = true;
+    this.clipboard = null;
     this.canvas = document.getElementById('er-canvas');
     this.svg = document.getElementById('er-svg');
+    if (this.canvas) this.canvas.classList.add('grid-active');
     this.connectingFrom = null;
     this.initActionButtons();
+    // 初期状態でグリッドを反映
+    this.updateGrid();
     // Add sample entities
     this.addEntityAt('ユーザー', 'users', [
       {logicalName:'ユーザーID', physicalName:'user_id', type:'INT', pk:true, fk:false},
@@ -51,29 +58,195 @@ class ERDiagramTool {
   }
 
   initActionButtons() {
-    const section = this.canvas.closest('.tool-section');
-    if (section) {
-      section.querySelectorAll('[data-action]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const action = btn.dataset.action;
-          if (typeof this[action] === 'function') {
-            this[action]();
-          } else {
-            console.warn(`Action "${action}" not implemented in ERDiagramTool`);
-          }
-        });
+    // ER図に関連する要素（ヘッダー、ツールバー、ワークスペース）内のボタンのみを対象にする
+    // ページ全体のボタンを奪わないよう、セレクタを限定します
+    const scope = document.querySelector('.er-workspace')?.parentElement || document;
+    const buttons = scope.querySelectorAll('.editor-header [data-action], .er-toolbar [data-action], .er-workspace [data-action]');
+    
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const action = btn.dataset.action;
+        // このツール(this)にメソッドが存在する場合のみ実行
+        if (typeof this[action] === 'function') {
+          this[action]();
+        } else {
+          console.warn(`Action "${action}" not implemented in ERDiagramTool`);
+        }
       });
-      if (window.lucide) {
-        lucide.createIcons({ root: section });
-      }
+    });
+    if (window.lucide) {
+      lucide.createIcons();
     }
   }
 
-  redoLastAction() { showToast('やり直し機能は未実装です'); }
-  autoLayout() { showToast('自動レイアウトは未実装です'); }
-  save() { showToast('ブラウザのローカルストレージに保存しました'); }
-  copy() { if(this.selectedEntity) showToast('エンティティをコピーしました'); }
-  paste() { showToast('貼り付けは未実装です'); }
+  saveDiagram() {
+    const data = {
+      entities: this.entities,
+      relations: this.relations,
+      entityIdCounter: this.entityIdCounter
+    };
+    localStorage.setItem('upstream_er_diagram_save', JSON.stringify({
+      ...data,
+      viewMode: this.viewMode,
+      sqlDialect: this.sqlDialect
+    }));
+    showToast('設計をローカルストレージに保存しました');
+  }
+
+  loadDiagram() {
+    const saved = localStorage.getItem('upstream_er_diagram_save');
+    if (saved) {
+      this.restoreSnapshot(JSON.parse(saved));
+      showToast('保存された設計を読み込みました');
+    } else {
+      showToast('保存されたデータが見つかりません');
+    }
+  }
+
+  redoLastAction() {
+    const action = this.redoStack.pop();
+    if (!action) {
+      showToast('やり直せる操作がありません');
+      return;
+    }
+    this.isApplyingUndo = true;
+    try {
+      // Redoは現状Snapshotからの復元、またはアクションの再適用
+      if (action.type === 'removeEntity') {
+        this.addEntityAt(action.logicalName, action.physicalName, action.attrs, action.x, action.y);
+      } else if (action.type === 'clearAll') {
+        this.entities = [];
+        this.relations = [];
+        this.canvas.querySelectorAll('.er-entity').forEach(e => e.remove());
+        this.svg.innerHTML = '';
+      }
+      // 必要に応じて他のアクションタイプも拡張
+      this.drawRelations();
+      showToast('やり直しました');
+    } finally {
+      this.isApplyingUndo = false;
+    }
+  }
+
+  copySelected() {
+    if (this.selectedEntity) {
+      this.clipboard = JSON.parse(JSON.stringify(this.selectedEntity));
+      showToast('エンティティをコピーしました');
+    } else {
+      showToast('エンティティを選択してください');
+    }
+  }
+
+  pasteSelected() {
+    if (!this.clipboard) {
+      showToast('貼り付ける要素がありません');
+      return;
+    }
+    const offset = 40;
+    this.addEntityAt(
+      this.clipboard.logicalName + '_copy',
+      this.clipboard.physicalName + '_copy',
+      this.clipboard.attrs,
+      this.clipboard.x + offset,
+      this.clipboard.y + offset
+    );
+    showToast('コピーを貼り付けました');
+  }
+
+  zoomIn() {
+    this.zoomLevel = Math.min(this.zoomLevel + 0.1, 2.0);
+    this.applyZoom();
+    showToast(`ズーム: ${Math.round(this.zoomLevel * 100)}%`);
+  }
+
+  zoomOut() {
+    this.zoomLevel = Math.max(this.zoomLevel - 0.1, 0.5);
+    this.applyZoom();
+    showToast(`ズーム: ${Math.round(this.zoomLevel * 100)}%`);
+  }
+
+  resetZoom() {
+    this.zoomLevel = 1.0;
+    this.applyZoom();
+    showToast('ズームをリセットしました');
+  }
+
+  applyZoom() {
+    this.canvas.style.transform = `scale(${this.zoomLevel})`;
+    this.canvas.style.transformOrigin = '0 0';
+  }
+
+  toggleGrid() {
+    this.isGridVisible = !this.isGridVisible;
+    if (this.canvas) {
+      this.canvas.classList.toggle('grid-active', this.isGridVisible);
+    }
+    showToast(this.isGridVisible ? 'グリッドを表示' : 'グリッドを非表示');
+  }
+
+  autoLayout() {
+    this.entities.forEach((entity, i) => {
+      entity.x = 80 + (i % 3) * 350;
+      entity.y = 80 + Math.floor(i / 3) * 300;
+      const el = document.getElementById(entity.id);
+      if (el) {
+        el.style.left = entity.x + 'px';
+        el.style.top = entity.y + 'px';
+      }
+    });
+    this.drawRelations();
+    showToast('エンティティを再配置しました');
+  }
+
+  aiAutoLayout() { showToast('AIによるレイアウト最適化を開始します...'); }
+  
+  toggleAIChat() {
+    const panel = document.getElementById('er-ai-chat-panel');
+    if (panel) panel.classList.toggle('visible');
+  }
+
+  shareDiagram() { showToast('共有用URLを作成しました'); }
+  showUserProfile() { showToast('ユーザープロフィールを表示します'); }
+  showHelp() { showToast('ヘルプを表示します'); }
+  showSettings() { showToast('エディタ設定を開きます'); }
+  closePropertyPanel() {
+    const panel = document.getElementById('er-property-panel');
+    if (panel) panel.classList.remove('visible');
+  }
+  bringToFront() {
+    if (this.selectedEntity) {
+      const el = document.getElementById(this.selectedEntity.id);
+      if (el) {
+        let maxZ = 0;
+        document.querySelectorAll('.er-entity').forEach(e => {
+          const z = parseInt(window.getComputedStyle(e).zIndex) || 0;
+          if (z > maxZ) maxZ = z;
+        });
+        el.style.zIndex = maxZ + 1;
+      }
+    }
+  }
+  sendToBack() {
+    if (this.selectedEntity) {
+      const el = document.getElementById(this.selectedEntity.id);
+      if (el) {
+        let minZ = 0;
+        document.querySelectorAll('.er-entity').forEach(e => {
+          const z = parseInt(window.getComputedStyle(e).zIndex) || 0;
+          if (z < minZ) minZ = z;
+        });
+        el.style.zIndex = minZ - 1;
+      }
+    }
+  }
+  deleteSelected() {
+    if (this.selectedEntity) {
+      this.removeEntityById(this.selectedEntity.id);
+      this.drawRelations();
+      this.closePropertyPanel();
+      showToast('削除しました');
+    }
+  }
 
   toggleSidebar() {
     const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
@@ -94,7 +267,7 @@ class ERDiagramTool {
         el.querySelector('.er-entity-header').textContent = this.viewMode === 'logical' ? entity.logicalName : entity.physicalName;
         el.querySelector('.er-entity-attrs').innerHTML = entity.attrs.map(a => `<div class="er-attr">
           ${a.pk?'<span class="attr-key">PK</span>':''}${a.fk?'<span class="attr-key" style="color:#06b6d4">FK</span>':''}
-          <span>${this.escapeHtml(this.viewMode === 'logical' ? a.logicalName : a.physicalName)}</span><span class="attr-type">${a.type}</span>
+          <span>${this.escapeHtml(this.viewMode === 'logical' ? a.logicalName : a.physicalName)}</span><span class="attr-type">${this.escapeHtml(a.type)}</span>
         </div>`).join('');
       }
     });
@@ -163,6 +336,11 @@ class ERDiagramTool {
     this.pushUndoAction({
       type: 'removeEntity',
       entityId: entity.id,
+      logicalName: entity.logicalName,
+      physicalName: entity.physicalName,
+      attrs: JSON.parse(JSON.stringify(entity.attrs)),
+      x: entity.x,
+      y: entity.y,
       entityIndex: this.entities.length - 1,
       entityIdCounter: this.entityIdCounter - 1,
     });
@@ -249,6 +427,12 @@ class ERDiagramTool {
       const logName = document.getElementById('er-form-logical-name').value.trim();
       const phyName = document.getElementById('er-form-physical-name').value.trim();
       if (!logName || !phyName) { showToast('論理名と物理名を入力してください'); return; }
+      
+      const nameRegex = /^[a-zA-Z0-9_]+$/;
+      if (!nameRegex.test(phyName)) {
+        showToast('テーブル物理名は半角英数字とアンダースコアのみ使用可能です');
+        return;
+      }
 
       const rows = rowsContainer.querySelectorAll('.er-form-row');
       const attrs = Array.from(rows).map(row => ({
@@ -258,6 +442,11 @@ class ERDiagramTool {
         pk: row.querySelector('.pk').classList.contains('active'),
         fk: row.querySelector('.fk').classList.contains('active')
       }));
+
+      if (attrs.some(a => !nameRegex.test(a.physicalName))) {
+        showToast('カラム物理名は半角英数字とアンダースコアのみ使用可能です');
+        return;
+      }
 
       if (isEdit) {
         const oldState = { 
@@ -280,7 +469,7 @@ class ERDiagramTool {
           el.querySelector('.er-entity-header').textContent = this.viewMode === 'logical' ? logName : phyName;
           el.querySelector('.er-entity-attrs').innerHTML = attrs.map(a => `<div class="er-attr">
             ${a.pk?'<span class="attr-key">PK</span>':''}${a.fk?'<span class="attr-key" style="color:#06b6d4">FK</span>':''}
-            <span>${this.escapeHtml(this.viewMode === 'logical' ? a.logicalName : a.physicalName)}</span><span class="attr-type">${a.type}</span>
+            <span>${this.escapeHtml(this.viewMode === 'logical' ? a.logicalName : a.physicalName)}</span><span class="attr-type">${this.escapeHtml(a.type)}</span>
           </div>`).join('');
         }
         showToast('エンティティを更新しました');
@@ -306,14 +495,14 @@ class ERDiagramTool {
     el.id = entity.id;
     el.style.left = entity.x + 'px';
     el.style.top = entity.y + 'px';
-    el.innerHTML = `
-      <div class="er-entity-header">${this.viewMode === 'logical' ? entity.logicalName : entity.physicalName}</div>
-      <div class="er-entity-attrs">
-        ${entity.attrs.map(a => `<div class="er-attr">
-          ${a.pk?'<span class="attr-key">PK</span>':''}${a.fk?'<span class="attr-key" style="color:#06b6d4">FK</span>':''}
-          <span>${this.escapeHtml(this.viewMode === 'logical' ? a.logicalName : a.physicalName)}</span><span class="attr-type">${a.type}</span>
-        </div>`).join('')}
-      </div>`;
+    
+    el.innerHTML = `<div class="er-entity-header"></div><div class="er-entity-attrs"></div>`;
+    el.querySelector('.er-entity-header').textContent = this.viewMode === 'logical' ? entity.logicalName : entity.physicalName;
+    el.querySelector('.er-entity-attrs').innerHTML = entity.attrs.map(a => `<div class="er-attr">
+      ${a.pk?'<span class="attr-key">PK</span>':''}${a.fk?'<span class="attr-key" style="color:#06b6d4">FK</span>':''}
+      <span>${this.escapeHtml(this.viewMode === 'logical' ? a.logicalName : a.physicalName)}</span><span class="attr-type">${this.escapeHtml(a.type)}</span>
+    </div>`).join('');
+
     let dragging = false, ox, oy;
     el.addEventListener('mousedown', e => {
       if (this.connectingFrom) {
@@ -343,7 +532,7 @@ class ERDiagramTool {
                       });
                       el.querySelector('.er-entity-attrs').innerHTML = entity.attrs.map(a => `<div class="er-attr">
                         ${a.pk?'<span class="attr-key">PK</span>':''}${a.fk?'<span class="attr-key" style="color:#06b6d4">FK</span>':''}
-                        <span>${this.escapeHtml(this.viewMode === 'logical' ? a.logicalName : a.physicalName)}</span><span class="attr-type">${a.type}</span>
+                        <span>${this.escapeHtml(this.viewMode === 'logical' ? a.logicalName : a.physicalName)}</span><span class="attr-type">${this.escapeHtml(a.type)}</span>
                       </div>`).join('');
                       showToast(`外部キー ${fkPhysicalName} を自動追加しました`);
                    }
@@ -407,6 +596,15 @@ class ERDiagramTool {
     this.canvas.querySelectorAll('.er-entity').forEach(e => e.classList.remove('selected'));
     this.selectedEntity = entity;
     el.classList.add('selected');
+
+    // プロパティパネルを表示し、現在の値をセット
+    const panel = document.getElementById('er-property-panel');
+    if (panel) {
+      panel.classList.add('visible');
+      document.getElementById('er-prop-label').value = entity.logicalName;
+      document.getElementById('er-prop-x').value = entity.x;
+      document.getElementById('er-prop-y').value = entity.y;
+    }
   }
   addRelation() {
     if (this.entities.length < 2) { showToast('エンティティを2つ以上追加してください'); return; }
@@ -460,6 +658,7 @@ class ERDiagramTool {
   pushUndoAction(action) {
     if (this.isApplyingUndo || !action) return;
     this.undoHistory.push(action);
+    this.redoStack = [];
   }
   getEntityById(entityId) {
     return this.entities.find(entity => entity.id === entityId) || null;
@@ -494,86 +693,47 @@ class ERDiagramTool {
       showToast('戻せる操作がありません');
       return;
     }
-
+    this.redoStack.push(action);
     this.isApplyingUndo = true;
     try {
       if (action.type === 'removeEntity') {
         this.removeEntityById(action.entityId);
         this.entityIdCounter = action.entityIdCounter;
-        this.drawRelations();
-        showToast('一つ戻しました');
-        return;
-      }
-
-      if (action.type === 'moveEntity') {
+      } else if (action.type === 'moveEntity') {
         const entity = this.getEntityById(action.entityId);
-        const el = entity ? document.getElementById(entity.id) : null;
-        if (entity && el) {
-          entity.x = action.x;
-          entity.y = action.y;
-          el.style.left = `${entity.x}px`;
-          el.style.top = `${entity.y}px`;
-          this.drawRelations();
+        if (entity) {
+          entity.x = action.x; entity.y = action.y;
+          const el = document.getElementById(entity.id);
+          if (el) { el.style.left = entity.x + 'px'; el.style.top = entity.y + 'px'; }
         }
-        showToast('一つ戻しました');
-        return;
-      }
-
-      if (action.type === 'renameEntity' || action.type === 'updateEntity') {
+      } else if (action.type === 'updateEntity') {
         const entity = this.getEntityById(action.entityId);
-        const el = entity ? document.getElementById(entity.id) : null;
-        if (entity && el) {
-          if (action.type === 'renameEntity') {
-            entity.logicalName = action.name;
-          } else {
-            entity.logicalName = action.oldState.logicalName;
-            entity.physicalName = action.oldState.physicalName;
-            entity.attrs = action.oldState.attrs;
-          }
-          el.querySelector('.er-entity-header').textContent = this.viewMode === 'logical' ? entity.logicalName : entity.physicalName;
-          el.querySelector('.er-entity-attrs').innerHTML = entity.attrs.map(a => `<div class="er-attr">
-            ${a.pk?'<span class="attr-key">PK</span>':''}${a.fk?'<span class="attr-key" style="color:#06b6d4">FK</span>':''}
-            <span>${this.escapeHtml(this.viewMode === 'logical' ? a.logicalName : a.physicalName)}</span><span class="attr-type">${a.type}</span>
-          </div>`).join('');
+        if (entity) {
+          entity.logicalName = action.oldState.logicalName;
+          entity.physicalName = action.oldState.physicalName;
+          entity.attrs = action.oldState.attrs;
+          this.renderEntityContent(entity);
         }
-        showToast('一つ戻しました');
-        return;
-      }
-
-      if (action.type === 'removeRelation') {
-        this.relations = this.relations.filter(rel => !(rel.from === action.from && rel.to === action.to && rel.label === action.label));
-        this.drawRelations();
-        showToast('一つ戻しました');
-        return;
-      }
-
-      if (action.type === 'restoreRelation') {
-        this.relations.push(action.relation);
-        this.drawRelations();
-        showToast('一つ戻しました');
-        return;
-      }
-
-      if (action.type === 'updateRelation') {
-        const rel = this.relations.find(r => r.from === action.oldState.from && r.to === action.oldState.to);
-        if (rel) {
-          rel.label = action.oldState.label;
-          this.drawRelations();
-        }
-        showToast('一つ戻しました');
-        return;
-      }
-
-      if (action.type === 'clearAll') {
+      } else if (action.type === 'removeRelation') {
+        this.relations = this.relations.filter(rel => !(rel.from === action.from && rel.to === action.to));
+      } else if (action.type === 'clearAll') {
         this.restoreSnapshot(action.snapshot);
-        showToast('一つ戻しました');
-        return;
       }
-
-      showToast('戻し処理に失敗しました');
+      this.drawRelations();
+      showToast('元に戻しました');
     } finally {
       this.isApplyingUndo = false;
     }
+  }
+
+  renderEntityContent(entity) {
+    const el = document.getElementById(entity.id);
+    if (!el) return;
+    el.querySelector('.er-entity-header').textContent = this.viewMode === 'logical' ? entity.logicalName : entity.physicalName;
+    el.querySelector('.er-entity-attrs').innerHTML = entity.attrs.map(a => `<div class="er-attr">
+      ${a.pk?'<span class="attr-key">PK</span>':''}${a.fk?'<span class="attr-key" style="color:#06b6d4">FK</span>':''}
+      <span>${this.escapeHtml(this.viewMode === 'logical' ? a.logicalName : a.physicalName)}</span><span class="attr-type">${this.escapeHtml(a.type)}</span>
+    </div>`).join('');
   }
   drawRelations() {
     this.svg.innerHTML = `

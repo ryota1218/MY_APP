@@ -638,6 +638,10 @@ class DiagramTool {
     this.prefix = prefix;
     this.components = components;
     this.options = options;
+    this.zoomLevel = 1.0;
+    this.isGridVisible = true;
+    this.clipboard = null;
+
     this.isDropdownPalette = this.options.paletteMode === 'dropdown';
     this.umlType = this.options.umlType || null;
     this.connectMode = false;
@@ -936,7 +940,7 @@ class DiagramTool {
     const connectButton = document.getElementById(this.prefix + '-connect-mode');
 
     // クラス図、コンポーネント図、配置図、コンポジット構造図、パッケージ図、またはコミュニケーション図モードの場合: 接続タイプセレクタを生成
-    if (this.umlType === 'class' || this.umlType === 'component' || this.umlType === 'deployment' || this.umlType === 'composite' || this.umlType === 'package' || this.umlType === 'communication') {
+    if (this.umlType === 'class' || this.umlType === 'erdiagram' || this.prefix === 'er' || this.umlType === 'component' || this.umlType === 'deployment' || this.umlType === 'composite' || this.umlType === 'package' || this.umlType === 'communication') {
       connectButton.innerHTML = '';
       connectButton.textContent = '';
       connectButton.style.display = 'none';
@@ -944,6 +948,8 @@ class DiagramTool {
       let connTypes = CLASS_CONNECTION_TYPES;
       if (this.umlType === 'component') {
         connTypes = COMPONENT_CONNECTION_TYPES;
+      } else if (this.umlType === 'erdiagram' || this.prefix === 'er') {
+        connTypes = [{ key: 'association', label: 'リレーション', icon: '━━' }];
       } else if (this.umlType === 'deployment') {
         connTypes = DEPLOYMENT_CONNECTION_TYPES;
       } else if (this.umlType === 'composite') {
@@ -1098,8 +1104,8 @@ class DiagramTool {
       const idx = parseInt(e.dataTransfer.getData('text/plain'));
       if (isNaN(idx)) return;
       const rect = this.canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left - 60;
-      const y = e.clientY - rect.top - 20;
+      const x = (e.clientX - rect.left) / this.zoomLevel - 60;
+      const y = (e.clientY - rect.top) / this.zoomLevel - 20;
       this.addNode(this.components[idx], x, y);
     });
     this.canvas.addEventListener('click', e => {
@@ -1110,15 +1116,14 @@ class DiagramTool {
     });
 
     // UIボタンのイベントバインディング
-    const container = this.canvas.closest('.tool-section');
+    // tool-sectionが見つからない場合は、さらに上の階層まで探す（ヘッダーとキャンバスが離れている場合のため）
+    const container = this.canvas.closest('.tool-section') || this.canvas.closest('.editor-header')?.parentElement || this.canvas.parentElement;
     if (container) {
       container.querySelectorAll('[data-action]').forEach(btn => {
         btn.addEventListener('click', e => {
           const action = btn.dataset.action;
-          if (action === 'openPaletteMenu') {
-            e.stopPropagation();
-          }
           if (typeof this[action] === 'function') {
+            e.stopPropagation();
             this[action]();
           }
         });
@@ -1128,6 +1133,12 @@ class DiagramTool {
     document.addEventListener('keydown', e => {
       const target = e.target;
       const isEditingField = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable);
+      
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'c') { if(!isEditingField) { e.preventDefault(); this.copySelected(); } }
+        if (e.key === 'v') { if(!isEditingField) { e.preventDefault(); this.pasteSelected(); } }
+      }
+
       if (isEditingField) return;
       if (e.key !== 'Delete' && e.key !== 'Backspace') return;
       console.debug('[DiagramTool] keydown', e.key, 'selectedNode=', this.selectedNode?.id, 'selectedConn=', this.selectedConnection?.id);
@@ -1610,6 +1621,163 @@ updateNodeDOM(node) {
   }
   this.drawConnections();
 }
+
+/* ===== 追加された機能の実装 ===== */
+
+zoomIn() {
+  this.zoomLevel = Math.min(2.0, this.zoomLevel + 0.1);
+  this.applyZoom();
+}
+
+zoomOut() {
+  this.zoomLevel = Math.max(0.5, this.zoomLevel - 0.1);
+  this.applyZoom();
+}
+
+resetZoom() {
+  this.zoomLevel = 1.0;
+  this.applyZoom();
+}
+
+applyZoom() {
+  this.canvas.style.transform = `scale(${this.zoomLevel})`;
+  this.canvas.style.transformOrigin = '0 0';
+  showToast(`ズーム: ${Math.round(this.zoomLevel * 100)}%`);
+}
+
+toggleGrid() {
+  this.isGridVisible = !this.isGridVisible;
+  this.canvas.classList.toggle('grid-active', this.isGridVisible);
+  showToast(this.isGridVisible ? 'グリッドを表示しました' : 'グリッドを非表示にしました');
+}
+
+copySelected() {
+  if (this.selectedNode) {
+    this.clipboard = { type: 'node', data: { ...this.selectedNode } };
+    showToast('コピーしました');
+  } else if (this.selectedConnection) {
+    showToast('接続線のコピーには対応していません');
+  }
+}
+
+pasteSelected() {
+  if (!this.clipboard) return;
+  if (this.clipboard.type === 'node') {
+    const source = this.clipboard.data;
+    // 貼り付け位置を少しずらす
+    const x = source.x + 40;
+    const y = source.y + 40;
+    
+    // 元のコンポーネント定義を探す（アイコンなどを引き継ぐため）
+    const comp = this.components.find(c => c.label === source.label) || this.components[0];
+    this._createNode(comp, x, y, {}, { ...source, id: undefined });
+    showToast('貼り付けました');
+  }
+}
+
+saveDiagram() {
+  const data = {
+    nodes: this.nodes,
+    connections: this.connections,
+    nodeIdCounter: this.nodeIdCounter,
+    connIdCounter: this.connIdCounter,
+    umlType: this.umlType
+  };
+  const key = `upstream_diagram_${this.prefix}_${this.umlType || 'main'}`;
+  localStorage.setItem(key, JSON.stringify(data));
+  showToast('ブラウザに保存しました');
+}
+
+loadDiagram() {
+  const key = `upstream_diagram_${this.prefix}_${this.umlType || 'main'}`;
+  const saved = localStorage.getItem(key);
+  if (!saved) {
+    showToast('保存されたデータが見つかりません');
+    return;
+  }
+  if (confirm('保存されているデータを読み込みますか？現在の内容は失われます。')) {
+    const data = JSON.parse(saved);
+    this.restoreSnapshot(data);
+    showToast('データを読み込みました');
+  }
+}
+
+showHelp() {
+  alert('【UpStream ヘルプ】\n・左のパレットから図形をドラッグ＆ドロップして配置\n・接続モードをONにしてノード間をクリックで接続\n・図形をダブルクリックでプロパティ編集\n・AIボタンで自動レイアウトが可能');
+}
+
+showSettings() {
+  showToast('設定パネルは現在開発中です');
+}
+
+showUserProfile() {
+  const user = JSON.parse(localStorage.getItem('upstream_user') || '{}');
+  alert(`ユーザー情報:\n名前: ${user.display_name || 'ゲスト'}\nメール: ${user.email || '未設定'}`);
+}
+
+/* ===== ER図専用メソッド ===== */
+
+addEntity() {
+  // ER図用のデフォルトコンポーネント定義
+  const entityComp = {
+    label: '新規テーブル',
+    color: '#10b981',
+    nodeType: 'class-box', // クラス図の枠を利用
+    defaults: {
+      stereotype: '«table»',
+      attributes: ['id : INT (PK)', 'name : VARCHAR(255)'],
+      methods: []
+    }
+  };
+  
+  // キャンバス中央付近に配置
+  const x = (this.canvas.clientWidth / 2 - 80) / this.zoomLevel;
+  const y = (this.canvas.clientHeight / 2 - 60) / this.zoomLevel;
+  
+  this.showClassBoxForm(entityComp, x, y);
+  showToast('エンティティを追加しました');
+}
+
+addRelation() {
+  this.connectMode = !this.connectMode;
+  if (typeof this.updateConnectButton === 'function') this.updateConnectButton();
+  this.canvas.style.cursor = this.connectMode ? 'crosshair' : 'default';
+  
+  // ER図の場合、デフォルトの接続タイプをリレーションに設定
+  this.activeConnType = 'association';
+  showToast(this.connectMode ? 'リレーション作成モード: ON' : 'リレーション作成モード: OFF');
+}
+
+toggleNameView() {
+  this.isPhysicalView = !this.isPhysicalView;
+  const btn = document.getElementById(this.prefix + '-toggle-name-btn');
+  if (btn) {
+    btn.textContent = this.isPhysicalView ? '🌐 物理名を表示中' : '🌐 論理名を表示中';
+  }
+  showToast(this.isPhysicalView ? '物理名（テーブル名）表示' : '論理名表示');
+  // 必要に応じてノードの再描画処理を追加
+}
+
+exportSQL() {
+  let sql = `-- UpStream Export: ${new Date().toLocaleString()}\n\n`;
+  this.nodes.forEach(node => {
+    if (node.nodeType === 'class-box') {
+      sql += `CREATE TABLE ${node.label} (\n`;
+      const cols = (node.attributes || []).map(a => `  ${a.replace(':', '')}`).join(',\n');
+      sql += cols + `\n);\n\n`;
+    }
+  });
+  
+  // 簡易的にコンソールとアラートで表示
+  console.log(sql);
+  alert("DDLを生成しました（詳細はコンソールを確認してください）:\n\n" + sql.substring(0, 200) + "...");
+}
+
+toggleSidebar() {
+  document.body.classList.toggle('sidebar-collapsed');
+}
+
+/* ================================ */
 
 addNode(comp, x, y, options = {}) {
   // クラス図ノードの場合はフォームを表示
@@ -2449,11 +2617,11 @@ renderNode(node) {
 
       const onMouseMove = moveEvent => {
         if (dir.includes('right')) {
-          node.width = Math.max(minWidth, Math.round(startWidth + (moveEvent.clientX - startX)));
+          node.width = Math.max(minWidth, Math.round(startWidth + (moveEvent.clientX - startX) / this.zoomLevel));
           el.style.width = node.width + 'px';
         }
         if (dir.includes('bottom')) {
-          node.height = Math.max(minHeight, Math.round(startHeight + (moveEvent.clientY - startY)));
+          node.height = Math.max(minHeight, Math.round(startHeight + (moveEvent.clientY - startY) / this.zoomLevel));
           el.style.height = node.height + 'px';
         }
         this.drawConnections();
@@ -2510,8 +2678,8 @@ renderNode(node) {
     this.selectNode(node, el);
     const dragStart = { x: node.x, y: node.y };
     let moved = false;
-    ox = e.clientX - node.x;
-    oy = e.clientY - node.y;
+    ox = (e.clientX / this.zoomLevel) - node.x;
+    oy = (e.clientY / this.zoomLevel) - node.y;
     e.preventDefault();
     // Nesting: コンテナノードの場合、内部の子ノードを特定
     const isContainer = node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary' || node.behaviorType === 'fragment' || node.nodeType === 'group-boundary';
@@ -2540,8 +2708,8 @@ renderNode(node) {
     }
     const onMouseMove = e => {
       if (!dragging) return;
-      const nextX = e.clientX - ox;
-      const nextY = e.clientY - oy;
+      const nextX = (e.clientX / this.zoomLevel) - ox;
+      const nextY = (e.clientY / this.zoomLevel) - oy;
       if (nextX !== node.x || nextY !== node.y) moved = true;
       node.x = nextX;
       node.y = nextY;
