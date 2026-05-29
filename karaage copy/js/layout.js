@@ -10,15 +10,21 @@ class LayoutTool {
     this.canvasW = 960;
     this.canvasH = 600;
     this.aspectRatio = null; // null = free
+    this.zoomLevel = 1.0; // ズーム初期値を追加
+    this.isGridVisible = true; // グリッド初期値を追加
+    this.clipboard = null; // コピペ用バッファを追加
+
     this.canvas = document.getElementById('layout-canvas');
     this.canvas.classList.add('free-size');
     this.propertyPanelEl = null;
+    
     this.initPalette();
     this.initCanvasEvents();
     this.initActionButtons();
     this.initPropertyPanel();
     this.initCanvasConfig();
   }
+
   initActionButtons() {
     // data-action属性によるイベントバインディング
     const section = this.canvas.closest('.tool-section');
@@ -37,6 +43,7 @@ class LayoutTool {
       }
     }
   }
+
   initPalette() {
     const items = [
       { icon:'panel-top', label:'ヘッダー', w:360, h:50, bg:'#e2e8f0' },
@@ -89,6 +96,7 @@ class LayoutTool {
     // アイコンの初期化
     if (window.lucide) lucide.createIcons();
   }
+
   initCanvasEvents() {
     this.canvas.addEventListener('dragover', e => e.preventDefault());
     this.canvas.addEventListener('drop', e => {
@@ -96,8 +104,8 @@ class LayoutTool {
       const idx = parseInt(e.dataTransfer.getData('text/plain'));
       if (isNaN(idx)) return;
       const rect = this.canvas.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const x = (e.clientX - rect.left) / this.zoomLevel;
+      const y = (e.clientY - rect.top) / this.zoomLevel;
       this.addElement(this.paletteItems[idx], x, y);
     });
     this.canvas.addEventListener('click', e => {
@@ -117,16 +125,9 @@ class LayoutTool {
       const ctrl = e.ctrlKey || e.metaKey;
 
       if (ctrl && key === 'c') {
-        if (this.selectedEl) {
-          this.clipboardItem = JSON.parse(JSON.stringify(this.selectedEl));
-          showToast('コピーしました');
-        }
+        this.copySelected();
       } else if (ctrl && key === 'v') {
-        if (this.clipboardItem) {
-          this.clipboardItem.x += 20;
-          this.clipboardItem.y += 20;
-          this.addElement(this.clipboardItem, this.clipboardItem.x, this.clipboardItem.y);
-        }
+        this.pasteSelected();
       } else if (key === 'delete' || key === 'backspace') {
         if (this.selectedEl) {
           this.deleteSelected();
@@ -148,6 +149,7 @@ class LayoutTool {
           el.y = Math.max(0, el.y);
           div.style.left = el.x + 'px';
           div.style.top = el.y + 'px';
+          if (this.propertyPanelEl && this.propertyPanelEl.id === el.id) this.syncPropertyPanel(el);
         }
       }
     });
@@ -191,6 +193,7 @@ class LayoutTool {
       }
     });
   }
+
   initPropertyPanel() {
     const bindInput = (suffix, updater) => {
       const input = document.getElementById('layout-prop-' + suffix);
@@ -227,6 +230,7 @@ class LayoutTool {
       });
     }
   }
+
   openPropertyPanel(el) {
     this.propertyPanelEl = el;
     const panel = document.getElementById('layout-property-panel');
@@ -241,6 +245,7 @@ class LayoutTool {
       }
     }, 120);
   }
+
   syncPropertyPanel(el) {
     if (!el) return;
     const setVal = (suffix, value) => {
@@ -261,16 +266,17 @@ class LayoutTool {
     const bgInput = document.getElementById('layout-prop-bg');
     if (bgInput) bgInput.disabled = !!el.imageUrl;
   }
+
   closePropertyPanel() {
     this.propertyPanelEl = null;
     const panel = document.getElementById('layout-property-panel');
     if (panel) panel.classList.remove('open');
   }
+
   normalizeHexColor(color) {
     if (!color || color === 'transparent') return '#ffffff';
     if (typeof color !== 'string') return '#ffffff';
 
-    // #rgb / #rrggbb / #rrggbbaa
     if (color.startsWith('#')) {
       if (color.length === 4) {
         const r = color[1];
@@ -282,7 +288,6 @@ class LayoutTool {
       if (color.length === 9) return color.slice(0, 7);
     }
 
-    // rgb(...) / rgba(...)
     const match = color.match(/rgba?\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
     if (match) {
       const toHex = (n) => Number(n).toString(16).padStart(2, '0');
@@ -291,6 +296,7 @@ class LayoutTool {
 
     return '#ffffff';
   }
+
   updateElementDOM(el) {
     const div = document.getElementById(el.id);
     if (!div) return;
@@ -320,6 +326,7 @@ class LayoutTool {
     const labelSpan = div.querySelector('.layout-label');
     if (labelSpan) labelSpan.textContent = el.label || '';
   }
+
   addElementFromPalette(idx) {
     const item = this.paletteItems[idx];
     if (!item) return;
@@ -329,8 +336,8 @@ class LayoutTool {
     const y = Math.min(60 + Math.floor(this.elemIdCounter / 4) * 80, Math.max(20, canvasH - item.h - 20));
     this.addElement(item, x, y);
   }
+
   toggleSidebar() {
-    // デスクトップ用の折りたたみとモバイル用のメニュー開閉の両方をトグル
     const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
     document.body.classList.toggle('menu-open');
     if (isCollapsed) {
@@ -339,11 +346,13 @@ class LayoutTool {
       document.body.dataset.sidebarCollapsedByUser = 'false';
     }
   }
+
   togglePaletteDropdown() {
     const dropdown = document.getElementById('layout-palette-dropdown');
     if (!dropdown) return;
     dropdown.classList.toggle('open');
   }
+
   addElement(item, x, y) {
     const id = 'layout_el_' + (this.elemIdCounter++);
     const el = {
@@ -367,6 +376,7 @@ class LayoutTool {
       elemIdCounter: this.elemIdCounter - 1,
     });
   }
+
   renderElement(el) {
     const div = document.createElement('div');
     div.className = 'layout-element';
@@ -406,7 +416,7 @@ class LayoutTool {
         ox = e.clientX; oy = e.clientY;
       } else {
         dragging = true;
-        ox = e.clientX - el.x; oy = e.clientY - el.y;
+        ox = (e.clientX / this.zoomLevel) - el.x; oy = (e.clientY / this.zoomLevel) - el.y;
       }
       
       const startState = { x: el.x, y: el.y, w: el.w, h: el.h };
@@ -415,8 +425,8 @@ class LayoutTool {
 
       const onMouseMove = event => {
         if (resizing) {
-          const dx = event.clientX - ox;
-          const dy = event.clientY - oy;
+          const dx = (event.clientX - ox) / this.zoomLevel;
+          const dy = (event.clientY - oy) / this.zoomLevel;
           el.w = Math.max(40, ow + dx);
           el.h = Math.max(30, oh + dy);
           div.style.width = el.w + 'px';
@@ -424,8 +434,8 @@ class LayoutTool {
           if (this.propertyPanelEl && this.propertyPanelEl.id === el.id) this.syncPropertyPanel(el);
           moved = true;
         } else if (dragging) {
-          const nextX = Math.max(0, event.clientX - ox);
-          const nextY = Math.max(0, event.clientY - oy);
+          const nextX = Math.max(0, (event.clientX / this.zoomLevel) - ox);
+          const nextY = Math.max(0, (event.clientY / this.zoomLevel) - oy);
           if (nextX !== el.x || nextY !== el.y) moved = true;
           el.x = nextX;
           el.y = nextY;
@@ -466,6 +476,7 @@ class LayoutTool {
     });
     this.canvas.appendChild(div);
   }
+
   selectElement(el, div) {
     this.deselectAll();
     this.selectedEl = el;
@@ -476,18 +487,18 @@ class LayoutTool {
       this.syncPropertyPanel(el);
     }
   }
+
   deselectAll() {
     this.selectedEl = null;
     this.canvas.querySelectorAll('.layout-element').forEach(e => e.classList.remove('selected'));
   }
+
   moveForward(el) {
     if (!el) return;
     const currentZ = el.zIndex || 0;
-    // 1段階上のZ順序を持つ要素を探す
     const nextElement = this.elements.find(e => e.zIndex === currentZ + 1);
     
     if (nextElement) {
-      // 入れ替え
       const oldZ = el.zIndex;
       el.zIndex = nextElement.zIndex;
       nextElement.zIndex = oldZ;
@@ -503,6 +514,7 @@ class LayoutTool {
       oldZIndex: (el.zIndex === currentZ + 1) ? currentZ : el.zIndex,
     });
   }
+
   moveBackward(el) {
     if (!el) return;
     const currentZ = el.zIndex || 0;
@@ -512,11 +524,9 @@ class LayoutTool {
       return;
     }
     
-    // 1段階下のZ順序を持つ要素を探す
     const prevElement = this.elements.find(e => e.zIndex === currentZ - 1);
     
     if (prevElement) {
-      // 入れ替え
       const oldZ = el.zIndex;
       el.zIndex = prevElement.zIndex;
       prevElement.zIndex = oldZ;
@@ -532,6 +542,7 @@ class LayoutTool {
       oldZIndex: (el.zIndex === currentZ - 1) ? currentZ : el.zIndex,
     });
   }
+
   deleteSelected() {
     if (!this.selectedEl) return;
     const el = this.selectedEl;
@@ -540,15 +551,19 @@ class LayoutTool {
       element: JSON.parse(JSON.stringify(el))
     });
     this.removeElementById(el.id);
+    this.closePropertyPanel();
     showToast('削除しました');
   }
+
   pushUndoAction(action) {
     if (this.isApplyingUndo || !action) return;
     this.undoHistory.push(action);
   }
+
   getElementById(elementId) {
     return this.elements.find(element => element.id === elementId) || null;
   }
+
   removeElementById(elementId) {
     const index = this.elements.findIndex(element => element.id === elementId);
     if (index < 0) return null;
@@ -558,6 +573,7 @@ class LayoutTool {
     if (this.selectedEl && this.selectedEl.id === elementId) this.selectedEl = null;
     return element;
   }
+
   restoreSnapshot(snapshot) {
     if (!snapshot) return;
     this.elements = snapshot.elements.map(element => ({ ...element }));
@@ -566,6 +582,7 @@ class LayoutTool {
     this.canvas.querySelectorAll('.layout-element').forEach(element => element.remove());
     this.elements.forEach(element => this.renderElement(element));
   }
+
   undoLastAction() {
     const action = this.undoHistory.pop();
     if (!action) {
@@ -651,6 +668,7 @@ class LayoutTool {
       this.isApplyingUndo = false;
     }
   }
+
   clearAll() {
     if (!confirm('キャンバスをクリアします。よろしいですか？')) {
       return;
@@ -662,6 +680,7 @@ class LayoutTool {
     this.elements = []; this.elemIdCounter = 0;
     this.canvas.querySelectorAll('.layout-element').forEach(e => e.remove());
     this.pushUndoAction({ type: 'clearAll', snapshot });
+    this.deselectAll();
     showToast('キャンバスをクリアしました');
   }
   exportJSON() {
@@ -676,9 +695,94 @@ class LayoutTool {
     FileIO.importJSONFromText(this);
   }
 
+  /* ===== ズーム機能 ===== */
+  zoomIn() {
+    this.zoomLevel = Math.min(2.0, this.zoomLevel + 0.1);
+    this.applyZoom();
+  }
+
+  zoomOut() {
+    this.zoomLevel = Math.max(0.5, this.zoomLevel - 0.1);
+    this.applyZoom();
+  }
+
+  resetZoom() {
+    this.zoomLevel = 1.0;
+    this.applyZoom();
+  }
+
+  applyZoom() {
+    this.canvas.style.transform = `scale(${this.zoomLevel})`;
+    this.canvas.style.transformOrigin = '0 0';
+    showToast(`ズーム: ${Math.round(this.zoomLevel * 100)}%`);
+  }
+
+  /* ===== グリッド切り替え ===== */
+  toggleGrid() {
+    this.isGridVisible = !this.isGridVisible;
+    this.canvas.classList.toggle('grid-visible', this.isGridVisible);
+    this.canvas.classList.toggle('grid-active', this.isGridVisible);
+    showToast(this.isGridVisible ? 'グリッドを表示しました' : 'グリッドを非表示にしました');
+  }
+
+  /* ===== コピー＆ペースト機能 ===== */
+  copySelected() {
+    if (this.selectedEl) {
+      this.clipboard = { ...this.selectedEl };
+      showToast('コピーしました');
+    }
+  }
+
+  pasteSelected() {
+    if (!this.clipboard) return;
+    const item = { ...this.clipboard };
+    this.addElement(item, item.x + 20, item.y + 20);
+    showToast('貼り付けました');
+  }
+
+  /* ===== ストレージ保存・読み込み ===== */
+  saveDiagram() {
+    const data = {
+      elements: this.elements,
+      elemIdCounter: this.elemIdCounter
+    };
+    localStorage.setItem('upstream_layout_save', JSON.stringify(data));
+    showToast('ブラウザに保存しました');
+  }
+
+  loadDiagram() {
+    const saved = localStorage.getItem('upstream_layout_save');
+    if (!saved) return showToast('保存データがありません');
+    if (confirm('現在の内容を破棄して読み込みますか？')) {
+      this.elements = []; 
+      this.elemIdCounter = 0;
+      this.canvas.querySelectorAll('.layout-element').forEach(e => e.remove());
+
+      const data = JSON.parse(saved);
+      this.elemIdCounter = data.elemIdCounter;
+      data.elements.forEach(el => {
+        this.elements.push(el);
+        this.renderElement(el);
+      });
+      showToast('読み込み完了');
+    }
+  }
+
+  /* ===== ヘルプ・その他モック ===== */
+  showHelp() {
+    alert('【画面レイアウト ヘルプ】\n・左のUI要素をドラッグして配置\n・要素をダブルクリックでテキスト編集\n・プロパティパネルで色やサイズを調整');
+  }
+
+  showSettings() {
+    showToast('設定は開発中です');
+  }
+
+  
+
   exportPNG() {
     showToast('PNGエクスポートは現在モック実装です', 'info');
   }
+
   initCanvasConfig() {
     const section = this.canvas.closest('.tool-section');
     if (!section) return;
@@ -711,8 +815,6 @@ class LayoutTool {
       });
     });
 
-
-    // ウィンドウリサイズ時にも再計算
     window.addEventListener('resize', () => {
       const toolSection = this.canvas.closest('.tool-section');
       if (toolSection && toolSection.classList.contains('active')) {
@@ -720,14 +822,15 @@ class LayoutTool {
       }
     });
 
-    // Lucideアイコン初期化（ツールバー全体を対象に）
     const toolbar = section.querySelector('.layout-toolbar');
     if (toolbar && window.lucide) lucide.createIcons({ root: toolbar });
   }
+
   parseRatio(str) {
     const [a, b] = str.split(':').map(Number);
     return a / b;
   }
+
   applyCanvasSize() {
     const container = document.getElementById('layout-canvas-container');
     if (!container) return;
@@ -738,7 +841,6 @@ class LayoutTool {
       this.canvas.style.height = '';
     } else {
       this.canvas.classList.remove('free-size');
-      // 余白（パディングやスクロールバーを考慮）を引く
       const maxW = container.clientWidth;
       const maxH = container.clientHeight;
       
