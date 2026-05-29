@@ -21,17 +21,6 @@ from google.genai import types
 _env_path = Path(__file__).resolve().parent / ".env"
 load_dotenv(dotenv_path=_env_path)
 
-# --- APIキーの確認と警告 ---
-_api_key = os.getenv("GEMINI_API_KEY", "").strip()
-if not _api_key or _api_key == "your_api_key_here":
-    print(
-        "\n============================================================\n"
-        " [WARNING] GEMINI_API_KEY が設定されていません。\n"
-        "  AI自動配置機能を使用するには、backend/.env にAPIキーを設定してください。\n"
-        "  取得先: https://aistudio.google.com/apikey\n"
-        "============================================================\n"
-    )
-
 # --- Gemini クライアントの初期化 ---
 _client = None
 
@@ -40,22 +29,24 @@ def get_client():
     if _client is not None:
         return _client
     
-    api_key = os.getenv("GEMINI_API_KEY", "").strip()
-    if not api_key or api_key == "your_api_key_here":
+    project_id = os.getenv("GCP_PROJECT_ID", "").strip()
+    location = os.getenv("GCP_LOCATION", "us-central1").strip()
+
+    if not project_id:
         raise RuntimeError(
             "\n"
             "============================================================\n"
-            " GEMINI_API_KEY が設定されていません！\n"
-            " backend/.env ファイルに正しいAPIキーを設定してください。\n"
-            " 取得先: https://aistudio.google.com/apikey\n"
+            " GCP_PROJECT_ID が設定されていません！\n"
+            " backend/.env ファイルにGCPプロジェクトIDを設定してください。\n"
             "============================================================"
         )
-    _client = genai.Client(api_key=api_key)
+    
+    # Vertex AI経由で初期化
+    _client = genai.Client(vertexai=True, project=project_id, location=location)
     return _client
 
 # 使用するモデル
-MODEL_NAME = "gemini-2.5-flash"
-
+MODEL_NAME = "gemini-2.5-pro"
 
 def extract_json_from_response(text: str) -> dict | list:
     """
