@@ -180,11 +180,16 @@
     </form>
 
     <div class="login-footer">
-      <p>プロトタイプ用アカウント: <code>admin@example.com</code> / <code>password</code></p>
+      <p>メールアドレスとパスワード（6文字以上）で新規登録できます</p>
     </div>
   </div>
 </div>
 
+  <!-- Supabase CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Supabase Config -->
+  <script src="../js/supabase-config.js"></script>
+  <!-- Auth Logic -->
   <script src="../js/auth.js"></script>
   <script>
     // アイコンを表示用に生成
@@ -228,7 +233,7 @@
     };
 
     // 既にログイン済みの場合はトップページへリダイレクト
-    if (localStorage.getItem('isLoggedIn') === 'true' || localStorage.getItem('upstream_user')) {
+    if (localStorage.getItem('isLoggedIn') === 'true') {
       window.location.href = '../index.html' + window.location.search;
     }
   </script>
