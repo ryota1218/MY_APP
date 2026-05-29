@@ -4315,9 +4315,8 @@ async sendAIChatMessage() {
     chat_history: this.chatHistory || []
   };
 
-  const apiBaseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:8000'
-    : 'https://upstream-ai-backend-976977069035.us-central1.run.app';
+  // 常にCloud Runのバックエンドを見に行くように設定（Pythonのローカル起動が不要になります）
+  const apiBaseUrl = 'https://upstream-ai-backend-976977069035.us-central1.run.app';
 
   try {
     const response = await fetch(`${apiBaseUrl}/api/ai-chat-layout`, {
@@ -4476,10 +4475,8 @@ async aiAutoLayout() {
   showToast('🤖 AIが最適な配置を計算中...');
 
   try {
-    // ローカル開発環境（localhost）ならポート8000を使用、本番（Vercel）は同じドメイン内の相対パスを使用
-    const apiBaseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-      ? 'http://localhost:8000'
-      : 'https://upstream-ai-backend-976977069035.us-central1.run.app';
+    // 常にCloud Runのバックエンドを見に行くように設定（Pythonのローカル起動が不要になります）
+    const apiBaseUrl = 'https://upstream-ai-backend-976977069035.us-central1.run.app';
 
     const response = await fetch(`${apiBaseUrl}/api/ai-layout`, {
       method: 'POST',
@@ -4598,11 +4595,7 @@ async aiAutoLayout() {
   } catch (error) {
     console.error('[AI AutoLayout] Error:', error);
 
-    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-      showToast('⚠️ AIサーバーに接続できません。backend/main.py を起動してください');
-    } else {
-      showToast(`⚠️ AI配置エラー: ${error.message}`);
-    }
+    showToast(`⚠️ AIサーバーエラー: ${error.message}`);
   }
 }
 exportSVG() {
