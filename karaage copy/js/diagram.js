@@ -4149,7 +4149,7 @@ async sendAIChatMessage() {
 
   const apiBaseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:8000'
-    : '';
+    : 'https://upstream-ai-backend-976977069035.us-central1.run.app';
 
   try {
     const response = await fetch(`${apiBaseUrl}/api/ai-chat-layout`, {
@@ -4311,7 +4311,7 @@ async aiAutoLayout() {
     // ローカル開発環境（localhost）ならポート8000を使用、本番（Vercel）は同じドメイン内の相対パスを使用
     const apiBaseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
       ? 'http://localhost:8000'
-      : '';
+      : 'https://upstream-ai-backend-976977069035.us-central1.run.app';
 
     const response = await fetch(`${apiBaseUrl}/api/ai-layout`, {
       method: 'POST',

@@ -1,0 +1,25 @@
+# 仮想環境
+venv/
+.venv/
+env/
+
+# キャッシュ・ビルド成果物
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+
+# 環境変数やシークレットファイル
+.env
+*.pem
+*.key
+
+# Git
+.git/
+.gitignore
+
+# その他不要ファイル
+README.md
