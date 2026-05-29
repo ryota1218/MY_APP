@@ -32,7 +32,15 @@
       <div class="editor-header-sep"></div>
     </div>
     <div class="editor-header-group">
-      <button class="editor-header-btn" data-label="PNGエクスポート" aria-label="PNGエクスポート" data-action="exportPNG"><i data-lucide="download" class="editor-icon"></i></button>
+      <button class="editor-header-btn" data-label="インポート" aria-label="インポート" data-action="importJSONFromText"><i data-lucide="folder-input" class="editor-icon"></i></button>
+      
+      <div class="export-dropdown" style="position: relative; display: inline-flex;">
+        <button class="editor-header-btn" data-label="エクスポート" aria-label="エクスポート" onclick="const menu = this.nextElementSibling; const isVisible = menu.style.display === 'flex'; document.querySelectorAll('.export-dropdown-content').forEach(el => el.style.display = 'none'); menu.style.display = isVisible ? 'none' : 'flex'; event.stopPropagation();"><i data-lucide="download" class="editor-icon"></i></button>
+        <div class="export-dropdown-content" style="display: none; position: absolute; right: 0; top: 100%; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; padding: 4px; min-width: 140px; flex-direction: column; gap: 2px;">
+          <button class="editor-header-btn" style="width: 100%; justify-content: flex-start; padding: 6px 12px; border-radius: 4px;" data-action="exportJSON"><i data-lucide="save" class="editor-icon" style="margin-right: 8px; width: 16px; height: 16px;"></i>JSON保存</button>
+          <button class="editor-header-btn" style="width: 100%; justify-content: flex-start; padding: 6px 12px; border-radius: 4px;" data-action="exportPNG"><i data-lucide="image" class="editor-icon" style="margin-right: 8px; width: 16px; height: 16px;"></i>PNG保存</button>
+        </div>
+      </div>
       <button class="editor-header-btn" data-label="共有" aria-label="共有"><i data-lucide="share-2" class="editor-icon"></i></button>
       <button class="editor-header-btn" data-label="ユーザー" aria-label="ユーザー" data-action="showUserProfile"><i data-lucide="user" class="editor-icon"></i></button>
     </div>

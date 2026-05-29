@@ -37,6 +37,15 @@ class App {
 
     // ログイン状態をUIに反映（各セクションのHTMLがロードされた後に実行）
     if (window.Auth) window.Auth.updateUI();
+
+    // グローバルクリックイベント（エクスポートドロップダウンを閉じる用）
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.export-dropdown')) {
+        document.querySelectorAll('.export-dropdown-content').forEach(el => {
+          el.style.display = 'none';
+        });
+      }
+    });
   }
 
   /**

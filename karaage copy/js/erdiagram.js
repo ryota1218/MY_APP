@@ -810,7 +810,19 @@ class ERDiagramTool {
     showToast('E-R図をクリアしました');
   }
   exportSVG() {
-    showToast('SVGをエクスポートしました');
+    FileIO.exportSVG(this);
+  }
+
+  exportJSON() {
+    FileIO.exportJSON(this);
+  }
+
+  importJSON() {
+    FileIO.importJSON(this);
+  }
+
+  importJSONFromText() {
+    FileIO.importJSONFromText(this);
   }
 
   getEdgePoint(rect, cx, cy, targetX, targetY) {

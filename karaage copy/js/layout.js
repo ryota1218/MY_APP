@@ -683,6 +683,17 @@ class LayoutTool {
     this.deselectAll();
     showToast('キャンバスをクリアしました');
   }
+  exportJSON() {
+    FileIO.exportJSON(this);
+  }
+
+  importJSON() {
+    FileIO.importJSON(this);
+  }
+
+  importJSONFromText() {
+    FileIO.importJSONFromText(this);
+  }
 
   /* ===== ズーム機能 ===== */
   zoomIn() {
@@ -766,8 +777,10 @@ class LayoutTool {
     showToast('設定は開発中です');
   }
 
+  
+
   exportPNG() {
-    showToast('レイアウトデータを保存しました');
+    showToast('PNGエクスポートは現在モック実装です', 'info');
   }
 
   initCanvasConfig() {
