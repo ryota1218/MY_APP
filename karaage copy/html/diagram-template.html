@@ -1,3 +1,9 @@
+<style>
+  .diagram-canvas.grid-active {
+    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.3) 1.5px, transparent 1.5px);
+    background-size: 20px 20px;
+  }
+</style>
 <script>
   // index.htmlを経由せず直接開かれた場合は、メイン画面へリダイレクト
   if (!window.app) window.location.href = '../index.html';
@@ -7,22 +13,22 @@
   <div class="editor-header-bar">
     <div class="editor-header-group">
       <button class="editor-header-btn" data-label="新規作成" aria-label="新規作成" data-action="clearAll"><i data-lucide="file-plus" class="editor-icon"></i></button>
-      <button class="editor-header-btn" data-label="保存" aria-label="保存"><i data-lucide="save" class="editor-icon"></i></button>
-      <button class="editor-header-btn" data-label="フォルダを開く" aria-label="フォルダを開く"><i data-lucide="folder-open" class="editor-icon"></i></button>
+      <button class="editor-header-btn" data-label="保存" aria-label="保存" data-action="saveDiagram"><i data-lucide="save" class="editor-icon"></i></button>
+      <button class="editor-header-btn" data-label="フォルダを開く" aria-label="フォルダを開く" data-action="loadDiagram"><i data-lucide="folder-open" class="editor-icon"></i></button>
       <div class="editor-header-sep"></div>
     </div>
     <div class="editor-header-group">
       <button class="editor-header-btn" data-label="元に戻す" aria-label="元に戻す" data-action="undoLastAction"><i data-lucide="undo-2" class="editor-icon"></i></button>
       <button class="editor-header-btn" data-label="やり直す" aria-label="やり直す" data-action="redoLastAction"><i data-lucide="redo-2" class="editor-icon"></i></button>
-      <button class="editor-header-btn" data-label="コピー" aria-label="コピー"><i data-lucide="copy" class="editor-icon"></i></button>
-      <button class="editor-header-btn" data-label="貼り付け" aria-label="貼り付け"><i data-lucide="clipboard-paste" class="editor-icon"></i></button>
+      <button class="editor-header-btn" data-label="コピー" aria-label="コピー" data-action="copySelected"><i data-lucide="copy" class="editor-icon"></i></button>
+      <button class="editor-header-btn" data-label="貼り付け" aria-label="貼り付け" data-action="pasteSelected"><i data-lucide="clipboard-paste" class="editor-icon"></i></button>
       <div class="editor-header-sep"></div>
     </div>
     <div class="editor-header-group">
-      <button class="editor-header-btn" data-label="ズームイン" aria-label="ズームイン"><i data-lucide="zoom-in" class="editor-icon"></i></button>
-      <button class="editor-header-btn" data-label="ズームアウト" aria-label="ズームアウト"><i data-lucide="zoom-out" class="editor-icon"></i></button>
-      <button class="editor-header-btn" data-label="全体表示" aria-label="全体表示"><i data-lucide="maximize-2" class="editor-icon"></i></button>
-      <button class="editor-header-btn" data-label="グリッド表示" aria-label="グリッド表示"><i data-lucide="grid-3x3" class="editor-icon"></i></button>
+      <button class="editor-header-btn" data-label="ズームイン" aria-label="ズームイン" data-action="zoomIn"><i data-lucide="zoom-in" class="editor-icon"></i></button>
+      <button class="editor-header-btn" data-label="ズームアウト" aria-label="ズームアウト" data-action="zoomOut"><i data-lucide="zoom-out" class="editor-icon"></i></button>
+      <button class="editor-header-btn" data-label="全体表示" aria-label="全体表示" data-action="resetZoom"><i data-lucide="maximize-2" class="editor-icon"></i></button>
+      <button class="editor-header-btn" data-label="グリッド表示" aria-label="グリッド表示" data-action="toggleGrid"><i data-lucide="grid-3x3" class="editor-icon"></i></button>
       <div class="editor-header-sep"></div>
     </div>
     <div class="editor-header-group">
@@ -39,13 +45,13 @@
           <button class="editor-header-btn" style="width: 100%; justify-content: flex-start; padding: 6px 12px; border-radius: 4px;" data-action="exportSVG"><i data-lucide="image" class="editor-icon" style="margin-right: 8px; width: 16px; height: 16px;"></i>SVG保存</button>
         </div>
       </div>
-      <button class="editor-header-btn" data-label="共有" aria-label="共有"><i data-lucide="share-2" class="editor-icon"></i></button>
-      <button class="editor-header-btn" data-label="ユーザー" aria-label="ユーザー"><i data-lucide="user" class="editor-icon"></i></button>
+      <button class="editor-header-btn" data-label="共有" aria-label="共有" data-action="shareDiagram"><i data-lucide="share-2" class="editor-icon"></i></button>
+      <button class="editor-header-btn" data-label="ユーザー" aria-label="ユーザー" data-action="showUserProfile"><i data-lucide="user" class="editor-icon"></i></button>
     </div>
     <div class="editor-header-spacer"></div>
     <div class="editor-header-group">
-      <button class="editor-header-btn" data-label="ヘルプ" aria-label="ヘルプ"><i data-lucide="help-circle" class="editor-icon"></i></button>
-      <button class="editor-header-btn" data-label="設定" aria-label="設定"><i data-lucide="settings" class="editor-icon"></i></button>
+      <button class="editor-header-btn" data-label="ヘルプ" aria-label="ヘルプ" data-action="showHelp"><i data-lucide="help-circle" class="editor-icon"></i></button>
+      <button class="editor-header-btn" data-label="設定" aria-label="設定" data-action="showSettings"><i data-lucide="settings" class="editor-icon"></i></button>
     </div>
   </div>
 </div>
@@ -115,7 +121,7 @@
   </div>
 </div>
 <div class="diagram-workspace architecture-workspace" style="position: relative; overflow: hidden; display: flex;">
-  <div class="diagram-canvas" id="{{prefix}}-canvas">
+  <div class="diagram-canvas grid-active" id="{{prefix}}-canvas">
     <svg class="connections" id="{{prefix}}-svg"></svg>
   </div>
   
