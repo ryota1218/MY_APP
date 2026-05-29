@@ -1186,6 +1186,12 @@ enableDrag() {
 
     showToast('CSVをエクスポートしました');
   }
+
+  showUserProfile() {
+    if (window.app && window.app.profile) {
+      window.app.profile.show();
+    }
+  }
 }
 
 // 初期化は core.js の initNav() で自動的に行われます

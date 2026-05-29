@@ -17,9 +17,6 @@ class ERDiagramTool {
     this.svg = document.getElementById('er-svg');
     if (this.canvas) this.canvas.classList.add('grid-active');
     this.connectingFrom = null;
-    this.initActionButtons();
-    // 初期状態でグリッドを反映
-    this.updateGrid();
     // Add sample entities
     this.addEntityAt('ユーザー', 'users', [
       {logicalName:'ユーザーID', physicalName:'user_id', type:'INT', pk:true, fk:false},
@@ -55,28 +52,6 @@ class ERDiagramTool {
         this.selectedEntity = null;
       }
     });
-  }
-
-  initActionButtons() {
-    // ER図に関連する要素（ヘッダー、ツールバー、ワークスペース）内のボタンのみを対象にする
-    // ページ全体のボタンを奪わないよう、セレクタを限定します
-    const scope = document.querySelector('.er-workspace')?.parentElement || document;
-    const buttons = scope.querySelectorAll('.editor-header [data-action], .er-toolbar [data-action], .er-workspace [data-action]');
-    
-    buttons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const action = btn.dataset.action;
-        // このツール(this)にメソッドが存在する場合のみ実行
-        if (typeof this[action] === 'function') {
-          this[action]();
-        } else {
-          console.warn(`Action "${action}" not implemented in ERDiagramTool`);
-        }
-      });
-    });
-    if (window.lucide) {
-      lucide.createIcons();
-    }
   }
 
   saveDiagram() {
@@ -206,7 +181,11 @@ class ERDiagramTool {
   }
 
   shareDiagram() { showToast('共有用URLを作成しました'); }
-  showUserProfile() { showToast('ユーザープロフィールを表示します'); }
+  showUserProfile() {
+    if (window.app && window.app.profile) {
+      window.app.profile.show();
+    }
+  }
   showHelp() { showToast('ヘルプを表示します'); }
   showSettings() { showToast('エディタ設定を開きます'); }
   closePropertyPanel() {
@@ -362,6 +341,7 @@ class ERDiagramTool {
     const container = document.getElementById('modal-container');
     if (!container) return;
 
+    container.style.display = 'block';
     container.innerHTML = `
       <div class="modal-overlay">
         <div class="modal er-class-modal" style="min-width: 600px;">
@@ -382,13 +362,15 @@ class ERDiagramTool {
             <button type="button" class="btn btn-sm btn-secondary er-form-add-btn" id="er-form-add-row">＋ カラムを追加</button>
           </div>
           <div class="modal-actions">
-            <button class="btn btn-secondary" onclick="document.getElementById('modal-container').innerHTML=''">キャンセル</button>
+            <button class="btn btn-secondary" id="er-form-cancel">キャンセル</button>
             <button class="btn btn-primary" id="er-form-submit">${isEdit ? '更新' : '作成'}</button>
           </div>
         </div>
       </div>
     `;
 
+    const close = () => { container.innerHTML = ''; container.style.display = 'none'; };
+    document.getElementById('er-form-cancel').onclick = close;
     const rowsContainer = document.getElementById('er-form-rows-container');
     const addRowBtn = document.getElementById('er-form-add-row');
     const submitBtn = document.getElementById('er-form-submit');

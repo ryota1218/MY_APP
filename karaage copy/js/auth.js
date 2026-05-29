@@ -5,14 +5,14 @@ const Auth = {
   currentUser: null,
 
   init() {
-    // 保存されたログイン状態を確認
+    // 他のスクリプトからアクセスできるようにグローバルに公開
+    window.Auth = this;
+
+    // 保存されたユーザー情報を復元
     const savedUser = localStorage.getItem('upstream_user');
     if (savedUser) {
       this.currentUser = JSON.parse(savedUser);
     }
-
-    // 他のスクリプトからアクセスできるようにグローバルに公開
-    window.Auth = this;
 
     this.updateUI();
 
@@ -53,8 +53,8 @@ const Auth = {
       this.currentUser = registeredUser ? 
         { name: registeredUser.email.split('@')[0], id: registeredUser.email } : 
         { name: '管理者ユーザー', id: 'admin@example.com' };
-
       localStorage.setItem('upstream_user', JSON.stringify(this.currentUser));
+
       // index.html の認証ガード用フラグをセット
       localStorage.setItem('isLoggedIn', 'true');
       
@@ -105,8 +105,8 @@ const Auth = {
 
   logout() {
     this.currentUser = null;
-    localStorage.removeItem('upstream_user');
     localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('upstream_user');
     this.updateUI();
     location.reload(); // 状態をクリアするためリロード
   },
@@ -116,23 +116,23 @@ const Auth = {
     const dashNameDisplay = document.getElementById('dashboard-user-name');
     const authBtn = document.getElementById('auth-action-btn');
 
-    console.log('Updating UI for user:', this.currentUser ? this.currentUser.name : 'Guest');
-
     if (this.currentUser) {
       // ログイン中
-      if (nameDisplay) {
-        nameDisplay.textContent = this.currentUser.name;
-      }
-      if (dashNameDisplay) {
-        dashNameDisplay.textContent = this.currentUser.name;
-      }
+      if (nameDisplay) nameDisplay.textContent = this.currentUser.name;
+      if (dashNameDisplay) dashNameDisplay.textContent = this.currentUser.name;
       if (authBtn) {
         authBtn.textContent = 'ログアウト';
         authBtn.removeAttribute('data-tool'); 
       }
+      // アバターの反映（存在する場合）
+      const avatarEl = document.getElementById('user-avatar-display');
+      if (avatarEl && this.currentUser.avatar) {
+        avatarEl.innerHTML = `<img src="${this.currentUser.avatar}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+      }
     } else {
       // ログアウト/ゲスト状態
       if (nameDisplay) nameDisplay.textContent = 'ゲスト';
+      if (dashNameDisplay) dashNameDisplay.textContent = 'ゲスト';
       if (authBtn) {
         authBtn.textContent = 'ログイン';
         authBtn.setAttribute('data-tool', 'login');
