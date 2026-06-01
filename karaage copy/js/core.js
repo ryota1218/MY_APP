@@ -8,6 +8,7 @@
  */
 const SECTIONS = [
   { id: 'dashboard',    file: 'html/dashboard.html',    default: true },
+  { id: 'project',      file: 'html/project.html' },
   { id: 'proposal',     file: 'html/proposal.html' },
   { id: 'requirements', file: 'html/requirements.html' },
   { id: 'architecture', file: 'html/diagram-template.html', prefix: 'arch', appProp: 'architecture' },
@@ -185,6 +186,7 @@ class App {
     if (typeof lucide !== 'undefined') lucide.createIcons();
 
     // Lazy init
+    if (tool === 'project' && !this.project) this.project = new ProjectTool();
     if (tool === 'architecture' && !this.architecture) this.architecture = new DiagramTool('arch', archComponents, { paletteMode: 'dropdown' });
     if (tool === 'uml' && !this.uml) this.uml = new DiagramTool('uml', umlComponents, { paletteMode: 'dropdown' });
     if (tool === 'screen-transition' && !this.screenTransition) this.screenTransition = new DiagramTool('st', screenTransitionComponents, { paletteMode: 'dropdown' });

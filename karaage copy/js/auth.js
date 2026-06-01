@@ -15,9 +15,22 @@ const Auth = {
         name: session.user.email.split('@')[0]
       };
       localStorage.setItem('isLoggedIn', 'true');
+      
+      // ログイン画面にいる場合はプロジェクト選択を促すためにプロジェクト管理画面へリダイレクト
+      if (window.location.pathname.includes('login.html')) {
+        window.location.href = '../index.html?tool=project';
+      }
     } else {
       this.currentUser = null;
       localStorage.removeItem('isLoggedIn');
+      
+      // メイン画面（index.html または ルートパス）にいてセッションが無い場合はログイン画面へリダイレクト
+      const isMainPage = window.location.pathname.endsWith('index.html') || 
+                         window.location.pathname === '/' || 
+                         window.location.pathname.endsWith('/');
+      if (isMainPage) {
+        window.location.href = 'html/login.html' + window.location.search;
+      }
     }
 
     // グローバルに公開
@@ -86,12 +99,18 @@ const Auth = {
     localStorage.setItem('isLoggedIn', 'true');
     this.updateUI();
 
-    // ログイン画面にいる場合はトップページへ
+    // ログイン画面にいる場合はプロジェクト管理画面へ（新規プロジェクトの選択・作成を促すため）
     if (window.location.pathname.includes('login.html')) {
-      window.location.href = '../index.html';
+      window.location.href = '../index.html?tool=project';
     } else {
       errorEl.textContent = 'ログイン成功！';
-      setTimeout(() => location.reload(), 500);
+      setTimeout(() => {
+        if (window.app) {
+          window.app.navigateTo('project');
+        } else {
+          location.reload();
+        }
+      }, 500);
     }
   },
 

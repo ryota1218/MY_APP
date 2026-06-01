@@ -45,5 +45,8 @@
 /* ログイン画面 */
 @import url('login.css');
 
+/* プロジェクト管理画面 */
+@import url('project.css');
+
 /* レスポンシブ対応・ハンバーガーメニュー */
 @import url('responsive.css');

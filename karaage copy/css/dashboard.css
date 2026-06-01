@@ -19,8 +19,16 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background-color: rgba(255,255,255,0.12);
+  background-color: rgba(255,255,255,0.08);
+  border-radius: var(--radius-sm, 6px);
   min-width: 200px;
+  transition: background-color 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.project-info-badge:hover {
+  background-color: rgba(124, 58, 237, 0.15);
+  border-color: var(--accent);
+  transform: translateY(-1px);
 }
 
 /* 2 & 3. 中段エリア（横並び） */

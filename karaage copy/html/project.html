@@ -1,0 +1,87 @@
+<script>
+  // index.htmlを経由せず直接開かれた場合は、メイン画面へリダイレクト
+  if (!window.app) window.location.href = '../index.html?tool=project';
+</script>
+<link rel="stylesheet" href="css/project.css">
+
+<div class="section-header">
+  <div class="welcome-message">
+    <h1>プロジェクト管理</h1>
+    <p>新しいプロジェクトの作成、または既存の共有プロジェクトへ参加します。</p>
+  </div>
+</div>
+
+<div class="project-layout">
+  <div class="project-grid">
+    <!-- プロジェクト作成カード -->
+    <div class="card project-action-card">
+      <div class="card-icon-header">
+        <i data-lucide="folder-plus" class="icon-lg"></i>
+      </div>
+      <h2>新規プロジェクト作成</h2>
+      <p>新しいワークスペースを作成し、システム構成図や要件定義などを共同で設計します。</p>
+      
+      <form id="create-project-form" class="project-form">
+        <div class="form-group">
+          <label for="new-project-name">プロジェクト名</label>
+          <input type="text" id="new-project-name" class="form-input" placeholder="例: UpStream-Dev" required maxlength="100">
+        </div>
+        <div id="create-project-error" class="project-error-message"></div>
+        <button type="submit" class="btn btn-primary btn-block">
+          <i data-lucide="plus-circle"></i> プロジェクトを作成
+        </button>
+      </form>
+    </div>
+
+    <!-- プロジェクト参加カード -->
+    <div class="card project-action-card">
+      <div class="card-icon-header">
+        <i data-lucide="users" class="icon-lg"></i>
+      </div>
+      <h2>既存プロジェクトに参加</h2>
+      <p>チームメンバーから共有された「プロジェクトID」を入力して、共同編集に参加します。</p>
+      
+      <form id="join-project-form" class="project-form">
+        <div class="form-group">
+          <label for="join-project-id">プロジェクトID (UUID)</label>
+          <input type="text" id="join-project-id" class="form-input" placeholder="例: 123e4567-e89b-12d3-a456-426614174000" required maxlength="36">
+        </div>
+        <div id="join-project-error" class="project-error-message"></div>
+        <button type="submit" class="btn btn-secondary btn-block">
+          <i data-lucide="user-plus"></i> プロジェクトに参加
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 所属プロジェクト一覧 -->
+  <div class="card my-projects-card">
+    <div class="block-header">
+      <h2>所属中のプロジェクト</h2>
+      <button class="btn btn-sm btn-secondary" id="refresh-projects-btn">
+        <i data-lucide="rotate-cw"></i> 更新
+      </button>
+    </div>
+    <div class="project-table-container">
+      <table class="project-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>プロジェクト名</th>
+            <th>オーナーID</th>
+            <th>役割</th>
+            <th>参加日</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="my-projects-list">
+          <tr>
+            <td colspan="6" class="text-center" style="color: var(--text-muted); padding: 20px;">
+              プロジェクトを読み込み中...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

@@ -12,10 +12,10 @@
 <div class="dashboard-layout">
   <!-- 1. プロジェクト名エリア（上段左寄り） -->
   <div class="dashboard-row top">
-    <div class="project-info-badge">
-      <i data-lucide="folder" class="icon-sm"></i>
+    <div class="project-info-badge" id="dashboard-project-badge" style="cursor: pointer;" onclick="window.app.navigateTo('project')" title="プロジェクト管理を開く">
+      <i data-lucide="folder-kanban" class="icon-sm"></i>
       <span class="label">プロジェクト:</span>
-      <span id="current-project-display">karaage_copy</span>
+      <span id="current-project-display">未選択</span>
     </div>
   </div>
 
