@@ -1,8 +1,8 @@
 /* ===== Diagram Tool (Architecture + UML) ===== */
 const archComponents = [
   // ── サーバー / コンピュート ──
-  { icon: '<i data-lucide="globe" class="node-lucide-icon"></i>', label: 'Webサーバー', color: '#7c3aed' },
-  { icon: '<i data-lucide="server" class="node-lucide-icon"></i>', label: 'APIサーバー', color: '#10b981' },
+  { icon: '<i data-lucide="globe" class="node-lucide-icon"></i>', label: 'Webブラウザ', color: '#7c3aed' },
+  { icon: '<i data-lucide="server" class="node-lucide-icon"></i>', label: 'サーバー', color: '#10b981' },
   { icon: '<i data-lucide="monitor" class="node-lucide-icon"></i>', label: 'アプリサーバー', color: '#3b82f6' },
   { icon: '<i data-lucide="zap" class="node-lucide-icon"></i>', label: 'Lambda/Function', color: '#f59e0b' },
   { icon: '<i data-lucide="container" class="node-lucide-icon"></i>', label: 'コンテナ', color: '#06b6d4' },
@@ -4309,8 +4309,9 @@ async sendAIChatMessage() {
       to: c.to,
       label: c.label || '',
     })),
-    canvas_width: this.canvas.clientWidth || 1200,
-    canvas_height: this.canvas.clientHeight || 800,
+    // ノード幅(約160px)+ラベル余白分を差し引き、右端のはみ出しを防止する
+    canvas_width: (this.canvas.clientWidth || 1200) - 200,
+    canvas_height: (this.canvas.clientHeight || 800) - 80,
     user_instruction: text,
     chat_history: this.chatHistory || []
   };
@@ -4467,8 +4468,9 @@ async aiAutoLayout() {
       to: c.to,
       label: c.label || '',
     })),
-    canvas_width: this.canvas.clientWidth || 1200,
-    canvas_height: this.canvas.clientHeight || 800,
+    // ノード幅(約160px)+ラベル余白分を差し引き、右端のはみ出しを防止する
+    canvas_width: (this.canvas.clientWidth || 1200) - 200,
+    canvas_height: (this.canvas.clientHeight || 800) - 80,
   };
 
   // ローディング表示
