@@ -231,10 +231,9 @@
       authTitle.textContent = 'ログイン';
       authDesc.textContent = 'UpStream アカウントにログインしてください';
     };
-
-    // 既にログイン済みの場合はプロジェクト管理画面へ簡易リダイレクト
+    
     if (localStorage.getItem('isLoggedIn') === 'true') {
-      window.location.href = '../index.html?tool=project';
+      window.location.href = '../index.html' + window.location.search;
     }
   </script>
 </body>

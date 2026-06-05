@@ -1,6 +1,11 @@
 <script>
   // index.htmlを経由せず直接開かれた場合は、メイン画面へリダイレクト
   if (!window.app) window.location.href = '../index.html?tool=dashboard';
+
+  // 現在のユーザー名を反映
+  if (window.Auth && window.Auth.currentUser) {
+    document.getElementById('dashboard-user-name').textContent = window.Auth.currentUser.name;
+  }
 </script>
 <link rel="stylesheet" href="css/dashboard.css">
 <!-- Dashboard -->

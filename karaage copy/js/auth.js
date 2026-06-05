@@ -35,6 +35,8 @@ const Auth = {
 
     // グローバルに公開
     window.Auth = this;
+  }
+
     this.updateUI();
 
     // イベント委譲でフォーム送信をキャッチ
@@ -104,6 +106,8 @@ const Auth = {
       window.location.href = '../index.html?tool=project';
     } else {
       errorEl.textContent = 'ログイン成功！';
+      
+      // 画面の切り替えやリロードを少し遅延させて実行
       setTimeout(() => {
         if (window.app) {
           window.app.navigateTo('project');
@@ -113,6 +117,7 @@ const Auth = {
       }, 500);
     }
   },
+
 
   async handleRegister() {
     const email = document.getElementById('reg-email').value;
@@ -167,6 +172,7 @@ const Auth = {
     await window.supabaseClient.auth.signOut();
     this.currentUser = null;
     localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('upstream_user');
     this.updateUI();
     location.reload();
   },
@@ -184,9 +190,15 @@ const Auth = {
         authBtn.textContent = 'ログアウト';
         authBtn.removeAttribute('data-tool'); 
       }
+      // アバターの反映（存在する場合）
+      const avatarEl = document.getElementById('user-avatar-display');
+      if (avatarEl && this.currentUser.avatar) {
+        avatarEl.innerHTML = `<img src="${this.currentUser.avatar}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+      }
     } else {
       // ログアウト状態
       if (nameDisplay) nameDisplay.textContent = 'ゲスト';
+      if (dashNameDisplay) dashNameDisplay.textContent = 'ゲスト';
       if (authBtn) {
         authBtn.textContent = 'ログイン';
         authBtn.setAttribute('data-tool', 'login');

@@ -54,12 +54,14 @@
       <a data-tool="gantt"><span class="nav-icon"><i data-lucide="calendar"></i></span><span>ガントチャート</span></a>
     </nav>
     <div class="sidebar-footer">
-      <div id="user-status-area" class="user-status-area">
-        <div class="user-info">
-          <i data-lucide="circle-user" class="icon-sm"></i>
-          <span id="display-user-name">ゲスト</span>
+      <div id="user-status-area" style="display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 10px 0;">
+        <div class="user-profile-trigger" data-action="showUserProfile" style="cursor: pointer; text-align: center;">
+          <div id="user-avatar-display" style="width: 40px; height: 40px; background: #333; border-radius: 50%; margin: 0 auto 5px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #444;">
+            <i data-lucide="user" style="width: 20px; height: 20px;"></i>
+          </div>
+          <span id="display-user-name" style="font-size: 0.85rem; font-weight: 600; display: block;">ゲスト</span>
         </div>
-        <button id="auth-action-btn" class="btn-auth-link" data-tool="login">ログイン</button>
+        <button id="auth-action-btn" class="btn-auth-link" data-tool="login" style="font-size: 0.75rem; opacity: 0.8;">ログイン</button>
       </div>
       <div class="version-info">UpStream v1.0 © 2026</div>
     </div>
@@ -88,6 +90,7 @@
   <script src="js/auth.js"></script>
   <script src="js/core.js"></script>
   <script src="js/project.js"></script>
+  <script src="js/profile.js"></script>
   <script src="js/proposal.js"></script>
   <script src="js/requirements.js"></script>
   <script src="js/behavior-diagram.js"></script>
@@ -100,8 +103,8 @@
   <script src="js/erdiagram.js"></script>
   <script src="js/gantt.js"></script>
   <script>
-    // URLパラメータを確認して指定のツールを表示する
     window.addEventListener('load', () => {
+      // URLパラメータを確認して指定のツールを表示する
       const params = new URLSearchParams(window.location.search);
       const tool = params.get('tool');
       if (tool && tool !== 'dashboard') {

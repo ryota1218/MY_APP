@@ -1860,6 +1860,7 @@ showClassBoxForm(comp, x, y, options) {
   const container = document.getElementById('modal-container');
   if (!container) { this._createNode(comp, x, y, options); return; }
 
+  container.style.display = 'block';
   container.innerHTML = `
     <div class="modal-overlay">
       <div class="modal uml-class-modal">
