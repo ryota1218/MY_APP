@@ -194,9 +194,14 @@ async def ai_layout(request: AILayoutRequest):
         canvas_height=request.canvas_height,
     )
 
+    # 要素数（ノード数＋接続数）に応じてモデルを動的に切り替え
+    element_count = len(request.nodes) + len(request.existing_connections)
+    target_model = "gemini-3.1-flash-lite" if element_count <= 10 else "gemini-3.5-flash"
+    print(f"  - Selected Model: {target_model} (elements: {element_count})")
+
     try:
         # Gemini APIを呼び出し
-        result = call_gemini(prompt)
+        result = call_gemini(prompt, model_name=target_model)
     except RuntimeError as e:
         print("\n[ERROR] Gemini APIとの通信に失敗しました")
         import traceback
@@ -330,8 +335,13 @@ async def ai_chat_layout(request: AIChatLayoutRequest):
         canvas_height=request.canvas_height,
     )
     
+    # 要素数に応じてモデルを動的に切り替え
+    element_count = len(request.nodes) + len(request.existing_connections)
+    target_model = "gemini-3.1-flash-lite" if element_count <= 10 else "gemini-3.5-flash"
+    print(f"  - Selected Model (Chat): {target_model} (elements: {element_count})")
+
     try:
-        result = call_gemini(prompt)
+        result = call_gemini(prompt, model_name=target_model)
     except Exception as e:
         print(f"\n[ERROR] Gemini APIとの通信に失敗しました (Chat-Layout): {str(e)}")
         raise HTTPException(
