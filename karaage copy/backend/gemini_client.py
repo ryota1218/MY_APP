@@ -30,7 +30,9 @@ def get_client():
         return _client
     
     project_id = os.getenv("GCP_PROJECT_ID", "").strip()
-    location = os.getenv("GCP_LOCATION", "us-central1").strip()
+    
+    # Vertex AIの新世代モデル（3.5 Flash等）は global エンドポイントに集約されているため固定
+    location = "global"
 
     if not project_id:
         raise RuntimeError(
@@ -45,8 +47,8 @@ def get_client():
     _client = genai.Client(vertexai=True, project=project_id, location=location)
     return _client
 
-# 使用するモデル
-MODEL_NAME = "gemini-2.5-pro"
+# 使用するモデル（AI Studio版の3.5 Flash）
+MODEL_NAME = "gemini-3.5-flash"
 
 def extract_json_from_response(text: str) -> dict | list:
     """
@@ -88,7 +90,7 @@ def extract_json_from_response(text: str) -> dict | list:
     )
 
 
-def call_gemini(prompt: str, max_retries: int = 2) -> dict | list:
+def call_gemini(prompt: str, max_retries: int = 2, model_name: str = MODEL_NAME) -> dict | list:
     """
     Gemini APIにプロンプトを送信し、JSONレスポンスを返す。
 
@@ -108,7 +110,7 @@ def call_gemini(prompt: str, max_retries: int = 2) -> dict | list:
         try:
             client = get_client()
             response = client.models.generate_content(
-                model=MODEL_NAME,
+                model=model_name,
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     temperature=0.3,  # 低めの温度で安定した出力
@@ -151,7 +153,7 @@ def call_gemini(prompt: str, max_retries: int = 2) -> dict | list:
             "Gemini APIの無料枠制限（クォータ制限: 1日20リクエスト）に達しました。\n"
             "【解決方法】\n"
             "1. Google AI Studio（ https://aistudio.google.com/ ）で別のGoogleアカウントで新しいAPIキーを発行し、backend/.env をそのキーに書き換える\n"
-            "2. Google AI Studio で無料枠から従量課金プラン（Pay-as-you-go）に切り替える（gemini-2.5-flashは100万トークンあたり数円〜数十円と非常に安価なため、個人開発であれば月数十円〜数百円程度で無制限に使えます）"
+            "2. Google AI Studio で無料枠から従量課金プラン（Pay-as-you-go）に切り替える（gemini-1.5-flashは100万トークンあたり数円〜数十円と非常に安価なため、個人開発であれば月数十円〜数百円程度で無制限に使えます）"
         )
         raise RuntimeError(friendly_msg)
 
