@@ -35,7 +35,6 @@ const Auth = {
 
     // グローバルに公開
     window.Auth = this;
-  }
 
     this.updateUI();
 
