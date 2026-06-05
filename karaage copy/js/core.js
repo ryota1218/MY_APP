@@ -448,6 +448,24 @@ class App {
   }
 }
 
+// 全画面共通のボタンアクション処理 (data-actionを持つ要素をクリックした際の処理)
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn || btn.dataset.action === 'showUserProfile') return; // プロフィールはprofile.jsで個別処理
+
+  const action = btn.dataset.action;
+  const toolId = window.app?.currentTool;
+  if (!toolId) return;
+
+  // ツールIDからインスタンス名へのマッピング (例: screen-transition -> screenTransition)
+  const mapping = { 'screen-transition': 'screenTransition', 'erdiagram': 'erdiagram', 'architecture': 'architecture', 'uml': 'uml', 'gantt': 'gantt', 'layout': 'layout' };
+  const instance = window.app[mapping[toolId] || toolId];
+
+  if (instance && typeof instance[action] === 'function') {
+    instance[action]();
+  }
+});
+
 function showToast(msg) {
   const t = document.createElement('div');
   t.className = 'toast'; t.textContent = msg;
@@ -457,6 +475,7 @@ function showToast(msg) {
 
 function showModal(title, bodyHtml, onConfirm) {
   const container = document.getElementById('modal-container');
+  container.style.display = 'block';
   container.innerHTML = `
     <div class="modal-overlay">
       <div class="modal">
@@ -468,9 +487,10 @@ function showModal(title, bodyHtml, onConfirm) {
         </div>
       </div>
     </div>`;
-  container.querySelector('#modal-cancel').onclick = () => container.innerHTML = '';
-  container.querySelector('#modal-confirm').onclick = () => { if(onConfirm) onConfirm(); container.innerHTML = ''; };
-  container.querySelector('.modal-overlay').addEventListener('click', e => { if(e.target === e.currentTarget) container.innerHTML = ''; });
+  const close = () => { container.innerHTML = ''; container.style.display = 'none'; };
+  container.querySelector('#modal-cancel').onclick = close;
+  container.querySelector('#modal-confirm').onclick = () => { if(onConfirm) onConfirm(); close(); };
+  container.querySelector('.modal-overlay').addEventListener('click', e => { if(e.target === e.currentTarget) close(); });
 }
 
 function installInstantTooltips() {
@@ -551,8 +571,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   installInstantTooltips();
 
   // instantiate app & load HTML partials
-  if (!window.app) {
+  if (!(window.app instanceof App)) {
+    const existingApp = window.app || {};
     window.app = new App();
+    Object.assign(window.app, existingApp);
     await window.app.init();
   }
 
