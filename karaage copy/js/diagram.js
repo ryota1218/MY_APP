@@ -1702,7 +1702,7 @@ pasteSelected() {
   }
 }
 
-saveDiagram() {
+async saveDiagram() {
   const data = {
     nodes: this.nodes,
     connections: this.connections,
@@ -1710,20 +1710,49 @@ saveDiagram() {
     connIdCounter: this.connIdCounter,
     umlType: this.umlType
   };
-  const key = `upstream_diagram_${this.prefix}_${this.umlType || 'main'}`;
+  const typeKey = `${this.prefix}_${this.umlType || 'main'}`;
+  const key = `upstream_diagram_${typeKey}`;
   localStorage.setItem(key, JSON.stringify(data));
-  showToast('ブラウザに保存しました');
+
+  const projectId = window.DBIO?.getCurrentProjectId();
+  if (projectId) {
+    showToast('DBに保存中...', 'info');
+    const success = await window.DBIO.saveDiagramToDB(typeKey, data);
+    if (success) {
+      showToast('データベースに保存しました');
+    } else {
+      showToast('DB保存に失敗。ブラウザにのみ保存しました', 'warning');
+    }
+  } else {
+    showToast('ブラウザに保存しました');
+  }
 }
 
-loadDiagram() {
-  const key = `upstream_diagram_${this.prefix}_${this.umlType || 'main'}`;
-  const saved = localStorage.getItem(key);
-  if (!saved) {
-    showToast('保存されたデータが見つかりません');
+async loadDiagram(forceWithoutConfirm = false) {
+  const typeKey = `${this.prefix}_${this.umlType || 'main'}`;
+  const key = `upstream_diagram_${typeKey}`;
+  let data = null;
+
+  const projectId = window.DBIO?.getCurrentProjectId();
+  if (projectId) {
+    data = await window.DBIO.loadDiagramFromDB(typeKey);
+  }
+
+  if (!data) {
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      data = JSON.parse(saved);
+    }
+  }
+
+  if (!data) {
+    if (!forceWithoutConfirm) {
+      showToast('保存されたデータが見つかりません');
+    }
     return;
   }
-  if (confirm('保存されているデータを読み込みますか？現在の内容は失われます。')) {
-    const data = JSON.parse(saved);
+
+  if (forceWithoutConfirm || confirm('保存されているデータを読み込みますか？現在の内容は失われます。')) {
     this.restoreSnapshot(data);
     showToast('データを読み込みました');
   }

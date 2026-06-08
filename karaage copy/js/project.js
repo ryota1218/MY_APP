@@ -281,7 +281,7 @@ class ProjectTool {
   /**
    * プロジェクトをカレントとして選択状態にする
    */
-  selectProject(id, name) {
+  async selectProject(id, name) {
     localStorage.setItem('current_project_id', String(id));
     localStorage.setItem('current_project_name', name);
     
@@ -289,6 +289,33 @@ class ProjectTool {
     this.refreshProjects();
     
     showToast('プロジェクト「' + name + '」に切り替えました。');
+
+    // 選択されたプロジェクトの図データを自動ロード
+    if (window.app) {
+      const loadPromises = [];
+      
+      if (window.app.architecture && typeof window.app.architecture.loadDiagram === 'function') {
+        loadPromises.push(window.app.architecture.loadDiagram(true));
+      }
+      if (window.app.uml && typeof window.app.uml.loadDiagram === 'function') {
+        loadPromises.push(window.app.uml.loadDiagram(true));
+      }
+      if (window.app.screenTransition && typeof window.app.screenTransition.loadDiagram === 'function') {
+        loadPromises.push(window.app.screenTransition.loadDiagram(true));
+      }
+      if (window.app.layout && typeof window.app.layout.loadDiagram === 'function') {
+        loadPromises.push(window.app.layout.loadDiagram(true));
+      }
+      if (window.app.erdiagram && typeof window.app.erdiagram.loadDiagram === 'function') {
+        loadPromises.push(window.app.erdiagram.loadDiagram(true));
+      }
+
+      try {
+        await Promise.all(loadPromises);
+      } catch (err) {
+        console.error('[ProjectTool] 図の自動ロードに失敗しました:', err);
+      }
+    }
   }
 
   /**

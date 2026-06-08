@@ -54,27 +54,59 @@ class ERDiagramTool {
     });
   }
 
-  saveDiagram() {
+  async saveDiagram() {
     const data = {
       entities: this.entities,
       relations: this.relations,
-      entityIdCounter: this.entityIdCounter
-    };
-    localStorage.setItem('upstream_er_diagram_save', JSON.stringify({
-      ...data,
+      entityIdCounter: this.entityIdCounter,
       viewMode: this.viewMode,
       sqlDialect: this.sqlDialect
-    }));
-    showToast('設計をローカルストレージに保存しました');
+    };
+    localStorage.setItem('upstream_er_diagram_save', JSON.stringify(data));
+
+    const projectId = window.DBIO?.getCurrentProjectId();
+    if (projectId) {
+      showToast('DBに保存中...', 'info');
+      const success = await window.DBIO.saveDiagramToDB('er', data);
+      if (success) {
+        showToast('設計をデータベースに保存しました');
+      } else {
+        showToast('DB保存に失敗。ブラウザにのみ保存しました', 'warning');
+      }
+    } else {
+      showToast('設計をローカルストレージに保存しました');
+    }
   }
 
-  loadDiagram() {
-    const saved = localStorage.getItem('upstream_er_diagram_save');
-    if (saved) {
-      this.restoreSnapshot(JSON.parse(saved));
+  async loadDiagram(forceWithoutConfirm = false) {
+    let data = null;
+
+    const projectId = window.DBIO?.getCurrentProjectId();
+    if (projectId) {
+      data = await window.DBIO.loadDiagramFromDB('er');
+    }
+
+    if (!data) {
+      const saved = localStorage.getItem('upstream_er_diagram_save');
+      if (saved) {
+        data = JSON.parse(saved);
+      }
+    }
+
+    if (!data) {
+      if (!forceWithoutConfirm) {
+        showToast('保存されたデータが見つかりません');
+      }
+      return;
+    }
+
+    if (forceWithoutConfirm || confirm('保存されているデータを読み込みますか？現在の内容は失われます。')) {
+      this.restoreSnapshot(data);
+      if (data.viewMode) this.viewMode = data.viewMode;
+      if (data.sqlDialect) this.sqlDialect = data.sqlDialect;
+      const btn = document.getElementById('er-toggle-name-btn');
+      if (btn) btn.textContent = this.viewMode === 'logical' ? '🌐 論理名を表示中' : '💻 物理名を表示中';
       showToast('保存された設計を読み込みました');
-    } else {
-      showToast('保存されたデータが見つかりません');
     }
   }
 
