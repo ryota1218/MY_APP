@@ -741,24 +741,54 @@ class LayoutTool {
   }
 
   /* ===== ストレージ保存・読み込み ===== */
-  saveDiagram() {
+  async saveDiagram() {
     const data = {
       elements: this.elements,
       elemIdCounter: this.elemIdCounter
     };
     localStorage.setItem('upstream_layout_save', JSON.stringify(data));
-    showToast('ブラウザに保存しました');
+
+    const projectId = window.DBIO?.getCurrentProjectId();
+    if (projectId) {
+      showToast('DBに保存中...', 'info');
+      const success = await window.DBIO.saveDiagramToDB('layout', data);
+      if (success) {
+        showToast('データベースに保存しました');
+      } else {
+        showToast('DB保存に失敗。ブラウザにのみ保存しました', 'warning');
+      }
+    } else {
+      showToast('ブラウザに保存しました');
+    }
   }
 
-  loadDiagram() {
-    const saved = localStorage.getItem('upstream_layout_save');
-    if (!saved) return showToast('保存データがありません');
-    if (confirm('現在の内容を破棄して読み込みますか？')) {
+  async loadDiagram(forceWithoutConfirm = false) {
+    let data = null;
+
+    const projectId = window.DBIO?.getCurrentProjectId();
+    if (projectId) {
+      data = await window.DBIO.loadDiagramFromDB('layout');
+    }
+
+    if (!data) {
+      const saved = localStorage.getItem('upstream_layout_save');
+      if (saved) {
+        data = JSON.parse(saved);
+      }
+    }
+
+    if (!data) {
+      if (!forceWithoutConfirm) {
+        showToast('保存データがありません');
+      }
+      return;
+    }
+
+    if (forceWithoutConfirm || confirm('現在の内容を破棄して読み込みますか？')) {
       this.elements = []; 
       this.elemIdCounter = 0;
       this.canvas.querySelectorAll('.layout-element').forEach(e => e.remove());
 
-      const data = JSON.parse(saved);
       this.elemIdCounter = data.elemIdCounter;
       data.elements.forEach(el => {
         this.elements.push(el);
