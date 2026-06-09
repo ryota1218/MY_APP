@@ -1,7 +1,7 @@
 /* ===== 上タブ ===== */
 .top-tabs {
   display: flex;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   border-bottom: none;
   background: var(--bg-secondary);
 }
@@ -11,7 +11,9 @@
   text-align: center;
   padding: 12px;
   cursor: pointer;
-  border-right: 1px solid var(--border);
+  border-right: 2px solid var(--border);
+  transition: var(--transition);
+  color: var(--text-dim);
 }
 
 .tab:last-child {
@@ -21,12 +23,16 @@
 .tab.active {
   background: var(--bg-card);
   font-weight: bold;
+  border-bottom: 3px solid var(--accent);
+  color: var(--accent-light);
 }
 
 /* ===== ガント全体 ===== */
 .gantt-container {
   display: flex;
-  height: calc(100vh - 120px);
+  height: calc(100vh - 220px);
+  max-height: calc(100vh - 220px);
+  min-height: 0;
   border: 1px solid var(--border);
   background: var(--bg-card);
   overflow: hidden;
@@ -34,33 +40,71 @@
 
 /* ===== 左：タスク ===== */
 .gantt-tasks {
-  width: 350px;
+  width: 600px;
+  min-width: 600px;
   border-right: 1px solid var(--border);
+  height: 100%;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
+  box-sizing: border-box;
   background: var(--bg-secondary);
+}
+
+.gantt-task-list {
+  min-width: 0;
+}
+
+.gantt-timeline {
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  position: relative;
 }
 
 /* ヘッダー */
 .gantt-tasks-header {
   display: grid;
-  grid-template-columns: 24px 1fr 70px 70px;
+  grid-template-columns: 24px 30px minmax(140px, 1fr) 70px 70px 70px 70px;
   padding: 8px 10px;
   font-size: 0.7rem;
   font-weight: 600;
   border-bottom: 1px solid var(--border);
+  gap: 8px;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: #f0f0f0;
+  height: 48px;
+  box-sizing: border-box;
+  align-items: center;
 }
 
 /* 行 */
 .gantt-task-row {
   display: grid;
-  grid-template-columns: 24px 1fr 70px 70px;
+  grid-template-columns: 24px 30px minmax(140px, 1fr) 70px 70px 70px 70px;
   padding: 6px 10px;
   font-size: 0.75rem;
   align-items: center;
   height: 32px;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+.gantt-tasks-header span,
+.gantt-task-row span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gantt-task-row .phase-toggle-btn {
+  white-space: nowrap;
+  overflow: visible;
 }
 
 .gantt-task-row:hover {
@@ -75,8 +119,11 @@
 /* ===== 右：タイムライン ===== */
 .gantt-timeline {
   flex: 1;
-  overflow: auto;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
 }
 
 /* 日付ヘッダー */
@@ -87,11 +134,15 @@
   z-index: 5;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
+  flex: 0 0 auto;
+  height: 48px;
 }
 
 /* 日付セル */
 .gantt-day {
-  min-width: 36px;
+  width: 36px;
+  flex: none;
+  box-sizing: border-box;
   text-align: center;
   padding: 8px 0;
   font-size: 0.65rem;
@@ -101,6 +152,8 @@
 /* ===== バー ===== */
 .gantt-bars {
   position: relative;
+  flex: 1 1 auto;
+  overflow: auto;
 }
 
 .gantt-bar-row {
@@ -117,10 +170,23 @@
   background: linear-gradient(135deg, var(--accent), #6d28d9);
   color: white;
   font-size: 0.65rem;
-  padding: 0 6px;
+  padding: 0 10px;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 56px;
+  line-height: 1.2;
+  z-index: 2;
+}
+
+.gantt-bar.actual-bar {
+  height: 4px;
+  top: 24px;
+  background: var(--accent2);
+  opacity: 0.7;
 }
 
 /* ===== スクロールバー ===== */
@@ -232,4 +298,16 @@
   font-size: 0.9rem;
   background-color: #fff;
   color: #1f2937;
+}
+
+/* カレンダーアイコンを見やすく変更 */
+.form-input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  /* アイコンの色をテーマカラー（紫）に近づける */
+  filter: invert(30%) sepia(100%) saturate(1000%) hue-rotate(240deg) brightness(90%) contrast(90%);
+  padding: 2px;
+  border-radius: 3px;
+}
+.form-input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  background-color: rgba(0, 0, 0, 0.05);
 }

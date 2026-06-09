@@ -3,24 +3,25 @@
 // ============================================
 const GANTT_TEST_DATA = [
   // フェーズ1：要件定義
-  { id:1, name:'要件定義', phase:true, start:'2026-05-01', end:'2026-05-14', color:'#7c3aed', actualStart:null, actualEnd:null },
-  { id:2, name:'ヒアリング', phase:false, start:'2026-05-01', end:'2026-05-07', color:'#a78bfa', actualStart:null, actualEnd:null },
-  { id:3, name:'要件書作成', phase:false, start:'2026-05-05', end:'2026-05-14', color:'#a78bfa', actualStart:null, actualEnd:null },
+  { id:1, name:'要件定義', phase:true, start:'2026-06-01', end:'2026-06-14', color:'#7c3aed', actualStart:null, actualEnd:null },
+  { id:2, name:'ヒアリング', phase:false, start:'2026-06-01', end:'2026-06-07', color:'#a78bfa', actualStart:null, actualEnd:null },
+  { id:3, name:'要件書作成', phase:false, start:'2026-06-05', end:'2026-06-14', color:'#a78bfa', actualStart:null, actualEnd:null },
   
   // フェーズ2：基本設計
-  { id:4, name:'基本設計', phase:true, start:'2026-05-12', end:'2026-05-28', color:'#06b6d4', actualStart:null, actualEnd:null },
-  { id:5, name:'画面設計', phase:false, start:'2026-05-12', end:'2026-05-21', color:'#22d3ee', actualStart:null, actualEnd:null },
-  { id:6, name:'DB設計', phase:false, start:'2026-05-15', end:'2026-05-25', color:'#22d3ee', actualStart:null, actualEnd:null },
-  { id:7, name:'API設計', phase:false, start:'2026-05-19', end:'2026-05-28', color:'#22d3ee', actualStart:null, actualEnd:null },
+  { id:4, name:'基本設計', phase:true, start:'2026-06-12', end:'2026-06-28', color:'#06b6d4', actualStart:null, actualEnd:null },
+  { id:5, name:'画面設計', phase:false, start:'2026-06-12', end:'2026-06-21', color:'#22d3ee', actualStart:null, actualEnd:null },
+  { id:6, name:'DB設計', phase:false, start:'2026-06-15', end:'2026-06-25', color:'#22d3ee', actualStart:null, actualEnd:null },
+  { id:7, name:'API設計', phase:false, start:'2026-06-19', end:'2026-06-28', color:'#22d3ee', actualStart:null, actualEnd:null },
   
   // フェーズ3：詳細設計
-  { id:8, name:'詳細設計', phase:true, start:'2026-05-26', end:'2026-06-11', color:'#10b981', actualStart:null, actualEnd:null },
-  { id:9, name:'コンポーネント設計', phase:false, start:'2026-05-26', end:'2026-06-04', color:'#34d399', actualStart:null, actualEnd:null },
-  { id:10, name:'テスト計画', phase:false, start:'2026-06-01', end:'2026-06-11', color:'#34d399', actualStart:null, actualEnd:null },
+  { id:8, name:'詳細設計', phase:true, start:'2026-06-26', end:'2026-07-11', color:'#10b981', actualStart:null, actualEnd:null },
+  { id:9, name:'コンポーネント設計', phase:false, start:'2026-06-26', end:'2026-07-04', color:'#34d399', actualStart:null, actualEnd:null },
+  { id:10, name:'テスト計画', phase:false, start:'2026-07-01', end:'2026-07-11', color:'#34d399', actualStart:null, actualEnd:null },
 ];
 
 // テストデータを使用するかどうか（true=使用、false=使用しない）
 const USE_GANTT_TEST_DATA = true;
+const PHASE_COLOR = '#2563eb';
 
 // ============================================
 // GanttTool クラス
@@ -327,17 +328,23 @@ class GanttTool {
         tasksHtml += `
           <div class="gantt-task-row phase-row ${this.selected.has(task.id) ? 'selected' : ''}" 
                data-id="${task.id}" 
-               style="height:32px; position: relative; display: grid; grid-template-columns: 24px 1fr 70px 70px; align-items: center; gap: 8px; cursor: pointer; background: #f3f4f6; font-weight: 600;">
-            <div style="display:flex; align-items:center; gap:4px; margin-left: 4px;">
+               style="height:32px; position: relative; display: grid; grid-template-columns: 24px 1fr 65px 65px 65px 65px; align-items: center; gap: 8px; cursor: pointer; background: #f3f4f6; font-weight: 600;">
+            <div style="display:flex; align-items:center; gap:8px; margin-left: 4px;">
               <input type="checkbox" class="task-checkbox" data-id="${task.id}" ${this.selected.has(task.id) ? 'checked' : ''} style="cursor: pointer;">
-              <span class="phase-toggle-btn" data-id="${task.id}" style="cursor: pointer; font-size: 1rem; padding-left: 0;">${arrowIcon}</span>
+              <span class="phase-toggle-btn" data-id="${task.id}" style="cursor: pointer; font-size: 1rem; padding-left: 0; color: ${PHASE_COLOR};">${arrowIcon}</span>
             </div>
-            <span style="font-weight: 600; color: #1f2937;">${task.name}</span>
+            <span style="font-weight: 600; color: ${PHASE_COLOR}; margin-left: 8px;">${task.name}</span>
             <span style="font-size:0.75rem;color:var(--text-muted)">
               ${task.start.slice(5)}
             </span>
             <span style="font-size:0.75rem;color:var(--text-muted)">
               ${task.end.slice(5)}
+            </span>
+            <span style="font-size:0.75rem;color:var(--text-muted)">
+              ${task.actualStart ? task.actualStart.slice(5) : '-'}
+            </span>
+            <span style="font-size:0.75rem;color:var(--text-muted)">
+              ${task.actualEnd ? task.actualEnd.slice(5) : '-'}
             </span>
           </div>
         `;
@@ -357,7 +364,7 @@ class GanttTool {
             tasksHtml += `
               <div class="gantt-task-row ${this.selected.has(childTask.id) ? 'selected' : ''}" 
                    data-id="${childTask.id}" 
-                   style="height:32px; position: relative; display: grid; grid-template-columns: 24px 1fr 70px 70px; align-items: center; gap: 8px; padding-left: 16px; background: #ffffff; border-left: 3px solid ${childTask.color};">
+                   style="height:32px; position: relative; display: grid; grid-template-columns: 24px 1fr 65px 65px 65px 65px; align-items: center; gap: 8px; padding-left: 16px; background: #ffffff; border-left: 3px solid ${childTask.color};">
                 <input type="checkbox" class="task-checkbox" data-id="${childTask.id}" ${this.selected.has(childTask.id) ? 'checked' : ''} style="cursor: pointer; margin-left: 8px;">
                 <span style="padding-left:8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 8px;">
                   ${childTask.name}
@@ -368,6 +375,12 @@ class GanttTool {
                 </span>
                 <span style="font-size:0.75rem;color:var(--text-muted)">
                   ${childTask.end.slice(5)}
+                </span>
+                <span style="font-size:0.75rem;color:var(--text-muted)">
+                  ${childTask.actualStart ? childTask.actualStart.slice(5) : '-'}
+                </span>
+                <span style="font-size:0.75rem;color:var(--text-muted)">
+                  ${childTask.actualEnd ? childTask.actualEnd.slice(5) : '-'}
                 </span>
               </div>
             `;
@@ -388,22 +401,23 @@ class GanttTool {
         } else {
           this.expandedPhases.add(id);
         }
-        this.renderTasks();
+        this.render();
       });
     });
 
-    // チェックボックスイベント
+    // チェックボックスイベント（単一選択）
     list.querySelectorAll('.task-checkbox').forEach(checkbox => {
       checkbox.addEventListener('change', (e) => {
         e.stopPropagation();
         const id = parseInt(checkbox.dataset.id);
         if (e.target.checked) {
+          this.selected.clear();
           this.selected.add(id);
         } else {
           this.selected.delete(id);
         }
         this.updateDeleteButtonVisibility();
-        this.updateRowSelection();
+        this.render();
       });
     });
 
@@ -450,15 +464,12 @@ class GanttTool {
   updateDeleteButtonVisibility() {
     const deleteBtn = document.getElementById('delete-selected-btn');
     const inputActualBtn = document.getElementById('input-actual-btn');
-    const hasTaskSelected = Array.from(this.selected).some(id => {
-      const task = this.tasks.find(t => t.id === id);
-      return task && !task.phase;
-    });
+    const hasSelection = this.selected.size > 0;
     if (deleteBtn) {
-      deleteBtn.style.display = this.selected.size > 0 ? 'inline-block' : 'none';
+      deleteBtn.style.display = hasSelection ? 'inline-block' : 'none';
     }
     if (inputActualBtn) {
-      inputActualBtn.style.display = hasTaskSelected ? 'inline-block' : 'none';
+      inputActualBtn.style.display = hasSelection ? 'inline-block' : 'none';
     }
   }
 
@@ -562,7 +573,69 @@ class GanttTool {
     for (const task of this.tasks) {
       if (task.phase) {
         // フェーズ行
-        barsHtml += `<div class="gantt-bar-row" style="height:32px; background: rgba(0,0,0,0.02);"></div>`;
+        const phaseStartDayNum = this.getDayNumber(task.start);
+        const phaseEndDayNum = this.getDayNumber(task.end);
+        const phaseOffset = (phaseStartDayNum - startDayNum) * dayWidth;
+        const phaseDuration = (phaseEndDayNum - phaseStartDayNum) + 1;
+        const phaseWidth = phaseDuration * dayWidth;
+
+        let phaseOpacity = task.actualEnd ? '0.6' : '1';
+        let phaseStroke = task.actualEnd ? PHASE_COLOR : (task.actualStart ? '#f59e0b' : PHASE_COLOR);
+        let phaseBadge = '';
+        if (task.actualEnd) {
+          phaseBadge = '<div style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: #10b981; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 3px; font-weight: 600;">✓</div>';
+        } else if (task.actualStart) {
+          phaseBadge = '<div style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: #f59e0b; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 3px; font-weight: 600;">進行中</div>';
+        }
+
+        let phaseActualBar = '';
+        if (task.actualStart) {
+          const actualStartDayNum = this.getDayNumber(task.actualStart);
+          const actualEndDayNum = task.actualEnd
+            ? this.getDayNumber(task.actualEnd)
+            : Math.min(Math.floor(todayUTC.getTime() / 86400000), Math.floor(end.getTime() / 86400000));
+          const actualLeft = (actualStartDayNum - startDayNum) * dayWidth;
+          const actualDuration = Math.max((actualEndDayNum - actualStartDayNum) + 1, 1);
+          const actualWidth = actualDuration * dayWidth;
+
+          phaseActualBar = `
+            <div style="
+              position:absolute;
+              left:${actualLeft}px;
+              top:10px;
+              width:${actualWidth}px;
+              height:12px;
+              border-radius:6px;
+              background: rgba(16,185,129,0.35);
+              border: 1px solid rgba(16,185,129,0.65);
+              z-index: 1;
+            "></div>
+          `;
+        }
+
+        barsHtml += `
+          <div class="gantt-bar-row" style="height:32px; position: relative; background: rgba(0,0,0,0.02);">
+            ${phaseActualBar}
+            <div class="gantt-bar"
+                 data-id="${task.id}"
+                 title="${task.name}"
+                 style="
+                   position: relative;
+                   z-index: 2;
+                   left:${phaseOffset}px;
+                   width:${phaseWidth}px;
+                   background: linear-gradient(135deg, ${PHASE_COLOR}, ${PHASE_COLOR}cc);
+                   opacity: ${phaseOpacity};
+                   border-left: 3px solid ${phaseStroke};
+                   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                 ">
+              <span style="display: inline-block; width: calc(100% - 30px); padding: 2px 0 2px 6px; font-size: 0.75rem; font-weight: 500; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                ${task.name}
+              </span>
+              ${phaseBadge}
+            </div>
+          </div>
+        `;
 
         if (this.expandedPhases.has(task.id)) {
           const childTasks = this.tasks.filter(t =>
@@ -592,12 +665,40 @@ class GanttTool {
               statusBadge = '<div style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: #f59e0b; color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 3px; font-weight: 600;">進行中</div>';
             }
 
+            let actualBarHtml = '';
+            if (childTask.actualStart) {
+              const actualStartDayNum = this.getDayNumber(childTask.actualStart);
+              const actualEndDayNum = childTask.actualEnd
+                ? this.getDayNumber(childTask.actualEnd)
+                : Math.min(Math.floor(todayUTC.getTime() / 86400000), Math.floor(end.getTime() / 86400000));
+              const actualLeft = (actualStartDayNum - startDayNum) * dayWidth;
+              const actualDuration = Math.max((actualEndDayNum - actualStartDayNum) + 1, 1);
+              const actualWidth = actualDuration * dayWidth;
+
+              actualBarHtml = `
+                <div style="
+                  position:absolute;
+                  left:${actualLeft}px;
+                  top:10px;
+                  width:${actualWidth}px;
+                  height:12px;
+                  border-radius:6px;
+                  background: rgba(16,185,129,0.35);
+                  border: 1px solid rgba(16,185,129,0.65);
+                  z-index: 1;
+                "></div>
+              `;
+            }
+
             barsHtml += `
-              <div class="gantt-bar-row" style="height:32px; display: flex; align-items: center;">
+              <div class="gantt-bar-row" style="height:32px; position: relative;">
+                ${actualBarHtml}
                 <div class="gantt-bar"
                      data-id="${childTask.id}"
+                     title="${childTask.name}"
                      style="
                        position: relative;
+                       z-index: 2;
                        left:${startOffset}px;
                        width:${width}px;
                        background: linear-gradient(135deg, ${barColor}, ${barColor}cc);
@@ -605,7 +706,7 @@ class GanttTool {
                        border-left: 3px solid ${strokeColor};
                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
                      ">
-                  <span style="display: block; padding: 2px 4px; font-size: 0.75rem; font-weight: 500; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  <span style="display: inline-block; width: calc(100% - 30px); padding: 2px 0 2px 6px; font-size: 0.75rem; font-weight: 500; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                     ${childTask.name}
                   </span>
                   ${statusBadge}
@@ -1113,9 +1214,9 @@ enableDrag() {
       return;
     }
 
-    const selectedTasks = this.tasks.filter(t => this.selected.has(t.id) && !t.phase);
+    const selectedTasks = this.tasks.filter(t => this.selected.has(t.id));
     if (selectedTasks.length === 0) {
-      showToast('タスク（フェーズ以外）を選択してください');
+      showToast('選択したタスクが見つかりません');
       return;
     }
 
