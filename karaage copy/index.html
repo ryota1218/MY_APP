@@ -61,7 +61,13 @@
           </div>
           <span id="display-user-name" style="font-size: 0.85rem; font-weight: 600; display: block;">ゲスト</span>
         </div>
-        <button id="auth-action-btn" class="btn-auth-link" data-tool="login" style="font-size: 0.75rem; opacity: 0.8;">ログイン</button>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button id="account-settings-btn" class="btn btn-secondary btn-sm" style="display:flex; align-items:center; gap:6px; padding: 6px 10px;" title="アカウント設定">
+            <i data-lucide="settings" style="width:16px; height:16px;"></i>
+            設定
+          </button>
+          <button id="auth-action-btn" class="btn-auth-link" data-tool="login" style="font-size: 0.75rem; opacity: 0.8;">ログイン</button>
+        </div>
       </div>
       <div class="version-info">UpStream v1.0 © 2026</div>
     </div>
