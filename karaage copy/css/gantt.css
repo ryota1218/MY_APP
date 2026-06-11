@@ -167,8 +167,8 @@
   height: 18px;
   top: 6px;
   border-radius: 4px;
-  background: linear-gradient(135deg, var(--accent), #6d28d9);
-  color: white;
+  background: linear-gradient(135deg, var(--bg-primary), var(--accent));
+  color: var(--text);
   font-size: 0.65rem;
   padding: 0 10px;
   display: flex;

@@ -657,7 +657,7 @@ class DiagramTool {
     this.nodeIdCounter = 0;
     this.connIdCounter = 0;
     this.quickAddCounter = 0;
-    this.defaultTextStyle = { fontSize: 14, color: '#e5e7eb' };
+    this.defaultTextStyle = { fontSize: 14, color: 'var(--text)' };
     this.inlineShapeLimit = Number.isFinite(options.inlineShapeLimit)
       ? Math.max(1, options.inlineShapeLimit)
       : 8;
@@ -1002,7 +1002,7 @@ class DiagramTool {
         connectButton.classList.toggle('active', this.connectMode);
         connectButton.textContent = `🔗 接続モード ${this.connectMode ? 'ON' : 'OFF'}`;
         if (!this.isDropdownPalette) {
-          connectButton.style.background = this.connectMode ? 'rgba(124,58,237,0.2)' : '';
+          // let css handle the active state style
         }
       };
       this.updateConnectButton();
@@ -1763,7 +1763,8 @@ showHelp() {
 }
 
 showSettings() {
-  showToast('設定パネルは現在開発中です');
+  showToast('設定パネルを開きます');
+  if (window.themeManager) window.themeManager.toggleModal();
 }
 
 showUserProfile() {

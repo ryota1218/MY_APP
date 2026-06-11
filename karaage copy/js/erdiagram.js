@@ -219,7 +219,10 @@ class ERDiagramTool {
     }
   }
   showHelp() { showToast('ヘルプを表示します'); }
-  showSettings() { showToast('エディタ設定を開きます'); }
+  showSettings() { 
+    showToast('エディタ設定を開きます');
+    if (window.themeManager) window.themeManager.toggleModal();
+  }
   closePropertyPanel() {
     const panel = document.getElementById('er-property-panel');
     if (panel) panel.classList.remove('visible');

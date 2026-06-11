@@ -15,7 +15,7 @@
 
 .er-entity-header {
   padding: 10px 14px; font-weight: 600; font-size: 0.85rem;
-  background: linear-gradient(135deg, rgba(6,182,212,0.15), rgba(124,58,237,0.1));
+  background: linear-gradient(135deg, var(--bg-primary), var(--accent));
   border-bottom: 1px solid var(--border);
   border-radius: var(--radius-sm) var(--radius-sm) 0 0;
 }

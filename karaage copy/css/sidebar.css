@@ -1,7 +1,7 @@
 /* Sidebar */
 .sidebar {
   width: var(--sidebar-w); height: 100vh;
-  background: linear-gradient(180deg, rgba(17,24,39,0.95), rgba(10,14,26,0.98));
+  background: var(--bg-primary);
   border-right: 1px solid var(--border);
   display: flex; flex-direction: column;
   backdrop-filter: blur(20px); z-index: 100;
@@ -33,24 +33,24 @@
   transition: var(--transition);
 }
 .sidebar-toggle-btn:hover {
-  background: rgba(124,58,237,0.2) !important;
-  color: var(--accent-light);
+  background: var(--border-hover) !important;
+  color: var(--accent);
 }
 .sidebar-collapsed .sidebar-toggle-btn {
-  background: rgba(124,58,237,0.15);
+  background: var(--bg-glass);
 }
 
 .logo {
   padding: 24px 20px; display: flex; align-items: center; gap: 12px;
   font-size: 1.3rem; font-weight: 700;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  background: linear-gradient(135deg, var(--text), var(--accent));
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
 .logo-icon {
   width: 40px; height: 40px; border-radius: 10px;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  background: linear-gradient(135deg, var(--bg-primary), var(--accent));
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.2rem; -webkit-text-fill-color: white;
+  font-size: 1.2rem; -webkit-text-fill-color: var(--text);
 }
 
 .sidebar nav { flex: 1; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
@@ -66,7 +66,7 @@
 }
 .sidebar nav a:hover { color: var(--text); background: var(--bg-glass); }
 .sidebar nav a.active {
-  color: white; background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(6,182,212,0.1));
+  color: var(--text); background: var(--bg-glass);
   border: 1px solid var(--border-hover);
 }
 .sidebar nav a.active::before {
@@ -94,7 +94,7 @@
 }
 .nav-has-submenu > a:hover { color: var(--text); background: var(--bg-glass); }
 .nav-has-submenu > a.active {
-  color: white; background: linear-gradient(135deg, rgba(124,58,237,0.2), rgba(6,182,212,0.1));
+  color: var(--text); background: var(--bg-glass);
   border: 1px solid var(--border-hover);
 }
 .nav-has-submenu > a.active::before {
@@ -168,7 +168,7 @@
 }
 .nav-submenu a.active {
   color: white;
-  background: linear-gradient(90deg, rgba(124,58,237,0.2), transparent);
+  background: linear-gradient(90deg, var(--bg-primary), var(--accent));
   position: relative;
 }
 .nav-submenu a.active::before {
@@ -190,7 +190,8 @@
   top: 0;
   width: 30px;
   height: 100vh;
-  background: linear-gradient(180deg, rgba(17, 24, 39, 0.25), rgba(10, 14, 26, 0.35));
+  background: var(--bg-primary);
+  border: none;
   border-right: 1px solid var(--border);
   color: var(--text-dim);
   display: flex;
@@ -209,10 +210,10 @@
 }
 
 .sidebar-toggle-handle:hover {
-  background: linear-gradient(180deg, rgba(124, 58, 237, 0.15), rgba(6, 182, 212, 0.1));
-  color: white;
-  border-right: 1px solid var(--accent-light);
-  box-shadow: 0 0 15px rgba(124, 58, 237, 0.3);
+  background: var(--bg-card);
+  color: var(--accent);
+  border-right: 1px solid var(--accent);
+  box-shadow: 0 0 15px rgba(124, 58, 237, 0.1);
 }
 
 .sidebar-toggle-handle .handle-arrow {
