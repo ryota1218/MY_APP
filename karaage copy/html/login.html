@@ -84,6 +84,27 @@
     .password-toggle:hover {
       color: var(--accent);
     }
+    .password-strength {
+      margin-top: 8px;
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .password-strength-bar {
+      flex: 1;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.16);
+      overflow: hidden;
+    }
+    .password-strength-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      transition: width 0.2s ease, background 0.2s ease;
+    }
     .login-error-message {
       color: #ef4444;
       font-size: 0.8rem;
@@ -169,6 +190,10 @@
         <span class="password-toggle" id="toggle-reg-password">
           <i data-lucide="eye"></i>
         </span>
+        <div class="password-strength" id="register-password-strength">
+          <span>強度: <strong id="register-password-strength-label">なし</strong></span>
+          <div class="password-strength-bar"><div class="password-strength-fill" id="register-password-strength-fill"></div></div>
+        </div>
       </div>
       <div id="register-error" class="login-error-message"></div>
       <div class="btn-submit-container">
@@ -217,6 +242,32 @@
     }
     setupPasswordToggle('toggle-login-password', 'password');
     setupPasswordToggle('toggle-reg-password', 'reg-password');
+
+    function updatePasswordStrength(inputId, labelId, fillId) {
+      const input = document.getElementById(inputId);
+      const label = document.getElementById(labelId);
+      const fill = document.getElementById(fillId);
+      if (!input || !label || !fill) return;
+
+      const value = input.value;
+      let score = 0;
+      if (value.length >= 8) score += 1;
+      if (/[A-Z]/.test(value)) score += 1;
+      if (/[a-z]/.test(value)) score += 1;
+      if (/[0-9]/.test(value)) score += 1;
+      if (/[^A-Za-z0-9]/.test(value)) score += 1;
+      const labels = ['弱い', 'やや弱い', '普通', '強い', 'とても強い'];
+      const colors = ['#ef4444', '#f59e0b', '#eab308', '#22c55e', '#10b981'];
+      const width = value.length === 0 ? 0 : (score / 5) * 100;
+      label.textContent = value.length === 0 ? 'なし' : labels[Math.max(0, Math.min(score - 1, labels.length - 1))];
+      label.style.color = value.length === 0 ? '#cbd5e1' : colors[Math.max(0, Math.min(score - 1, colors.length - 1))];
+      fill.style.width = `${width}%`;
+      fill.style.background = value.length === 0 ? 'transparent' : colors[Math.max(0, Math.min(score - 1, colors.length - 1))];
+    }
+
+    document.getElementById('reg-password').addEventListener('input', () => {
+      updatePasswordStrength('reg-password', 'register-password-strength-label', 'register-password-strength-fill');
+    });
 
     document.getElementById('show-register').onclick = () => {
       loginForm.style.display = 'none';

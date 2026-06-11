@@ -71,10 +71,17 @@ const Auth = {
   },
 
   async handleLogin() {
-    const email = document.getElementById('username').value;
+    const email = document.getElementById('username').value.trim().toLowerCase();
     const pass = document.getElementById('password').value;
     const errorEl = document.getElementById('login-error');
-    
+
+    const lockout = this.isLoginLockedOut(email);
+    if (lockout.locked) {
+      errorEl.textContent = `ログイン試行回数が上限に達しました。あと ${this.formatLockoutTime(lockout.remaining)} で再試行できます。`;
+      errorEl.style.color = '#ef4444';
+      return;
+    }
+
     errorEl.textContent = 'ログイン中...';
     errorEl.style.color = '#8b5cf6';
 
@@ -85,17 +92,25 @@ const Auth = {
 
     if (error) {
       console.error('Login error:', error.message);
+      this.recordLoginAttempt(email, false);
+      const attemptsLeft = Math.max(0, 5 - this.getLoginAttempts(email));
       errorEl.style.color = '#ef4444';
-      errorEl.textContent = 'ログインに失敗しました。メールアドレスかパスワードが間違っています。';
+      if (attemptsLeft === 0) {
+        errorEl.textContent = 'ログイン試行回数が上限に達しました。5分後に再試行してください。';
+      } else {
+        errorEl.textContent = `ログインに失敗しました。残り ${attemptsLeft} 回です。`;
+      }
       return;
     }
 
+    this.clearLoginAttempts(email);
     // ログイン成功
     this.currentUser = {
       id: data.user.id,
       email: data.user.email,
       name: data.user.email.split('@')[0]
     };
+    this.recordLoginEvent(data.user.id, data.user.email);
     
     localStorage.setItem('isLoggedIn', 'true');
     this.updateUI();
@@ -123,8 +138,9 @@ const Auth = {
     const pass = document.getElementById('reg-password').value;
     const errorEl = document.getElementById('register-error');
 
-    if (!email || !pass || pass.length < 6) {
-      errorEl.textContent = '有効なメールアドレスと6文字以上のパスワードを入力してください。';
+    const strength = this.getPasswordStrength(pass);
+    if (!email || !pass || strength.score < 3) {
+      errorEl.textContent = 'パスワードは8文字以上で、英大小文字・数字・記号を含めると安全です。';
       return;
     }
 
@@ -174,6 +190,156 @@ const Auth = {
     localStorage.removeItem('upstream_user');
     this.updateUI();
     location.reload();
+  },
+
+  getPasswordStrength(password) {
+    if (!password || password.length === 0) {
+      return { score: 0, label: 'なし' };
+    }
+    const result = { score: 0, label: '弱い' };
+    if (password.length >= 8) result.score += 1;
+    if (/[A-Z]/.test(password)) result.score += 1;
+    if (/[a-z]/.test(password)) result.score += 1;
+    if (/[0-9]/.test(password)) result.score += 1;
+    if (/[^A-Za-z0-9]/.test(password)) result.score += 1;
+    const labels = ['弱い', 'やや弱い', '普通', '強い', 'とても強い'];
+    if (result.score <= 0) {
+      result.label = 'なし';
+    } else {
+      result.label = labels[Math.min(result.score - 1, labels.length - 1)];
+    }
+    return result;
+  },
+
+  async updatePassword(newPassword) {
+    if (!this.currentUser) {
+      return { error: { message: 'ログインしてください。' } };
+    }
+
+    const { data, error } = await window.supabaseClient.auth.updateUser({ password: newPassword });
+    if (!error) {
+      return { data, error: null };
+    }
+    return { data, error };
+  },
+
+  getLoginAttemptState(email) {
+    const normalized = String(email || '').trim().toLowerCase();
+    const key = `login_attempts_${encodeURIComponent(normalized)}`;
+    try {
+      return JSON.parse(localStorage.getItem(key) || '{}');
+    } catch {
+      return {};
+    }
+  },
+
+  setLoginAttemptState(email, state) {
+    const normalized = String(email || '').trim().toLowerCase();
+    const key = `login_attempts_${encodeURIComponent(normalized)}`;
+    localStorage.setItem(key, JSON.stringify(state));
+  },
+
+  clearLoginAttempts(email) {
+    const normalized = String(email || '').trim().toLowerCase();
+    const key = `login_attempts_${encodeURIComponent(normalized)}`;
+    localStorage.removeItem(key);
+  },
+
+  getLoginAttempts(email) {
+    const state = this.getLoginAttemptState(email);
+    return state.count || 0;
+  },
+
+  isLoginLockedOut(email) {
+    const state = this.getLoginAttemptState(email);
+    const now = Date.now();
+    if (state.lockoutUntil && now < state.lockoutUntil) {
+      return { locked: true, remaining: Math.ceil((state.lockoutUntil - now) / 1000) };
+    }
+    return { locked: false, remaining: 0 };
+  },
+
+  formatLockoutTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    if (minutes > 0) {
+      return `${minutes}分${secs}秒`;
+    }
+    return `${secs}秒`;
+  },
+
+  recordLoginAttempt(email, success) {
+    const normalized = String(email || '').trim().toLowerCase();
+    if (!normalized) return;
+    if (success) {
+      this.clearLoginAttempts(normalized);
+      return;
+    }
+
+    const state = this.getLoginAttemptState(normalized);
+    state.count = (state.count || 0) + 1;
+    if (state.count >= 5) {
+      state.lockoutUntil = Date.now() + 5 * 60 * 1000;
+    }
+    this.setLoginAttemptState(normalized, state);
+  },
+
+  async updateEmail(newEmail) {
+    if (!this.currentUser) {
+      return { error: { message: 'ログインしてください。' } };
+    }
+    if (!newEmail || !newEmail.includes('@')) {
+      return { error: { message: '有効なメールアドレスを入力してください。' } };
+    }
+
+    const { data, error } = await window.supabaseClient.auth.updateUser({ email: newEmail });
+    if (!error) {
+      this.currentUser.email = newEmail;
+      this.currentUser.name = newEmail.split('@')[0];
+      return { data, error: null };
+    }
+    return { data, error };
+  },
+
+  async deleteAccount() {
+    if (!this.currentUser) {
+      return { error: { message: 'ログインしてください。' } };
+    }
+    if (typeof window.supabaseClient.auth.deleteUser === 'function') {
+      const { data, error } = await window.supabaseClient.auth.deleteUser();
+      if (!error) {
+        this.currentUser = null;
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('upstream_user');
+        return { data, error: null };
+      }
+      return { data, error };
+    }
+    return { error: { message: 'アカウント削除はクライアントでは対応していません。サーバー側の管理機能が必要です。' } };
+  },
+
+  recordLoginEvent(userId, email) {
+    try {
+      const historyKey = `login_history_${userId}`;
+      const history = JSON.parse(localStorage.getItem(historyKey) || '[]');
+      history.unshift({
+        date: new Date().toISOString(),
+        email,
+        userAgent: navigator.userAgent,
+      });
+      localStorage.setItem(historyKey, JSON.stringify(history.slice(0, 20)));
+    } catch (err) {
+      console.warn('Login history save failed:', err);
+    }
+  },
+
+  getLoginHistory(userId) {
+    try {
+      const historyKey = `login_history_${userId}`;
+      return JSON.parse(localStorage.getItem(historyKey) || '[]');
+    } catch (err) {
+      return [];
+    }
   },
 
   updateUI() {

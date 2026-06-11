@@ -1,3 +1,5 @@
+"use strict";
+
 // ============================================
 // テストデータ（下記をコメントアウトして削除可能）
 // ============================================
@@ -30,6 +32,20 @@ class GanttTool {
   constructor() {
     // テストデータを使用する場合はロード
     this.tasks = USE_GANTT_TEST_DATA ? JSON.parse(JSON.stringify(GANTT_TEST_DATA)) : [];
+    this.tasks = [];
+    try {
+      // テストデータまたはローカルストレージからのロード
+      const saved = localStorage.getItem('gantt_tasks');
+      if (saved) {
+        this.tasks = JSON.parse(saved);
+      } else if (USE_GANTT_TEST_DATA) {
+        this.tasks = JSON.parse(JSON.stringify(GANTT_TEST_DATA));
+      }
+    } catch (e) {
+      console.error("Failed to load tasks:", e);
+      showToast("データの読み込みに失敗しました。");
+    }
+
     this.selected = new Set(); // 選択状態を管理
     this.expandedPhases = new Set(); // フェーズの展開状態を管理
     this.overallStartOverride = null;
@@ -223,6 +239,17 @@ class GanttTool {
     return `${year}-${month}-${day}`;
   }
 
+  // HTMLエスケープ（XSS対策）
+  escapeHTML(str) {
+    if (!str) return '';
+    return str.toString()
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   // "YYYY-MM-DD" 形式の日付文字列をUTC Dateに変換（タイムゾーン対応）
   parseDate(dateStr) {
     const [year, month, day] = dateStr.split('-').map(Number);
@@ -333,7 +360,7 @@ class GanttTool {
               <input type="checkbox" class="task-checkbox" data-id="${task.id}" ${this.selected.has(task.id) ? 'checked' : ''} style="cursor: pointer;">
               <span class="phase-toggle-btn" data-id="${task.id}" style="cursor: pointer; font-size: 1rem; padding-left: 0; color: ${PHASE_COLOR};">${arrowIcon}</span>
             </div>
-            <span style="font-weight: 600; color: ${PHASE_COLOR}; margin-left: 8px;">${task.name}</span>
+            <span style="font-weight: 600; color: ${PHASE_COLOR}; margin-left: 8px;">${this.escapeHTML(task.name)}</span>
             <span style="font-size:0.75rem;color:var(--text-muted)">
               ${task.start.slice(5)}
             </span>
@@ -367,7 +394,7 @@ class GanttTool {
                    style="height:32px; position: relative; display: grid; grid-template-columns: 24px 1fr 65px 65px 65px 65px; align-items: center; gap: 8px; padding-left: 16px; background: #ffffff; border-left: 3px solid ${childTask.color};">
                 <input type="checkbox" class="task-checkbox" data-id="${childTask.id}" ${this.selected.has(childTask.id) ? 'checked' : ''} style="cursor: pointer; margin-left: 8px;">
                 <span style="padding-left:8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 8px;">
-                  ${childTask.name}
+                  ${this.escapeHTML(childTask.name)}
                   <span style="color: ${statusColor}; font-size: 0.875rem;">${statusIcon}</span>
                 </span>
                 <span style="font-size:0.75rem;color:var(--text-muted)">
@@ -475,11 +502,11 @@ class GanttTool {
 
   editTask(task) {
     showModal('タスク編集', `
-      <div class="form-group"><label>タスク名</label><input class="form-input" id="edit-task-name" value="${task.name}"></div>
-      <div class="form-group"><label>計画開始日</label><input class="form-input" id="edit-task-start" type="date" value="${task.start}"></div>
-      <div class="form-group"><label>計画終了日</label><input class="form-input" id="edit-task-end" type="date" value="${task.end}"></div>
-      <div class="form-group"><label>実績開始日</label><input class="form-input" id="edit-actual-start" type="date" value="${task.actualStart || ''}"></div>
-      <div class="form-group"><label>実績終了日</label><input class="form-input" id="edit-actual-end" type="date" value="${task.actualEnd || ''}"></div>
+      <div class="form-group"><label>タスク名</label><input class="form-input" id="edit-task-name" value="${this.escapeHTML(task.name)}"></div>
+      <div class="form-group"><label>計画開始日</label><input class="form-input" id="edit-task-start" type="date" value="${this.escapeHTML(task.start)}"></div>
+      <div class="form-group"><label>計画終了日</label><input class="form-input" id="edit-task-end" type="date" value="${this.escapeHTML(task.end)}"></div>
+      <div class="form-group"><label>実績開始日</label><input class="form-input" id="edit-actual-start" type="date" value="${this.escapeHTML(task.actualStart || '')}"></div>
+      <div class="form-group"><label>実績終了日</label><input class="form-input" id="edit-actual-end" type="date" value="${this.escapeHTML(task.actualEnd || '')}"></div>
     `,
     () => {
       const name = document.getElementById('edit-task-name').value;
@@ -490,6 +517,11 @@ class GanttTool {
 
       if (!name || !start || !end) {
         showToast('タスク名、計画開始日、計画終了日は必須です');
+        return;
+      }
+
+      if (name.length > 100) {
+        showToast('タスク名は100文字以内で入力してください');
         return;
       }
 
@@ -618,7 +650,7 @@ class GanttTool {
             ${phaseActualBar}
             <div class="gantt-bar"
                  data-id="${task.id}"
-                 title="${task.name}"
+                 title="${this.escapeHTML(task.name)}"
                  style="
                    position: relative;
                    z-index: 2;
@@ -630,7 +662,7 @@ class GanttTool {
                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
                  ">
               <span style="display: inline-block; width: calc(100% - 30px); padding: 2px 0 2px 6px; font-size: 0.75rem; font-weight: 500; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                ${task.name}
+                ${this.escapeHTML(task.name)}
               </span>
               ${phaseBadge}
             </div>
@@ -695,7 +727,7 @@ class GanttTool {
                 ${actualBarHtml}
                 <div class="gantt-bar"
                      data-id="${childTask.id}"
-                     title="${childTask.name}"
+                   title="${this.escapeHTML(childTask.name)}"
                      style="
                        position: relative;
                        z-index: 2;
@@ -707,7 +739,7 @@ class GanttTool {
                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
                      ">
                   <span style="display: inline-block; width: calc(100% - 30px); padding: 2px 0 2px 6px; font-size: 0.75rem; font-weight: 500; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                    ${childTask.name}
+                    ${this.escapeHTML(childTask.name)}
                   </span>
                   ${statusBadge}
                 </div>
@@ -932,7 +964,7 @@ enableDrag() {
         tableHtml += `
           <tr class="calc-phase-row" data-phase-id="${t.id}" style="background: ${rowBg}; border-bottom: 1px solid #e5e7eb; cursor: pointer; transition: background 0.2s;">
             <td style="padding: 12px 10px; font-weight: 700; color: ${textColor};">
-              <span class="calc-phase-toggle" style="display: inline-block; margin-right: 8px; font-size: 0.875rem;">${arrowIcon}</span>${t.name}
+              <span class="calc-phase-toggle" style="display: inline-block; margin-right: 8px; font-size: 0.875rem;">${arrowIcon}</span>${this.escapeHTML(t.name)}
             </td>
             <td style="padding: 12px 10px; text-align: center; font-size: 0.75rem; color: ${typeColor}; font-weight: 600;">${typeLabel}</td>
             <td style="padding: 12px 10px; text-align: center; color: ${textColor};">${t.start}</td>
@@ -953,7 +985,7 @@ enableDrag() {
 
         tableHtml += `
           <tr class="calc-task-row calc-phase-${parentPhaseId}" data-task-id="${t.id}" style="background: ${rowBg}; border-bottom: 1px solid #e5e7eb; display: ${isHidden ? 'none' : 'table-row'};">
-            <td style="padding: 12px 10px; font-weight: 500; color: ${textColor}; padding-left: 30px;">${t.name}</td>
+            <td style="padding: 12px 10px; font-weight: 500; color: ${textColor}; padding-left: 30px;">${this.escapeHTML(t.name)}</td>
             <td style="padding: 12px 10px; text-align: center; font-size: 0.75rem; color: ${typeColor}; font-weight: 600;">${typeLabel}</td>
             <td style="padding: 12px 10px; text-align: center; color: ${textColor};">${t.start}</td>
             <td style="padding: 12px 10px; text-align: center; color: ${textColor};">${t.end}</td>
@@ -982,7 +1014,7 @@ enableDrag() {
     // クリティカルパス計算（最長経路の検出）
     const criticalPath = this.calculateCriticalPath();
     const cpHtml = criticalPath.length > 0
-      ? `<strong>最長経路: ${criticalPath.map(t => t.name).join(' → ')}</strong><br>期間: ${criticalPath.reduce((sum, t) => sum + (this.getDayNumber(t.end) - this.getDayNumber(t.start)) + 1, 0)}日`
+      ? `<strong>最長経路: ${criticalPath.map(t => this.escapeHTML(t.name)).join(' → ')}</strong><br>期間: ${criticalPath.reduce((sum, t) => sum + (this.getDayNumber(t.end) - this.getDayNumber(t.start)) + 1, 0)}日`
       : 'クリティカルパスを計算できません';
     document.getElementById('critical-path').innerHTML = cpHtml;
   }
@@ -1227,7 +1259,7 @@ enableDrag() {
 
     const task = selectedTasks[0];
     showModal('実績入力', `
-      <div class="form-group"><label>タスク名</label><input class="form-input" value="${task.name}" readonly></div>
+      <div class="form-group"><label>タスク名</label><input class="form-input" value="${this.escapeHTML(task.name)}" readonly></div>
       <div class="form-group"><label>計画開始日</label><input class="form-input" value="${task.start}" readonly></div>
       <div class="form-group"><label>計画終了日</label><input class="form-input" value="${task.end}" readonly></div>
       <div class="form-group"><label>実績開始日</label><input class="form-input" id="actual-start" type="date" value="${task.actualStart || ''}"></div>
@@ -1272,13 +1304,14 @@ enableDrag() {
   }
 
   exportCSV() {
-    let csv = 'タスク名,フェーズ,開始日,終了日\n';
+    let csv = '\uFEFFタスク名,フェーズ,開始日,終了日\n'; // BOMを追加してExcelの文字化けを防止
 
     this.tasks.forEach(t => {
-      csv += `${t.name},${t.phase?'はい':'いいえ'},${t.start},${t.end}\n`;
+      const escapedName = `"${t.name.replace(/"/g, '""')}"`; // ダブルクオートのエスケープ
+      csv += `${escapedName},${t.phase ? 'はい' : 'いいえ'},${t.start},${t.end}\n`;
     });
 
-    const blob = new Blob([csv], { type:'text/csv' });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const a = document.createElement('a');
 
     a.href = URL.createObjectURL(blob);
