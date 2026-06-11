@@ -804,7 +804,8 @@ class LayoutTool {
   }
 
   showSettings() {
-    showToast('設定は開発中です');
+    showToast('設定画面を開きます');
+    if (window.themeManager) window.themeManager.toggleModal();
   }
 
   
