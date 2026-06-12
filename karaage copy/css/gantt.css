@@ -75,7 +75,7 @@
   position: sticky;
   top: 0;
   z-index: 3;
-  background: #f0f0f0;
+  background: var(--bg-card);
   height: 48px;
   box-sizing: border-box;
   align-items: center;
@@ -112,8 +112,12 @@
 }
 
 .gantt-task-row.phase {
-  background: rgba(124,58,237,0.08);
+  background: rgba(var(--accent-rgb),0.08);
   font-weight: bold;
+}
+.gantt-task-row .phase-toggle-btn {
+  margin-right: 12px;
+  color: var(--accent);
 }
 
 /* ===== 右：タイムライン ===== */
@@ -124,6 +128,7 @@
   flex-direction: column;
   min-width: 0;
   min-height: 0;
+  background: var(--bg-secondary);
 }
 
 /* 日付ヘッダー */
@@ -146,7 +151,14 @@
   text-align: center;
   padding: 8px 0;
   font-size: 0.65rem;
-  border-right: 1px solid rgba(0,0,0,0.08);
+  border-right: 1px solid var(--border);
+  color: var(--text-dim);
+}
+.gantt-day.weekend {
+  background: rgba(var(--accent-rgb),0.08);
+}
+.gantt-day:not(.weekend) {
+  background: var(--bg-secondary);
 }
 
 /* ===== バー ===== */
@@ -154,11 +166,17 @@
   position: relative;
   flex: 1 1 auto;
   overflow: auto;
+  background-image: linear-gradient(
+    to right,
+    rgba(var(--text-rgb),0.06) 1px,
+    transparent 1px
+  );
+  background-size: 36px 100%;
 }
 
 .gantt-bar-row {
   height: 32px;
-  border-bottom: 1px solid rgba(0,0,0,0.05);
+  border-bottom: 1px solid var(--border);
   position: relative;
 }
 
@@ -215,35 +233,36 @@
   cursor: grabbing;
 }
 
-/* ===== ガント全体を白に ===== */
+/* ===== ガント全体 ===== */
 .gantt-container {
-  background: #ffffff;
-  color: #333;
+  background: var(--bg-secondary);
+  color: var(--text);
 }
 
 /* 左タスク側 */
 .gantt-tasks {
-  background: #fafafa;
-  color: #333;
+  background: var(--bg-secondary);
+  color: var(--text);
 }
 
 /* ヘッダー */
 .gantt-tasks-header {
-  background: #f0f0f0;
-  color: #555;
+  background: var(--bg-card);
+  color: var(--text);
 }
 
 /* ===== タイムライン背景（重要） ===== */
 .gantt-timeline {
-  background: #ffffff;
+  background: var(--bg-secondary);
 }
 
 /* 縦グリッド（1日ごとの線） */
 .gantt-bars {
   position: relative;
+  background: var(--bg-secondary);
   background-image: linear-gradient(
     to right,
-    rgba(0,0,0,0.06) 1px,
+    rgba(var(--text-rgb),0.06) 1px,
     transparent 1px
   );
   background-size: 36px 100%;
@@ -251,18 +270,18 @@
 
 /* 横グリッド */
 .gantt-bar-row {
-  border-bottom: 1px solid rgba(0,0,0,0.08);
+  border-bottom: 1px solid var(--border);
 }
 
 /* 日付ヘッダー */
 .gantt-timeline-header {
-  background: #f8f8f8;
-  color: #444;
+  background: var(--bg-secondary);
+  color: var(--text);
 }
 
 /* 土日少し色変える */
 .gantt-day.weekend {
-  background: #f3f4f6;
+  background: rgba(var(--accent-rgb),0.08);
 }
 
 /* ===== バーを少し濃くして見やすく ===== */
@@ -272,12 +291,12 @@
 
 /* ===== 選択状態 ===== */
 .gantt-task-row.selected {
-  background: #dbeafe;
-  border-left: 3px solid #3b82f6;
+  background: rgba(var(--accent2-rgb),0.12);
+  border-left: 3px solid var(--accent2);
 }
 
 .gantt-task-row.selected .task-checkbox {
-  accent-color: #3b82f6;
+  accent-color: var(--accent2);
 }
 
 /* ===== フォーム要素（モーダル内） ===== */
