@@ -290,6 +290,11 @@ class ProjectTool {
     
     showToast('プロジェクト「' + name + '」に切り替えました。');
 
+    // 選択されたプロジェクトに応じたテーマカラーをロード
+    if (window.themeManager) {
+      await window.themeManager.loadTheme();
+    }
+
     // 選択されたプロジェクトの図データを自動ロード
     if (window.app) {
       const loadPromises = [];
