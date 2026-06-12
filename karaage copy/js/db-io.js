@@ -384,6 +384,52 @@ const DBIO = {
       if (error) throw error;
       return data;
     }
+  },
+
+  // ----------------------------------------------------
+  // Gantt Chart Data API
+  // ----------------------------------------------------
+  async fetchGanttData(projectId) {
+    if (!projectId) return null;
+    const { data, error } = await window.supabaseClient
+      .from('gantt')
+      .select('json')
+      .eq('project_id', projectId)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? data.json : null;
+  },
+
+  async saveGanttData(projectId, jsonStr) {
+    if (!projectId) return null;
+    
+    // Check if record exists
+    const { data: existing, error: checkError } = await window.supabaseClient
+      .from('gantt')
+      .select('id')
+      .eq('project_id', projectId)
+      .maybeSingle();
+      
+    if (checkError) throw checkError;
+    
+    if (existing) {
+      // Update
+      const { data, error } = await window.supabaseClient
+        .from('gantt')
+        .update({ json: jsonStr })
+        .eq('project_id', projectId)
+        .select();
+      if (error) throw error;
+      return data;
+    } else {
+      // Insert
+      const { data, error } = await window.supabaseClient
+        .from('gantt')
+        .insert([{ project_id: projectId, json: jsonStr }])
+        .select();
+      if (error) throw error;
+      return data;
+    }
   }
 };
 
