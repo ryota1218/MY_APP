@@ -12,9 +12,27 @@ const Auth = {
       this.currentUser = {
         id: session.user.id,
         email: session.user.email,
-        name: session.user.email.split('@')[0]
+        name: session.user.email.split('@')[0],
+        avatar: null
       };
+      
+      // public.users からプロフィール情報を取得
+      try {
+        const { data: profile, error: profileError } = await window.supabaseClient
+          .from('users')
+          .select('name, icon')
+          .eq('id', session.user.id)
+          .maybeSingle();
+        if (profile && !profileError) {
+          this.currentUser.name = profile.name || this.currentUser.name;
+          this.currentUser.avatar = profile.icon || null;
+        }
+      } catch (err) {
+        console.warn('Failed to load user profile from public.users:', err);
+      }
+
       localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('upstream_user', JSON.stringify(this.currentUser));
       
       // ログイン画面にいる場合はプロジェクト選択を促すためにプロジェクト管理画面へリダイレクト
       if (window.location.pathname.includes('login.html')) {
@@ -94,10 +112,27 @@ const Auth = {
     this.currentUser = {
       id: data.user.id,
       email: data.user.email,
-      name: data.user.email.split('@')[0]
+      name: data.user.email.split('@')[0],
+      avatar: null
     };
+
+    // public.users からプロフィール情報を取得して上書き
+    try {
+      const { data: profile, error: profileError } = await window.supabaseClient
+        .from('users')
+        .select('name, icon')
+        .eq('id', data.user.id)
+        .maybeSingle();
+      if (profile && !profileError) {
+        this.currentUser.name = profile.name || this.currentUser.name;
+        this.currentUser.avatar = profile.icon || null;
+      }
+    } catch (err) {
+      console.warn('Failed to load user profile on login:', err);
+    }
     
     localStorage.setItem('isLoggedIn', 'true');
+    localStorage.setItem('upstream_user', JSON.stringify(this.currentUser));
     this.updateUI();
 
     // ログイン画面にいる場合はプロジェクト管理画面へ（新規プロジェクトの選択・作成を促すため）

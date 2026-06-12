@@ -90,10 +90,11 @@ class ConnectionOutput(BaseModel):
     model_config = {"populate_by_name": True}
 
 
-class AILayoutResponse(BaseModel):
-    """AI配置＆接続のレスポンスボディ"""
+class AIChatLayoutResponse(BaseModel):
+    """AI対話型配置微調整のレスポンスボディ"""
     nodes: list[NodeOutput]
     connections: list[ConnectionOutput]
+    advice: str = ""
 
 
 # ─────────────────────────────────────────────
@@ -103,6 +104,7 @@ class AILayoutResponse(BaseModel):
 async def health_check():
     """ヘルスチェック"""
     return {"status": "ok", "service": "UpStream AI Layout API"}
+
 
 
 class SupabaseInsertInput(BaseModel):
@@ -335,10 +337,9 @@ async def ai_chat_layout(request: AIChatLayoutRequest):
         canvas_height=request.canvas_height,
     )
     
-    # 要素数に応じてモデルを動的に切り替え
-    element_count = len(request.nodes) + len(request.existing_connections)
-    target_model = "gemini-3.1-flash-lite" if element_count <= 10 else "gemini-3.5-flash"
-    print(f"  - Selected Model (Chat): {target_model} (elements: {element_count})")
+    # 対話チャット用には安価で安定した 2.5 Flash を使用
+    target_model = "gemini-2.5-flash"
+    print(f"  - Selected Model (Chat): {target_model}")
 
     try:
         result = call_gemini(prompt, model_name=target_model)
@@ -353,6 +354,7 @@ async def ai_chat_layout(request: AIChatLayoutRequest):
     try:
         response_nodes = result.get("nodes", [])
         response_connections = result.get("connections", [])
+        advice_text = result.get("advice", "")
 
         # ノードIDの存在確認
         valid_node_ids = {n.id for n in request.nodes}
@@ -404,10 +406,12 @@ async def ai_chat_layout(request: AIChatLayoutRequest):
         print(f"[AI Chat Layout Success]")
         print(f"  - Generated Nodes: {len(validated_nodes)}")
         print(f"  - Generated Connections: {len(validated_connections)}")
+        print(f"  - Advice: {advice_text}")
 
         return {
             "nodes": validated_nodes,
             "connections": validated_connections,
+            "advice": advice_text
         }
 
     except Exception as e:

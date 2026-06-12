@@ -24,15 +24,13 @@ load_dotenv(dotenv_path=_env_path)
 # --- Gemini クライアントの初期化 ---
 _client = None
 
-def get_client():
-    global _client
-    if _client is not None:
-        return _client
-    
+def get_client(model_name: str = "gemini-2.5-flash"):
     project_id = os.getenv("GCP_PROJECT_ID", "").strip()
     
-    # Vertex AIの新世代モデル（3.5 Flash等）は global エンドポイントに集約されているため固定
-    location = "global"
+    # 3.x世代など一部のプレビュー/最新モデルは global のみで動作。それ以外は us-central1 で低価格稼働
+    # us-central1 で動かないことがわかっているモデルを判定して location を動的に変える
+    is_global_only = "3.5" in model_name or "3.1" in model_name or "3-flash" in model_name
+    location = "global" if is_global_only else "us-central1"
 
     if not project_id:
         raise RuntimeError(
@@ -43,12 +41,11 @@ def get_client():
             "============================================================"
         )
     
-    # Vertex AI経由で初期化
-    _client = genai.Client(vertexai=True, project=project_id, location=location)
-    return _client
+    # Vertex AI経由で初期化（クライアントインスタンスはリージョンごとに使い分けるか、毎回生成します）
+    return genai.Client(vertexai=True, project=project_id, location=location)
 
-# 使用するモデル（AI Studio版の3.5 Flash）
-MODEL_NAME = "gemini-3.5-flash"
+# 使用するモデル（安定した低価格の2.5 Flash）
+MODEL_NAME = "gemini-2.5-flash"
 
 def extract_json_from_response(text: str) -> dict | list:
     """
@@ -108,7 +105,7 @@ def call_gemini(prompt: str, max_retries: int = 2, model_name: str = MODEL_NAME)
 
     for attempt in range(1, max_retries + 2):  # 初回 + リトライ回数
         try:
-            client = get_client()
+            client = get_client(model_name=model_name)
             response = client.models.generate_content(
                 model=model_name,
                 contents=prompt,
