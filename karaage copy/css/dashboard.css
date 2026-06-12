@@ -32,10 +32,10 @@
   transform: translateY(-1px);
 }
 
-/* 2 & 3. 中段エリア（横並び） */
+/* 2 & 3. 中段エリア */
 .dashboard-row.middle {
   display: grid;
-  grid-template-columns: 1fr 2.5fr; /* 図の総数を少し狭く、ガントを広く */
+  grid-template-columns: 1fr; /* 図の総数を削除し、ガントチャートを全幅に広げる */
   gap: 20px;
   min-height: 200px; /* 固定高さだとコンテンツが溢れて下の要素と重なるため、最小高さに変更 */
 }
@@ -173,15 +173,12 @@
 
 .mini-gantt-wrapper {
   display: grid;
-  grid-template-columns: 100px 1fr;
   grid-template-columns: 120px 1fr; /* タスク名列を少し広げる */
-  flex-grow: 1;
 }
 
 .mini-gantt-header-row {
   grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: 100px 1fr;
   grid-template-columns: 120px 1fr;
   background: #f3f4f6;
   border-bottom: 1px solid #e5e7eb;
@@ -209,8 +206,8 @@
 }
 
 .mini-day-cell {
-  flex-shrink: 0; /* 幅を固定するために縮小を禁止 */
-  display: flex; /* 日付と曜日を横並びにする */
+  flex: 1; /* 親の幅を均等に配分し、背景グリッドと同期させる */
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 4px; /* 日付と曜日の間のスペース */
@@ -226,7 +223,6 @@
 
 .mini-gantt-row {
   display: grid;
-  grid-template-columns: 100px 1fr;
   grid-template-columns: 120px 1fr;
   border-bottom: 1px solid #f3f4f6;
   height: 30px;

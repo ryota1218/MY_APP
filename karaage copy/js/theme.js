@@ -101,6 +101,52 @@ class ThemeManager {
     return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
   }
 
+  hexToRgb(hex) {
+    hex = hex.replace(/^#/, '');
+    if (hex.length === 3) {
+      hex = hex.split('').map(c => c + c).join('');
+    }
+    return {
+      r: parseInt(hex.substring(0, 2), 16),
+      g: parseInt(hex.substring(2, 4), 16),
+      b: parseInt(hex.substring(4, 6), 16),
+    };
+  }
+
+  hslToHex({ h, s, l }) {
+    s /= 100;
+    l /= 100;
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+    const m = l - c / 2;
+    let r = 0, g = 0, b = 0;
+
+    if (h < 60) {
+      r = c; g = x; b = 0;
+    } else if (h < 120) {
+      r = x; g = c; b = 0;
+    } else if (h < 180) {
+      r = 0; g = c; b = x;
+    } else if (h < 240) {
+      r = 0; g = x; b = c;
+    } else if (h < 300) {
+      r = x; g = 0; b = c;
+    } else {
+      r = c; g = 0; b = x;
+    }
+
+    const toHex = (value) => Math.round((value + m) * 255).toString(16).padStart(2, '0');
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  }
+
+  adjustHsl(hsl, delta) {
+    return { h: (hsl.h + delta + 360) % 360, s: hsl.s, l: hsl.l };
+  }
+
+  clampLightness(hsl, delta) {
+    return { h: hsl.h, s: hsl.s, l: Math.min(100, Math.max(0, hsl.l + delta)) };
+  }
+
   /**
    * HSLからグラデーションパレットを計算してCSS変数に適用
    */
@@ -140,8 +186,24 @@ class ThemeManager {
     }
 
     // アクセントカラーの適用
-    root.style.setProperty('--accent', accentColor);
     const accentHsl = this.hexToHsl(accentColor);
+    const accentRgb = this.hexToRgb(accentColor);
+    const accentLight = this.hslToHex(this.clampLightness(accentHsl, 18));
+    const accent2 = this.hslToHex(this.clampLightness(this.adjustHsl(accentHsl, 120), 10));
+    const accent3 = this.hslToHex(this.clampLightness(this.adjustHsl(accentHsl, 210), 10));
+
+    root.style.setProperty('--accent', accentColor);
+    root.style.setProperty('--accent-light', accentLight);
+    root.style.setProperty('--accent2', accent2);
+    root.style.setProperty('--accent3', accent3);
+    root.style.setProperty('--accent-rgb', `${accentRgb.r}, ${accentRgb.g}, ${accentRgb.b}`);
+    root.style.setProperty('--accent2-rgb', `${this.hexToRgb(accent2).r}, ${this.hexToRgb(accent2).g}, ${this.hexToRgb(accent2).b}`);
+    root.style.setProperty('--accent3-rgb', `${this.hexToRgb(accent3).r}, ${this.hexToRgb(accent3).g}, ${this.hexToRgb(accent3).b}`);
+    root.style.setProperty('--warn', '#f59e0b');
+    root.style.setProperty('--warn-rgb', '245, 158, 11');
+    root.style.setProperty('--danger', '#ef4444');
+    root.style.setProperty('--danger-rgb', '239, 68, 68');
+    root.style.setProperty('--text-rgb', `${this.hexToRgb(isDarkBg ? '#f8fafc' : '#0f172a').r}, ${this.hexToRgb(isDarkBg ? '#f8fafc' : '#0f172a').g}, ${this.hexToRgb(isDarkBg ? '#f8fafc' : '#0f172a').b}`);
     root.style.setProperty('--border-hover', `hsla(${accentHsl.h}, ${accentHsl.s}%, 50%, 0.5)`);
   }
 

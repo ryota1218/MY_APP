@@ -1,7 +1,3 @@
-<script>
-  // index.htmlを経由せず直接開かれた場合は、メイン画面へリダイレクト
-  if (!window.app) window.location.href = '../index.html?tool=gantt';
-</script>
 <!-- 上タブ -->
 <div class="top-tabs">
   <div class="tab active" data-tab="edit">編集</div>
@@ -10,11 +6,13 @@
 
 <!-- 編集パネル -->
 <div id="edit-panel" class="edit-panel" style="padding: 16px; border-bottom: 1px solid var(--border); display: flex; gap: 12px; align-items: center;" data-panel="edit">
-  <button id="edit-project-dates-btn" class="btn-secondary" style="padding: 8px 16px; background: #64748b; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500;">📆 全体期間編集</button>
-  <button id="add-phase-btn" class="btn-primary" style="padding: 8px 16px; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500;">+ フェーズ追加</button>
-  <button id="add-task-btn" class="btn-primary" style="padding: 8px 16px; background: #06b6d4; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500;">+ タスク追加</button>
-  <button id="input-actual-btn" class="btn-info" style="padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500; display: none;">📅 実績入力</button>
-  <button id="delete-selected-btn" class="btn-danger" style="padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500; display: none;">🗑️ 削除</button>
+  <button data-action="editProjectDates" class="btn-secondary" style="padding: 8px 16px; background: #64748b; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500;">📆 全体期間編集</button>
+  <button data-action="addPhase" class="btn-primary" style="padding: 8px 16px; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500;">+ フェーズ追加</button>
+  <button data-action="addTask" class="btn-primary" style="padding: 8px 16px; background: #06b6d4; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500;">+ タスク追加</button>
+  <button data-action="inputActual" id="input-actual-btn" class="btn-info" style="padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500; display: none;">📅 実績入力</button>
+  <button data-action="deleteSelected" id="delete-selected-btn" class="btn-danger" style="padding: 8px 16px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500; display: none;">🗑️ 削除</button>
+  <button id="export-json-btn" data-action="exportJSON" class="btn-secondary" style="padding: 8px 16px; background: #4b5563; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500;">📥 JSON保存</button>
+  <button data-action="exportCSV" class="btn-secondary" style="padding: 8px 16px; background: #4b5563; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.875rem; font-weight: 500;">📄 CSV出力</button>
   <div style="flex: 1;"></div>
 </div>
 

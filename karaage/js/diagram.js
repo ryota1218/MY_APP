@@ -1,10 +1,10 @@
 /* ===== Diagram Tool (Architecture + UML) ===== */
 const archComponents = [
-  { icon:'🌐', label:'Webサーバー', color:'#7c3aed' },
+  { icon:'🌐', label:'Webサーバー', color:'var(--accent, #7c3aed)' },
   { icon:'🗄️', label:'データベース', color:'#06b6d4' },
   { icon:'⚙️', label:'APIサーバー', color:'#10b981' },
   { icon:'📦', label:'キャッシュ', color:'#f59e0b' },
-  { icon:'☁️', label:'CDN', color:'#8b5cf6' },
+  { icon:'☁️', label:'CDN', color:'var(--accent, #8b5cf6)' },
   { icon:'🔐', label:'認証', color:'#ef4444' },
   { icon:'📨', label:'メッセージキュー', color:'#ec4899' },
   { icon:'📊', label:'ログ/監視', color:'#14b8a6' },
@@ -14,14 +14,14 @@ const archComponents = [
   { icon:'📱', label:'モバイル', color:'#a855f7' },
 ];
 const umlComponents = [
-  { icon:'⬜', label:'画面', color:'#7c3aed' },
+  { icon:'⬜', label:'画面', color:'var(--accent, #7c3aed)' },
   { icon:'🔵', label:'開始', color:'#10b981' },
   { icon:'🔴', label:'終了', color:'#ef4444' },
   { icon:'◇', label:'分岐', color:'#f59e0b' },
   { icon:'▶️', label:'アクション', color:'#06b6d4' },
-  { icon:'📋', label:'フォーム', color:'#8b5cf6' },
+  { icon:'📋', label:'フォーム', color:'var(--accent, #8b5cf6)' },
   { icon:'📊', label:'ダッシュボード', color:'#14b8a6' },
-  { icon:'⚙️', label:'設定', color:'#6366f1' },
+  { icon:'⚙️', label:'設定', color:'#64748b' },
   { icon:'🔔', label:'通知', color:'#ec4899' },
   { icon:'📝', label:'入力', color:'#f97316' },
 ];
@@ -44,7 +44,7 @@ class DiagramTool {
     const palette = document.getElementById(this.prefix + '-palette');
     palette.innerHTML = '<div class="palette-title">コンポーネント</div>' +
       this.components.map((c,i) => `
-        <div class="palette-item" draggable="true" data-idx="${i}">
+        <div class="palette-item" draggable="true" data-idx="${i}" style="border-left: 3px solid ${c.color}">
           <span class="p-icon">${c.icon}</span><span>${c.label}</span>
         </div>`).join('') +
       '<div class="palette-title" style="margin-top:16px;">操作</div>' +
@@ -58,7 +58,7 @@ class DiagramTool {
     document.getElementById(this.prefix+'-connect-mode').addEventListener('click', () => {
       this.connectMode = !this.connectMode;
       document.getElementById(this.prefix+'-connect-mode').style.background =
-        this.connectMode ? 'rgba(124,58,237,0.2)' : '';
+        this.connectMode ? 'var(--accent-light, rgba(124,58,237,0.2))' : '';
       this.canvas.style.cursor = this.connectMode ? 'crosshair' : 'default';
       showToast(this.connectMode ? '接続モード: ONー ノードをクリックして接続' : '接続モード: OFF');
     });
@@ -92,7 +92,7 @@ class DiagramTool {
     el.id = node.id;
     el.style.left = node.x + 'px';
     el.style.top = node.y + 'px';
-    el.style.borderColor = node.color + '60';
+    el.style.borderColor = (typeof node.color === 'string' && node.color.includes('var')) ? node.color : node.color + '60';
     el.innerHTML = `<span class="node-icon">${node.icon}</span><span class="node-label">${node.label}</span>
       <span class="node-port port-top" data-port="top"></span>
       <span class="node-port port-bottom" data-port="bottom"></span>
@@ -158,7 +158,7 @@ class DiagramTool {
     this.canvas.querySelectorAll('.diagram-node').forEach(n => n.classList.remove('selected'));
   }
   drawConnections() {
-    this.svg.innerHTML = '<defs><marker id="arrow-'+this.prefix+'" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#7c3aed"/></marker></defs>';
+    this.svg.innerHTML = '<defs><marker id="arrow-'+this.prefix+'" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="var(--accent, #7c3aed)"/></marker></defs>';
     this.connections.forEach(conn => {
       const fromEl = document.getElementById(conn.from);
       const toEl = document.getElementById(conn.to);
@@ -174,7 +174,7 @@ class DiagramTool {
       const path = document.createElementNS('http://www.w3.org/2000/svg','path');
       path.setAttribute('d',`M${x1},${y1} Q${mx},${y1} ${mx},${my} Q${mx},${y2} ${x2},${y2}`);
       path.setAttribute('fill','none');
-      path.setAttribute('stroke','#7c3aed');
+      path.setAttribute('stroke','var(--accent, #7c3aed)');
       path.setAttribute('stroke-width','2');
       path.setAttribute('marker-end',`url(#arrow-${this.prefix})`);
       path.setAttribute('opacity','0.7');
