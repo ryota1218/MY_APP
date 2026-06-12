@@ -225,36 +225,30 @@ class GanttTool {
     a.href = URL.createObjectURL(blob); a.download = 'gantt_chart.csv'; a.click();
     showToast('CSVをエクスポートしました');
   }
+  deleteSelected() {
+    if (!this.selectedTaskId) return;
+    this.tasks = this.tasks.filter(t => t.id !== this.selectedTaskId);
+    this.selectedTaskId = null;
+    this.render();
+    showToast('タスクを削除しました');
+  }
+  exportJSON() {
+    console.log('Attempting to export Gantt data as JSON...');
+    const data = JSON.stringify(this.tasks, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'gantt_data.json';
+    a.click();
+    showToast('JSONファイルを保存しました');
+  }
+  editProjectDates() {
+    showToast('プロジェクト全体期間の編集機能は準備中です');
+  }
 }
 
-/* ===== App Controller ===== */
-class App {
-  constructor() {
-    this.gantt = new GanttTool();
-    this.initTabs();
-    this.initEvents();
-  }
-  initTabs() {
-    const tabs = document.querySelectorAll('.tab');
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        tabs.forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        const isCalc = tab.dataset.tab === 'calculator';
-        document.getElementById('edit-panel').style.display = isCalc ? 'none' : 'flex';
-        document.getElementById('edit-content').style.display = isCalc ? 'none' : 'flex';
-        document.getElementById('calculator-content').style.display = isCalc ? 'block' : 'none';
-        if (isCalc) this.gantt.updateCalculator();
-      });
-    });
-  }
-  initEvents() {
-    document.getElementById('add-phase-btn').onclick = () => this.gantt.addPhase();
-    document.getElementById('add-task-btn').onclick = () => this.gantt.addTask();
-    document.getElementById('input-actual-btn').onclick = () => this.gantt.inputActual();
-    document.getElementById('export-csv-btn').onclick = () => this.gantt.exportCSV();
-  }
-}
+// core.jsのAppクラスと重複するため、gantt.js内のApp定義とDOMContentLoadedでの初期化を削除します。
+// GanttToolの初期化は core.js の navigateTo('gantt') によって行われます。
 
 /* ===== Initialize App ===== */
 let app;

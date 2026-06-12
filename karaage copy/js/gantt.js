@@ -92,6 +92,11 @@ class GanttTool {
       exportCsvBtn.onclick = () => this.exportCSV();
     }
 
+    const exportJsonBtn = document.getElementById('export-json-btn');
+    if (exportJsonBtn) {
+      exportJsonBtn.onclick = () => this.exportJSON();
+    }
+
     // Calculator controls
     this.setupCalculatorControls();
     const tabs = document.querySelectorAll('.tab');
@@ -353,14 +358,15 @@ class GanttTool {
         const arrowIcon = isExpanded ? '▼' : '▶';
         
         tasksHtml += `
-          <div class="gantt-task-row phase-row ${this.selected.has(task.id) ? 'selected' : ''}" 
-               data-id="${task.id}" 
-               style="height:32px; position: relative; display: grid; grid-template-columns: 24px 1fr 65px 65px 65px 65px; align-items: center; gap: 8px; cursor: pointer; background: #f3f4f6; font-weight: 600;">
+          <div class="gantt-task-row phase ${this.selected.has(task.id) ? 'selected' : ''}" 
+               data-id="${task.id}"
+               style="display: grid; grid-template-columns: 24px 30px minmax(140px, 1fr) 70px 70px 70px 70px; align-items: center; gap: 8px;">
             <div style="display:flex; align-items:center; gap:8px; margin-left: 4px;">
               <input type="checkbox" class="task-checkbox" data-id="${task.id}" ${this.selected.has(task.id) ? 'checked' : ''} style="cursor: pointer;">
-              <span class="phase-toggle-btn" data-id="${task.id}" style="cursor: pointer; font-size: 1rem; padding-left: 0; color: ${PHASE_COLOR};">${arrowIcon}</span>
+              <span class="phase-toggle-btn" data-id="${task.id}" style="cursor: pointer; font-size: 1rem; padding-left: 0;">${arrowIcon}</span>
             </div>
-            <span style="font-weight: 600; color: ${PHASE_COLOR}; margin-left: 8px;">${this.escapeHTML(task.name)}</span>
+            <span></span>
+            <span style="font-weight: 600; color: var(--accent); margin-left: 8px;">${this.escapeHTML(task.name)}</span>
             <span style="font-size:0.75rem;color:var(--text-muted)">
               ${task.start.slice(5)}
             </span>
@@ -386,14 +392,15 @@ class GanttTool {
 
           for (const childTask of childTasks) {
             const statusIcon = childTask.actualEnd ? '✓' : '';
-            const statusColor = childTask.actualEnd ? '#10b981' : '#9ca3af';
+            const statusColor = childTask.actualEnd ? 'var(--accent3)' : 'var(--text-muted)';
             
             tasksHtml += `
               <div class="gantt-task-row ${this.selected.has(childTask.id) ? 'selected' : ''}" 
                    data-id="${childTask.id}" 
-                   style="height:32px; position: relative; display: grid; grid-template-columns: 24px 1fr 65px 65px 65px 65px; align-items: center; gap: 8px; padding-left: 16px; background: #ffffff; border-left: 3px solid ${childTask.color};">
+                   style="height:32px; position: relative; display: grid; grid-template-columns: 24px 30px minmax(140px, 1fr) 70px 70px 70px 70px; align-items: center; gap: 8px; padding-left: 0; background: var(--bg-card); border-left: 3px solid ${childTask.color};">
                 <input type="checkbox" class="task-checkbox" data-id="${childTask.id}" ${this.selected.has(childTask.id) ? 'checked' : ''} style="cursor: pointer; margin-left: 8px;">
-                <span style="padding-left:8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 8px;">
+                <span></span>
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 8px;">
                   ${this.escapeHTML(childTask.name)}
                   <span style="color: ${statusColor}; font-size: 0.875rem;">${statusIcon}</span>
                 </span>
@@ -449,7 +456,7 @@ class GanttTool {
     });
 
     // フェーズクリックで展開/収納
-    list.querySelectorAll('.gantt-task-row.phase-row').forEach(row => {
+    list.querySelectorAll('.gantt-task-row.phase').forEach(row => {
       row.addEventListener('click', (e) => {
         if (e.target.closest('.task-checkbox') || e.target.closest('.phase-toggle-btn')) return;
         const id = parseInt(row.dataset.id);
@@ -1301,6 +1308,37 @@ enableDrag() {
       this.render();
       showToast('削除しました');
     });
+  }
+
+  exportJSON() {
+    try {
+      const data = {
+        type: 'gantt',
+        tasks: this.tasks.map(t => ({
+          id: t.id,
+          name: t.name,
+          phase: t.phase,
+          start: t.start,
+          end: t.end,
+          actualStart: t.actualStart,
+          actualEnd: t.actualEnd,
+          color: t.color
+        }))
+      };
+      const jsonStr = JSON.stringify(data, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'gantt_chart.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+      showToast('JSONをエクスポートしました');
+    } catch (e) {
+      console.error('JSON Export Error:', e);
+      showToast('JSONのエクスポートに失敗しました');
+    }
   }
 
   exportCSV() {
