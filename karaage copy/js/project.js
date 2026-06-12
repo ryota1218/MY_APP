@@ -314,6 +314,9 @@ class ProjectTool {
       if (window.app.erdiagram && typeof window.app.erdiagram.loadDiagram === 'function') {
         loadPromises.push(window.app.erdiagram.loadDiagram(true));
       }
+      if (window.app.gantt && typeof window.app.gantt.loadGanttData === 'function') {
+        loadPromises.push(window.app.gantt.loadGanttData());
+      }
 
       try {
         await Promise.all(loadPromises);
