@@ -32,11 +32,11 @@ class ProfileManager {
     
     modalContainer.style.display = 'block';
     modalContainer.innerHTML = `
-      <div class="modal-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:10000;">
-        <div class="modal-content" style="background:#1e1e1e; padding:30px; border-radius:12px; width:100%; max-width:400px; border:1px solid #333;">
+      <div class="modal-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; z-index:10000;">
+        <div class="modal-content" style="background:var(--bg-card); padding:30px; border-radius:12px; width:100%; max-width:400px; border:1px solid var(--border); color:var(--text);">
           <h2 style="margin-bottom:20px; color:var(--accent);">プロフィール設定</h2>
           <div style="text-align:center; margin-bottom:20px;">
-            <div id="modal-avatar-preview" style="width:80px; height:80px; background:#333; border-radius:50%; margin:0 auto 10px; overflow:hidden; display:flex; align-items:center; justify-content:center; border:2px solid var(--accent);">
+            <div id="modal-avatar-preview" style="width:80px; height:80px; background:var(--bg-secondary); border-radius:50%; margin:0 auto 10px; overflow:hidden; display:flex; align-items:center; justify-content:center; border:2px solid var(--accent);">
               ${user.avatar ? `<img src="${user.avatar}" style="width:100%; height:100%; object-fit:cover;">` : '<i data-lucide="user" style="width:40px; height:40px;"></i>'}
             </div>
             <input type="file" id="avatar-input" accept="image/*" style="display:none">
@@ -88,15 +88,15 @@ class ProfileManager {
     const modalContainer = document.getElementById('modal-container');
     modalContainer.style.display = 'block';
     modalContainer.innerHTML = `
-      <div class="modal-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:10000;">
-        <div class="modal-content" style="background:#1e1e1e; padding:30px; border-radius:12px; width:100%; max-width:400px; border:1px solid #333;">
+      <div class="modal-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; z-index:10000;">
+        <div class="modal-content" style="background:var(--bg-card); padding:30px; border-radius:12px; width:100%; max-width:400px; border:1px solid var(--border); color:var(--text);">
           <h2 style="margin-bottom:18px; color:var(--accent);">本人確認</h2>
           <p style="margin-bottom:20px; color:var(--text-muted); font-size:0.9rem;">設定を変更するには現在のパスワードを入力してください。</p>
           <div class="form-group">
             <label>現在のパスワード</label>
             <input type="password" id="reauth-password" class="form-input" style="width:100%" placeholder="パスワードを入力">
           </div>
-          <div id="reauth-error" style="color:#ef4444; font-size:0.8rem; margin-top:8px; min-height:1.2rem;"></div>
+          <div id="reauth-error" style="color:var(--danger); font-size:0.8rem; margin-top:8px; min-height:1.2rem;"></div>
           <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
             <button class="btn btn-secondary" onclick="document.getElementById('modal-container').style.display='none'">キャンセル</button>
             <button id="verify-reauth-btn" class="btn btn-primary">認証する</button>
@@ -128,8 +128,8 @@ class ProfileManager {
     const modalContainer = document.getElementById('modal-container');
     modalContainer.style.display = 'block';
     modalContainer.innerHTML = `
-      <div class="modal-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:10000;">
-        <div class="modal-content" style="background:#1e1e1e; padding:20px; border-radius:12px; width:min(100%,520px); max-width:520px; max-height:88vh; overflow-y:auto; border:1px solid #333; box-sizing:border-box;">
+      <div class="modal-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; z-index:10000;">
+        <div class="modal-content" style="background:var(--bg-card); padding:20px; border-radius:12px; width:min(100%,520px); max-width:520px; max-height:88vh; overflow-y:auto; border:1px solid var(--border); color:var(--text); box-sizing:border-box;">
           <h2 style="margin-bottom:18px; color:var(--accent);">アカウント設定</h2>
           <div style="display:grid; gap:14px; margin-bottom:18px;">
             <div class="form-group">
@@ -143,7 +143,7 @@ class ProfileManager {
             <div class="form-group">
               <label>新しいパスワード</label>
               <input type="password" id="account-password" class="form-input" placeholder="6文字以上">
-              <div class="password-strength" style="margin-top:8px; font-size:0.85rem; color:#cbd5e1; display:flex; align-items:center; gap:8px;">
+              <div class="password-strength" style="margin-top:8px; font-size:0.85rem; color:var(--text-dim); display:flex; align-items:center; gap:8px;">
                 <span>強度: <strong id="account-password-strength-label">なし</strong></span>
                 <div class="password-strength-bar" style="flex:1; height:8px; border-radius:999px; background:rgba(148,163,184,0.16); overflow:hidden;">
                   <div id="account-password-strength-fill" class="password-strength-fill" style="height:100%; width:0%; border-radius:999px; background:transparent; transition: width 0.2s ease, background 0.2s ease;"></div>
@@ -156,14 +156,14 @@ class ProfileManager {
             </div>
             <div class="form-group">
               <label>セキュリティ</label>
-              <div style="padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px; color: #d1d5db;">
+              <div style="padding: 12px; background: var(--bg-glass); border-radius: 8px; color: var(--text-dim);">
                 <p style="margin:0 0 8px;">2段階認証は未設定です。セキュリティを強化したい場合は外部認証サービスと連携してください。</p>
                 <a href="#" id="send-security-tips" style="color: var(--accent); text-decoration: underline;">セキュリティのヒントを見る</a>
               </div>
             </div>
             <div class="form-group">
               <label>ログイン履歴</label>
-              <div id="account-login-history" style="max-height: 180px; overflow:auto; background: rgba(255,255,255,0.05); border: 1px solid #2d3748; border-radius: 8px; padding: 12px; color: #e5e7eb; font-size: 0.9rem;"></div>
+              <div id="account-login-history" style="max-height: 180px; overflow:auto; background: var(--bg-glass); border: 1px solid var(--border); border-radius: 8px; padding: 12px; color: var(--text-dim); font-size: 0.9rem;"></div>
             </div>
           </div>
           <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px;">
@@ -171,7 +171,7 @@ class ProfileManager {
             <button id="account-delete-btn" class="btn btn-danger btn-sm" style="padding: 8px 12px;">アカウントを削除</button>
           </div>
           <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px;">
-            <span id="account-settings-feedback" style="color:#9ca3af; font-size:0.9rem;"></span>
+            <span id="account-settings-feedback" style="color:var(--text-muted); font-size:0.9rem;"></span>
           </div>
           <div style="display:flex; justify-content:flex-end; gap:10px;">
             <button class="btn btn-secondary" onclick="document.getElementById('modal-container').style.display='none'">閉じる</button>
@@ -196,7 +196,7 @@ class ProfileManager {
         const label = date.toLocaleString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
         return `<div style="margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px;">
           <div style="font-weight:600;">${this.escapeHTML(label)}</div>
-          <div style="font-size:0.82rem; color:#94a3b8;">${this.escapeHTML(item.email)} ・ ${this.escapeHTML(item.userAgent.substring(0, 60))}…</div>
+          <div style="font-size:0.82rem; color:var(--text-muted);">${this.escapeHTML(item.email)} ・ ${this.escapeHTML(item.userAgent.substring(0, 60))}…</div>
         </div>`;
       }).join('');
     };
@@ -208,11 +208,11 @@ class ProfileManager {
       if (!password || !label || !fill) return;
 
       const strength = Auth.getPasswordStrength(password.value || '');
-      const colors = ['#ef4444', '#f59e0b', '#eab308', '#22c55e', '#10b981'];
+      const colors = ['var(--danger)', '#f59e0b', '#eab308', '#22c55e', 'var(--accent)'];
       const score = Math.max(0, Math.min(strength.score, 5));
       const index = score > 0 ? Math.min(score - 1, colors.length - 1) : 0;
       label.textContent = strength.label;
-      label.style.color = score === 0 ? '#cbd5e1' : colors[index];
+      label.style.color = score === 0 ? 'var(--text-dim)' : colors[index];
       fill.style.width = score === 0 ? '0%' : `${(score / 5) * 100}%`;
       fill.style.background = score === 0 ? 'transparent' : colors[index];
     };

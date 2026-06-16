@@ -1,7 +1,7 @@
 /* ===== Diagram Tool (Architecture + UML) ===== */
 const archComponents = [
   // ── サーバー / コンピュート ──
-  { icon: '<i data-lucide="globe" class="node-lucide-icon"></i>', label: 'Webブラウザ', color: '#7c3aed' },
+  { icon: '<i data-lucide="globe" class="node-lucide-icon"></i>', label: 'Webブラウザ', color: 'var(--accent, #7c3aed)' },
   { icon: '<i data-lucide="server" class="node-lucide-icon"></i>', label: 'サーバー', color: '#10b981' },
   { icon: '<i data-lucide="monitor" class="node-lucide-icon"></i>', label: 'アプリサーバー', color: '#3b82f6' },
   { icon: '<i data-lucide="zap" class="node-lucide-icon"></i>', label: 'Lambda/Function', color: '#f59e0b' },
@@ -15,11 +15,11 @@ const archComponents = [
   { icon: '<i data-lucide="search" class="node-lucide-icon"></i>', label: '検索エンジン', color: '#f97316' },
   // ── ネットワーク / セキュリティ ──
   { icon: '<i data-lucide="network" class="node-lucide-icon"></i>', label: 'ロードバランサー', color: '#f97316' },
-  { icon: '<i data-lucide="cloud" class="node-lucide-icon"></i>', label: 'CDN', color: '#8b5cf6' },
+  { icon: '<i data-lucide="cloud" class="node-lucide-icon"></i>', label: 'CDN', color: 'var(--accent-light, #8b5cf6)' },
   { icon: '<i data-lucide="shield-check" class="node-lucide-icon"></i>', label: 'ファイアウォール', color: '#ef4444' },
   { icon: '<i data-lucide="lock" class="node-lucide-icon"></i>', label: '認証/認可', color: '#ec4899' },
   { icon: '<i data-lucide="waypoints" class="node-lucide-icon"></i>', label: 'APIゲートウェイ', color: '#14b8a6' },
-  { icon: '<i data-lucide="at-sign" class="node-lucide-icon"></i>', label: 'DNS', color: '#64748b' },
+  { icon: '<i data-lucide="at-sign" class="node-lucide-icon"></i>', label: 'DNS', color: 'var(--text-muted, #64748b)' },
   { icon: '<i data-lucide="shield" class="node-lucide-icon"></i>', label: 'WAF', color: '#dc2626' },
   { icon: '<i data-lucide="key-round" class="node-lucide-icon"></i>', label: 'VPN', color: '#7c3aed' },
   { icon: '<i data-lucide="arrow-left-right" class="node-lucide-icon"></i>', label: 'リバースプロキシ', color: '#0ea5e9' },
@@ -40,7 +40,7 @@ const archComponents = [
   { icon: '<i data-lucide="layout-dashboard" class="node-lucide-icon"></i>', label: '管理画面', color: '#3b82f6' },
 ];
 const umlComponents = [
-  { icon: '<i data-lucide="box" class="node-lucide-icon"></i>', label: 'クラス', color: '#7c3aed' },
+  { icon: '<i data-lucide="box" class="node-lucide-icon"></i>', label: 'クラス', color: 'var(--accent, #7c3aed)' },
   { icon: '<i data-lucide="diamond" class="node-lucide-icon"></i>', label: 'インターフェース', color: '#3b82f6' },
   { icon: '<i data-lucide="folder" class="node-lucide-icon"></i>', label: 'パッケージ', color: '#06b6d4' },
   { icon: '<i data-lucide="user" class="node-lucide-icon"></i>', label: 'アクター', color: '#10b981' },
@@ -58,7 +58,7 @@ const umlDiagramTypes = {
     label: 'クラス図',
     components: [
       {
-        icon: '<i data-lucide="box" class="node-lucide-icon"></i>', label: 'クラス', color: '#7c3aed', nodeType: 'class-box',
+        icon: '<i data-lucide="box" class="node-lucide-icon"></i>', label: 'クラス', color: 'var(--accent, #7c3aed)', nodeType: 'class-box',
         defaults: { stereotype: '', attributes: ['-属性1 : 型'], methods: ['+操作1() : 戻り値型'] }
       },
       {
@@ -66,7 +66,7 @@ const umlDiagramTypes = {
         defaults: { stereotype: '«interface»', attributes: [], methods: ['+操作1() : 戻り値型'] }
       },
       {
-        icon: '<i data-lucide="box" class="node-lucide-icon"></i>', label: '抽象クラス', color: '#8b5cf6', nodeType: 'class-box',
+        icon: '<i data-lucide="box" class="node-lucide-icon"></i>', label: '抽象クラス', color: 'var(--accent-light, #8b5cf6)', nodeType: 'class-box',
         defaults: { stereotype: '«abstract»', attributes: ['-属性1 : 型'], methods: ['+操作1() : 戻り値型'] }
       },
       {
@@ -81,7 +81,7 @@ const umlDiagramTypes = {
     label: 'オブジェクト図',
     components: [
       { icon: '<i data-lucide="square" class="node-lucide-icon"></i>', label: 'オブジェクト', color: '#14b8a6' },
-      { icon: '<i data-lucide="link-2" class="node-lucide-icon"></i>', label: 'リンク', color: '#7c3aed' },
+      { icon: '<i data-lucide="link-2" class="node-lucide-icon"></i>', label: 'リンク', color: 'var(--accent, #7c3aed)' },
       { icon: '<i data-lucide="box" class="node-lucide-icon"></i>', label: 'クラス', color: '#3b82f6' },
       { icon: '<i data-lucide="file-text" class="node-lucide-icon"></i>', label: 'ノート', color: '#64748b' },
     ],
@@ -105,7 +105,7 @@ const umlDiagramTypes = {
       {
         icon: '<i data-lucide="box" class="node-lucide-icon"></i>',
         label: 'クラス',
-        color: '#7c3aed',
+        color: 'var(--accent, #7c3aed)',
         nodeType: 'class-box',
         defaults: { stereotype: '', attributes: ['+ attribute1: type'], methods: ['+ operation1()'] },
         size: { w: 180, h: 120 }
@@ -175,7 +175,7 @@ const umlDiagramTypes = {
           </div>
         `,
         label: '構造化クラス',
-        color: '#7c3aed',
+        color: 'var(--accent, #7c3aed)',
         nodeType: 'composite-class',
         defaults: { stereotype: '«structured class»' },
         size: { w: 320, h: 220 }
@@ -457,7 +457,7 @@ const umlDiagramTypes = {
       {
         icon: '<i data-lucide="monitor" class="node-lucide-icon"></i>',
         label: 'ノード',
-        color: '#7c3aed',
+        color: 'var(--accent, #7c3aed)',
         nodeType: 'deployment-node',
         defaults: { stereotype: '«node»' },
         size: { w: 200, h: 120 }
@@ -559,7 +559,7 @@ const umlDiagramTypes = {
   interaction: {
     label: '相互作用図',
     components: [
-      { icon: '<i data-lucide="square" class="node-lucide-icon"></i>', label: '相互作用', color: '#7c3aed' },
+      { icon: '<i data-lucide="square" class="node-lucide-icon"></i>', label: '相互作用', color: 'var(--accent, #7c3aed)' },
       { icon: '<i data-lucide="user" class="node-lucide-icon"></i>', label: 'ライフライン', color: '#3b82f6' },
       { icon: '<i data-lucide="mail" class="node-lucide-icon"></i>', label: 'メッセージ', color: '#06b6d4' },
       { icon: '<i data-lucide="play" class="node-lucide-icon"></i>', label: '制御フロー', color: '#10b981' },
@@ -568,7 +568,7 @@ const umlDiagramTypes = {
   },
 };
 const screenTransitionComponents = [
-  { icon: '<i data-lucide="monitor" class="node-lucide-icon"></i>', label: '画面', color: '#7c3aed' },
+  { icon: '<i data-lucide="monitor" class="node-lucide-icon"></i>', label: '画面', color: 'var(--accent, #7c3aed)' },
   { icon: '<i data-lucide="play-circle" class="node-lucide-icon"></i>', label: '開始', color: '#10b981' },
   { icon: '<i data-lucide="stop-circle" class="node-lucide-icon"></i>', label: '終了', color: '#ef4444' },
   { icon: '<i data-lucide="git-branch" class="node-lucide-icon"></i>', label: '分岐', color: '#f59e0b' },
@@ -699,6 +699,7 @@ class DiagramTool {
           this.initPalette();
           this.initCanvasEvents();
           this.initTextStyleControls();
+          this.initThemeListener();
         } else {
           setTimeout(tryInit, 50);
         }
@@ -709,6 +710,7 @@ class DiagramTool {
       this.initCanvasEvents();
       this.initTextStyleControls();
       this.initPropertyPanel();
+      this.initThemeListener();
     }
     this.applyUmlMode();
   }
@@ -866,6 +868,13 @@ class DiagramTool {
       }
     }
   }
+  /** テーマ変更イベントを検知してUIを更新する */
+  initThemeListener() {
+    document.addEventListener('theme-changed', () => {
+      this.initPalette();
+      this.drawConnections();
+    });
+  }
   initPalette() {
     // 以前の接続タイプセレクタをクリーンアップ
     const oldConnGroup = document.getElementById(this.prefix + '-conn-group');
@@ -878,8 +887,8 @@ class DiagramTool {
       palette.innerHTML = `
         <div class="palette-dropdown">
           <button type="button" class="palette-dropdown-btn" id="${this.prefix}-shape-toggle">◽ 図形を追加</button>
-          <div class="palette-dropdown-menu" id="${this.prefix}-shape-menu">
-            ${this.components.map((c, i) => `<button type="button" class="shape-option" draggable="true" data-idx="${i}" data-label="${c.label}" aria-label="${c.label}">${c.icon}</button>`).join('')}
+          <div class="palette-dropdown-menu" id="${this.prefix}-shape-menu" style="background-color: var(--bg-card, #111827); border: 1px solid var(--accent, #7c3aed); box-shadow: 0 8px 32px var(--shadow-color, rgba(0,0,0,0.4));">
+            ${this.components.map((c, i) => `<button type="button" class="shape-option" draggable="true" data-idx="${i}" data-label="${c.label}" aria-label="${c.label}" style="border: 1px solid color-mix(in srgb, ${c.color}, transparent 80%); border-left: 3px solid ${c.color}; color: ${c.color}; background-color: color-mix(in srgb, ${c.color}, transparent 92%); box-shadow: 0 2px 4px color-mix(in srgb, ${c.color}, transparent 96%)">${c.icon}</button>`).join('')}
           </div>
         </div>
         <button type="button" class="palette-action-btn sidebar-toggle-btn" id="${this.prefix}-sidebar-toggle" title="サイドバー表示切替">☰</button>
@@ -924,7 +933,7 @@ class DiagramTool {
     } else {
       palette.innerHTML = '<div class="palette-title">コンポーネント</div>' +
         this.components.map((c, i) => `
-          <div class="palette-item" draggable="true" data-idx="${i}">
+          <div class="palette-item" draggable="true" data-idx="${i}" style="border: 1px solid color-mix(in srgb, ${c.color}, transparent 85%); border-left: 3px solid ${c.color}; color: ${c.color}; background-color: color-mix(in srgb, ${c.color}, transparent 92%); margin-bottom: 4px; border-radius: 4px;">
             <span class="p-icon">${c.icon}</span><span>${c.label}</span>
           </div>`).join('') +
         '<div class="palette-title" style="margin-top:16px;">操作</div>' +
@@ -1061,7 +1070,7 @@ class DiagramTool {
     if (inlineStrip) {
       const visibleComponents = this.components.slice(0, this.inlineShapeLimit);
       inlineStrip.innerHTML = visibleComponents.map((c, i) =>
-        `<button type="button" class="inline-shape-btn" draggable="true" data-idx="${i}" data-label="${c.label}" aria-label="${c.label}"><span class="inline-shape-icon">${c.icon}</span></button>`
+        `<button type="button" class="inline-shape-btn" draggable="true" data-idx="${i}" data-label="${c.label}" aria-label="${c.label}" style="background-color: color-mix(in srgb, ${c.color}, transparent 90%); border: 1px solid color-mix(in srgb, ${c.color}, transparent 75%); border-radius: 4px;"><span class="inline-shape-icon" style="color: ${c.color}">${c.icon}</span></button>`
       ).join('');
       inlineStrip.querySelectorAll('.inline-shape-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -1570,14 +1579,16 @@ updateNodeDOM(node) {
   el.style.top = node.y + 'px';
 
   const isContainer = node.nodeType === 'subsystem' || node.behaviorType === 'systemBoundary' || node.behaviorType === 'compositeState' ||
-                      node.nodeType === 'deployment-node' || node.nodeType === 'deployment-device' || node.nodeType === 'deployment-env' ||
-                      node.nodeType === 'composite-class' || node.nodeType === 'composite-part' || node.nodeType === 'composite-frame' || node.nodeType === 'uml-package' ||
-                      node.nodeType === 'group-boundary';
+    node.nodeType === 'deployment-node' || node.nodeType === 'deployment-device' || node.nodeType === 'deployment-env' ||
+    node.nodeType === 'composite-class' || node.nodeType === 'composite-part' || node.nodeType === 'composite-frame' || node.nodeType === 'uml-package' ||
+    node.nodeType === 'group-boundary';
   const defaultZ = isContainer ? 1 : 10;
   el.style.zIndex = node.zIndex || defaultZ;
 
+  const borderColorBase = (typeof node.color === 'string' && node.color.includes('var')) ? node.color : (node.color || '#e5e7eb');
+
   if (node.nodeType === 'class-box') {
-    el.style.borderColor = (node.color || '#e5e7eb') + '80';
+    el.style.borderColor = borderColorBase + (borderColorBase.includes('var') ? '' : '80');
     // クラス名
     const labelEl = el.querySelector('.uml-class-name');
     if (labelEl) labelEl.textContent = node.label;
@@ -1611,7 +1622,7 @@ updateNodeDOM(node) {
       ).join('') || '<div class="uml-class-row uml-class-empty"></div>';
     }
   } else {
-    el.style.borderColor = (node.color || '#e5e7eb') + '60';
+    el.style.borderColor = borderColorBase + (borderColorBase.includes('var') ? '' : '60');
     const labelEl = el.querySelector('.node-label');
     if (labelEl) {
       labelEl.textContent = node.label;
@@ -2323,9 +2334,9 @@ _drawTimingWaveLines(waveSvg) {
 
 renderNode(node) {
   const isContainer = node.nodeType === 'subsystem' || node.behaviorType === 'systemBoundary' || node.behaviorType === 'compositeState' ||
-                      node.nodeType === 'deployment-node' || node.nodeType === 'deployment-device' || node.nodeType === 'deployment-env' ||
-                      node.nodeType === 'composite-class' || node.nodeType === 'composite-part' || node.nodeType === 'composite-frame' || node.nodeType === 'uml-package' ||
-                      node.nodeType === 'group-boundary';
+    node.nodeType === 'deployment-node' || node.nodeType === 'deployment-device' || node.nodeType === 'deployment-env' ||
+    node.nodeType === 'composite-class' || node.nodeType === 'composite-part' || node.nodeType === 'composite-frame' || node.nodeType === 'uml-package' ||
+    node.nodeType === 'group-boundary';
   const defaultZ = isContainer ? 1 : 10;
   const el = document.createElement('div');
   el.id = node.id;
@@ -2359,7 +2370,7 @@ renderNode(node) {
     const isEnv = node.nodeType === 'deployment-env';
     const stereoText = isEnv ? '«executionEnvironment»' : (node.nodeType === 'deployment-device' ? '«device»' : '«node»');
     const strokeDash = isEnv ? 'stroke-dasharray="4,4"' : '';
-    const color = node.color || '#7c3aed';
+    const color = node.color || 'var(--accent, #7c3aed)';
     
     el.innerHTML = `
       <svg class="deployment-3d-bg" width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute; top:0; left:0; width:100%; height:100%; z-index:1; pointer-events:none;">
@@ -2412,7 +2423,7 @@ renderNode(node) {
   } else if (node.nodeType === 'composite-class') {
     // コンポジット構造図用 構造化クラス (左上にコンポーネントの2つ突起があるデザイン)
     el.className = 'diagram-node uml-composite-class node-type-composite-class';
-    el.style.borderColor = node.color || '#7c3aed';
+    el.style.borderColor = node.color || 'var(--accent, #7c3aed)';
     if (node.width) el.style.width = node.width + 'px';
     if (node.height) el.style.height = node.height + 'px';
     
@@ -2475,12 +2486,12 @@ renderNode(node) {
   } else if (node.nodeType === 'composite-frame') {
     // 上部に名前帯を持つフレーム
     el.className = 'diagram-node uml-composite-frame node-type-composite-frame';
-    el.style.borderColor = node.color || '#8b5cf6';
+    el.style.borderColor = node.color || 'var(--accent-light, #8b5cf6)';
     if (node.width) el.style.width = node.width + 'px';
     if (node.height) el.style.height = node.height + 'px';
     
     el.innerHTML = `
-      <div class="composite-frame-header" style="width:100%; height:28px; border-bottom:1.5px solid ${node.color || '#8b5cf6'}; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.03); box-sizing:border-box;">
+      <div class="composite-frame-header" style="width:100%; height:28px; border-bottom:1.5px solid ${node.color || 'var(--accent-light, #8b5cf6)'}; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.03); box-sizing:border-box;">
         <span class="node-label" style="font-weight:600; color:#ffffff;">${this.escapeHtml(node.label)}</span>
       </div>
       <div class="composite-frame-content" style="width:100%; height:calc(100% - 28px);"></div>
@@ -2599,13 +2610,14 @@ renderNode(node) {
   } else if (node.nodeType === 'class-box') {
     // UMLクラス図の3コンパートメントノード
     el.className = 'diagram-node uml-class-box';
-    el.style.borderColor = node.color + '80';
+    const borderColorBase = (typeof node.color === 'string' && node.color.includes('var')) ? node.color : (node.color || '#e5e7eb');
+    el.style.borderColor = borderColorBase + (borderColorBase.includes('var') ? '' : '80');
     const stereo = node.stereotype ? `<div class="uml-class-stereotype">${node.stereotype}</div>` : '';
     const attrsHtml = (node.attributes || []).map(a => `<div class="uml-class-row">${this.escapeHtml(a)}</div>`).join('');
     const methodsHtml = (node.methods || []).map(m => `<div class="uml-class-row">${this.escapeHtml(m)}</div>`).join('');
     el.innerHTML = `
-        <div class="uml-class-header" style="border-bottom-color:${node.color}40">
-          ${stereo}
+        <div class="uml-class-header" style="border-bottom-color:${borderColorBase}${borderColorBase.includes('var') ? '' : '40'}">
+        ${stereo}
           <div class="uml-class-name node-label">${this.escapeHtml(node.label)}</div>
         </div>
         <div class="uml-class-section uml-class-attrs" style="border-bottom-color:${node.color}40">
@@ -2622,7 +2634,8 @@ renderNode(node) {
     // 通常のノード
     el.className = 'diagram-node';
     if (node.nodeType) el.classList.add('node-type-' + node.nodeType);
-    el.style.borderColor = node.color + '60';
+    const borderColorBase = (typeof node.color === 'string' && node.color.includes('var')) ? node.color : (node.color || '#e5e7eb');
+    el.style.borderColor = borderColorBase + (borderColorBase.includes('var') ? '' : '60');
     if (node.width) el.style.width = node.width + 'px';
     if (node.height) el.style.height = node.height + 'px';
     const subtextTopHtml = node.subtextTop ? `<span class="node-subtext top">${this.escapeHtml(node.subtextTop)}</span>` : '';
@@ -2637,9 +2650,9 @@ renderNode(node) {
   }
 
   const isResizable = node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary' || node.behaviorType === 'fragment' || node.behaviorType === 'execSpec' || window.TimingDiagramLibrary?.isTimingNode(node) ||
-                      node.nodeType === 'deployment-node' || node.nodeType === 'deployment-device' || node.nodeType === 'deployment-env' || node.nodeType === 'deployment-artifact' ||
-                      node.nodeType === 'composite-class' || node.nodeType === 'composite-part' || node.nodeType === 'composite-collaboration' || node.nodeType === 'composite-frame' || node.nodeType === 'text-node' ||
-                      node.nodeType === 'uml-package' || node.nodeType === 'n-ary-association' || node.nodeType === 'group-boundary';
+    node.nodeType === 'deployment-node' || node.nodeType === 'deployment-device' || node.nodeType === 'deployment-env' || node.nodeType === 'deployment-artifact' ||
+    node.nodeType === 'composite-class' || node.nodeType === 'composite-part' || node.nodeType === 'composite-collaboration' || node.nodeType === 'composite-frame' || node.nodeType === 'text-node' ||
+    node.nodeType === 'uml-package' || node.nodeType === 'n-ary-association' || node.nodeType === 'group-boundary';
   if (isResizable) {
     ['right', 'bottom', 'bottom-right'].forEach(dir => {
       const handle = document.createElement('span');
@@ -2662,9 +2675,9 @@ renderNode(node) {
       const startWidth = node.width || el.getBoundingClientRect().width;
       const startHeight = node.height || el.getBoundingClientRect().height;
       const isResizable = node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary' || node.behaviorType === 'fragment' || node.behaviorType === 'execSpec' || window.TimingDiagramLibrary?.isTimingNode(node) ||
-                          node.nodeType === 'deployment-node' || node.nodeType === 'deployment-device' || node.nodeType === 'deployment-env' || node.nodeType === 'deployment-artifact' ||
-                          node.nodeType === 'composite-class' || node.nodeType === 'composite-part' || node.nodeType === 'composite-collaboration' || node.nodeType === 'composite-frame' || node.nodeType === 'text-node' ||
-                          node.nodeType === 'uml-package' || node.nodeType === 'n-ary-association' || node.nodeType === 'group-boundary';
+        node.nodeType === 'deployment-node' || node.nodeType === 'deployment-device' || node.nodeType === 'deployment-env' || node.nodeType === 'deployment-artifact' ||
+        node.nodeType === 'composite-class' || node.nodeType === 'composite-part' || node.nodeType === 'composite-collaboration' || node.nodeType === 'composite-frame' || node.nodeType === 'text-node' ||
+        node.nodeType === 'uml-package' || node.nodeType === 'n-ary-association' || node.nodeType === 'group-boundary';
       let minWidth = 120, minHeight = 80;
       if (node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary' || node.nodeType === 'group-boundary') { minWidth = 200; minHeight = 100; }
       else if (node.behaviorType === 'fragment') { minWidth = 150; minHeight = 80; }
@@ -2906,10 +2919,10 @@ deselectAll() {
 bringToFront() {
   if (!this.selectedNode) return;
   const isContainer = this.selectedNode.nodeType === 'subsystem' || this.selectedNode.behaviorType === 'systemBoundary' || this.selectedNode.behaviorType === 'compositeState' ||
-                      this.selectedNode.nodeType === 'deployment-node' || this.selectedNode.nodeType === 'deployment-device' || this.selectedNode.nodeType === 'deployment-env' ||
-                      this.selectedNode.nodeType === 'composite-class' || this.selectedNode.nodeType === 'composite-part' || this.selectedNode.nodeType === 'composite-frame' || this.selectedNode.nodeType === 'uml-package' ||
-                      this.selectedNode.nodeType === 'group-boundary';
-
+    this.selectedNode.nodeType === 'deployment-node' || this.selectedNode.nodeType === 'deployment-device' || this.selectedNode.nodeType === 'deployment-env' ||
+    this.selectedNode.nodeType === 'composite-class' || this.selectedNode.nodeType === 'composite-part' || this.selectedNode.nodeType === 'composite-frame' || this.selectedNode.nodeType === 'uml-package' ||
+    this.selectedNode.nodeType === 'group-boundary';
+  
   if (isContainer) {
     const containerNodes = this.nodes.filter(n => n.nodeType === 'subsystem' || n.behaviorType === 'systemBoundary' || n.behaviorType === 'compositeState' ||
                                                   n.nodeType === 'deployment-node' || n.nodeType === 'deployment-device' || n.nodeType === 'deployment-env' ||
@@ -2930,10 +2943,10 @@ bringToFront() {
 sendToBack() {
   if (!this.selectedNode) return;
   const isContainer = this.selectedNode.nodeType === 'subsystem' || this.selectedNode.behaviorType === 'systemBoundary' || this.selectedNode.behaviorType === 'compositeState' ||
-                      this.selectedNode.nodeType === 'deployment-node' || this.selectedNode.nodeType === 'deployment-device' || this.selectedNode.nodeType === 'deployment-env' ||
-                      this.selectedNode.nodeType === 'composite-class' || this.selectedNode.nodeType === 'composite-part' || this.selectedNode.nodeType === 'composite-frame' || this.selectedNode.nodeType === 'uml-package' ||
-                      this.selectedNode.nodeType === 'group-boundary';
-
+    this.selectedNode.nodeType === 'deployment-node' || this.selectedNode.nodeType === 'deployment-device' || this.selectedNode.nodeType === 'deployment-env' ||
+    this.selectedNode.nodeType === 'composite-class' || this.selectedNode.nodeType === 'composite-part' || this.selectedNode.nodeType === 'composite-frame' || this.selectedNode.nodeType === 'uml-package' ||
+    this.selectedNode.nodeType === 'group-boundary';
+  
   if (isContainer) {
     const containerNodes = this.nodes.filter(n => n.nodeType === 'subsystem' || n.behaviorType === 'systemBoundary' || n.behaviorType === 'compositeState' ||
                                                   n.nodeType === 'deployment-node' || n.nodeType === 'deployment-device' || n.nodeType === 'deployment-env' ||
@@ -3602,17 +3615,17 @@ drawConnections() {
   const p = this.prefix;
   // SVGマーカー定義（各接続タイプ用）
   this.svg.innerHTML = `<defs>
-      <marker id="arrow-${p}" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#7c3aed"/></marker>
-      <marker id="arrow-open-${p}" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" style="fill:var(--bg-card, #111827)" stroke="#7c3aed" stroke-width="1.5"/></marker>
-      <marker id="arrow-vee-${p}" markerWidth="12" markerHeight="10" refX="10" refY="5" orient="auto"><path d="M 0 1 L 10 5 L 0 9" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></marker>
-      <marker id="diamond-empty-${p}" markerWidth="14" markerHeight="10" refX="0" refY="5" orient="auto"><polygon points="0 5, 7 0, 14 5, 7 10" style="fill:var(--bg-card, #111827)" stroke="#7c3aed" stroke-width="1.5"/></marker>
-      <marker id="lollipop-${p}" markerWidth="14" markerHeight="14" refX="0" refY="7" orient="auto"><circle cx="7" cy="7" r="6" style="fill:var(--bg-card, #111827)" stroke="#7c3aed" stroke-width="1.5"/></marker>
-      <marker id="socket-${p}" markerWidth="10" markerHeight="16" refX="8" refY="8" orient="auto"><path d="M 0 1 A 7 7 0 0 1 0 15" fill="none" stroke="#7c3aed" stroke-width="1.5"/></marker>
-      <marker id="diamond-fill-${p}" markerWidth="14" markerHeight="10" refX="0" refY="5" orient="auto"><polygon points="0 5, 7 0, 14 5, 7 10" fill="#7c3aed" stroke="#7c3aed" stroke-width="1"/></marker>
-      <marker id="triangle-empty-${p}" markerWidth="12" markerHeight="10" refX="12" refY="5" orient="auto"><polygon points="0 0, 12 5, 0 10" style="fill:var(--bg-card, #111827)" stroke="#7c3aed" stroke-width="1.5"/></marker>
-      <marker id="x-mark-${p}" markerWidth="10" markerHeight="10" refX="0" refY="5" orient="auto"><circle cx="5" cy="5" r="4" style="fill:var(--bg-card, #111827)" stroke="none"/><line x1="2" y1="2" x2="8" y2="8" stroke="#7c3aed" stroke-width="2"/><line x1="8" y1="2" x2="2" y2="8" stroke="#7c3aed" stroke-width="2"/></marker>
+      <marker id="arrow-${p}" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="var(--accent, #7c3aed)"/></marker>
+      <marker id="arrow-open-${p}" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" style="fill:var(--bg-card, #111827)" stroke="var(--accent, #7c3aed)" stroke-width="1.5"/></marker>
+      <marker id="arrow-vee-${p}" markerWidth="12" markerHeight="10" refX="10" refY="5" orient="auto"><path d="M 0 1 L 10 5 L 0 9" fill="none" stroke="var(--accent, #7c3aed)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></marker>
+      <marker id="diamond-empty-${p}" markerWidth="14" markerHeight="10" refX="0" refY="5" orient="auto"><polygon points="0 5, 7 0, 14 5, 7 10" style="fill:var(--bg-card, #111827)" stroke="var(--accent, #7c3aed)" stroke-width="1.5"/></marker>
+      <marker id="lollipop-${p}" markerWidth="14" markerHeight="14" refX="0" refY="7" orient="auto"><circle cx="7" cy="7" r="6" style="fill:var(--bg-card, #111827)" stroke="var(--accent, #7c3aed)" stroke-width="1.5"/></marker>
+      <marker id="socket-${p}" markerWidth="10" markerHeight="16" refX="8" refY="8" orient="auto"><path d="M 0 1 A 7 7 0 0 1 0 15" fill="none" stroke="var(--accent, #7c3aed)" stroke-width="1.5"/></marker>
+      <marker id="diamond-fill-${p}" markerWidth="14" markerHeight="10" refX="0" refY="5" orient="auto"><polygon points="0 5, 7 0, 14 5, 7 10" fill="var(--accent, #7c3aed)" stroke="var(--accent, #7c3aed)" stroke-width="1"/></marker>
+      <marker id="triangle-empty-${p}" markerWidth="12" markerHeight="10" refX="12" refY="5" orient="auto"><polygon points="0 0, 12 5, 0 10" style="fill:var(--bg-card, #111827)" stroke="var(--accent, #7c3aed)" stroke-width="1.5"/></marker>
+      <marker id="x-mark-${p}" markerWidth="10" markerHeight="10" refX="0" refY="5" orient="auto"><circle cx="5" cy="5" r="4" style="fill:var(--bg-card, #111827)" stroke="none"/><line x1="2" y1="2" x2="8" y2="8" stroke="var(--accent, #7c3aed)" stroke-width="2"/><line x1="8" y1="2" x2="2" y2="8" stroke="var(--accent, #7c3aed)" stroke-width="2"/></marker>
     </defs>`;
-
+  
   this.canvas.querySelectorAll('.diagram-conn-label, .diagram-conn-multiplicity, .diagram-conn-port').forEach(el => el.remove());
 
   // ── 全ノードの接続点分散用: 各面（上下左右）の接続数を事前集計 ──
@@ -3990,8 +4003,8 @@ drawConnections() {
     const isSelected = this.selectedConnection === conn;
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute('d', dStr);
-    path.setAttribute('stroke', isSelected ? '#f59e0b' : '#7c3aed');
-    path.setAttribute('stroke-width', isSelected ? '3' : '2');
+    path.setAttribute('stroke', isSelected ? 'var(--warn, #f59e0b)' : 'var(--accent, #7c3aed)');
+    path.setAttribute('stroke-width', isSelected ? '4' : '2');
     path.setAttribute('fill', 'none');
     path.setAttribute('pointer-events', 'visibleStroke');
     path.setAttribute('opacity', '0.8');

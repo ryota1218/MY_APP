@@ -755,8 +755,8 @@ class ERDiagramTool {
   drawRelations() {
     this.svg.innerHTML = `
       <defs>
-        <marker id="er-arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-          <polygon points="0 0,10 3.5,0 7" fill="#06b6d4"/>
+        <marker id="er-arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto" fill="var(--accent, #06b6d4)">
+          <polygon points="0 0,10 3.5,0 7"/>
         </marker>
       </defs>`;
       
@@ -795,7 +795,7 @@ class ERDiagramTool {
       const line = document.createElementNS('http://www.w3.org/2000/svg','line');
       line.setAttribute('x1',x1); line.setAttribute('y1',y1);
       line.setAttribute('x2',x2); line.setAttribute('y2',y2);
-      line.setAttribute('stroke','#06b6d4'); line.setAttribute('stroke-width','2');
+      line.setAttribute('stroke','var(--accent, #06b6d4)'); line.setAttribute('stroke-width','2');
       if (startMarker) line.setAttribute('marker-start', startMarker);
       if (endMarker) line.setAttribute('marker-end', endMarker);
       line.setAttribute('opacity','0.6');
@@ -804,7 +804,7 @@ class ERDiagramTool {
       // Label
       const text = document.createElementNS('http://www.w3.org/2000/svg','text');
       text.setAttribute('x',(x1+x2)/2+8); text.setAttribute('y',(y1+y2)/2-8);
-      text.setAttribute('fill','#06b6d4'); text.setAttribute('font-size','12');
+      text.setAttribute('fill','var(--accent, #06b6d4)'); text.setAttribute('font-size','12');
       text.setAttribute('font-family','Inter,sans-serif');
       text.textContent = rel.label;
       g.appendChild(text);
