@@ -177,12 +177,14 @@ class ThemeManager {
       root.style.setProperty('--text-muted', '#94a3b8');
       root.style.setProperty('--border', 'rgba(255,255,255,0.15)');
       root.style.setProperty('--bg-glass', 'rgba(255,255,255,0.05)');
+      root.style.setProperty('--grid-dot-color', 'rgba(255,255,255,0.15)');
     } else {
       root.style.setProperty('--text', '#0f172a');
       root.style.setProperty('--text-dim', '#334155');
       root.style.setProperty('--text-muted', '#64748b');
       root.style.setProperty('--border', 'rgba(0,0,0,0.15)');
       root.style.setProperty('--bg-glass', 'rgba(0,0,0,0.03)');
+      root.style.setProperty('--grid-dot-color', 'rgba(0,0,0,0.1)');
     }
 
     // アクセントカラーの適用
@@ -205,6 +207,41 @@ class ThemeManager {
     root.style.setProperty('--danger-rgb', '239, 68, 68');
     root.style.setProperty('--text-rgb', `${this.hexToRgb(isDarkBg ? '#f8fafc' : '#0f172a').r}, ${this.hexToRgb(isDarkBg ? '#f8fafc' : '#0f172a').g}, ${this.hexToRgb(isDarkBg ? '#f8fafc' : '#0f172a').b}`);
     root.style.setProperty('--border-hover', `hsla(${accentHsl.h}, ${accentHsl.s}%, 50%, 0.5)`);
+
+    // UMLナビゲーション・サブメニュー用の詳細テーマ変数
+    root.style.setProperty('--nav-active-bg', `rgba(${accentRgb.r}, ${accentRgb.g}, ${accentRgb.b}, 0.15)`);
+    root.style.setProperty('--nav-active-text', accentColor);
+    root.style.setProperty('--nav-submenu-bg', subBgColor);
+    root.style.setProperty('--nav-submenu-border', `rgba(${accentRgb.r}, ${accentRgb.g}, ${accentRgb.b}, 0.3)`);
+
+    // 動的なUI要素のスタイル強制適用（CSSファイルが未対応の場合のフォールバック）
+    const styleId = 'theme-dynamic-overrides';
+    let styleTag = document.getElementById(styleId);
+    if (!styleTag) {
+      styleTag = document.createElement('style');
+      styleTag.id = styleId;
+      document.head.appendChild(styleTag);
+    }
+    styleTag.textContent = `
+      #uml-submenu a.active { background: var(--nav-active-bg) !important; color: var(--nav-active-text) !important; font-weight: 600; }
+      #uml-submenu a:hover:not(.active) { background: var(--bg-glass); }
+      .statusbar-preset.active { background: var(--nav-active-bg) !important; color: var(--nav-active-text) !important; border-color: var(--nav-active-text) !important; }
+      .layout-element.selected { border: 2px solid var(--accent) !important; box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.3); }
+      .layout-element .resize-handle { background: var(--accent); }
+      .inline-shape-btn:hover { border-color: var(--accent) !important; background: var(--nav-active-bg) !important; }
+      .layout-palette-dropdown { display: none; position: absolute; top: calc(100% + 8px); right: 0; background: var(--nav-submenu-bg) !important; border: 1px solid var(--nav-submenu-border) !important; border-radius: 8px; padding: 8px; min-width: 200px; box-shadow: var(--shadow); z-index: 1000; animation: fadeIn 0.2s ease; }
+      .layout-palette-dropdown.open { display: block; }
+      .layout-palette-dropdown .palette-title { color: var(--text-muted); font-size: 0.7rem; font-weight: 700; padding: 4px 8px 8px; margin-bottom: 6px; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.05em; }
+      .palette-item { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; color: var(--text-dim); font-size: 0.9rem; }
+      .palette-item:hover { background: var(--nav-active-bg) !important; color: var(--nav-active-text) !important; }
+      .palette-item .p-icon { color: var(--accent); display: flex; align-items: center; justify-content: center; }
+      .palette-item .palette-icon { width: 18px; height: 18px; }
+      .inline-shape-btn { background: var(--bg-glass); border: 1px solid var(--border); color: var(--text-muted); transition: all 0.2s; }
+      .inline-shape-btn:hover { color: var(--accent) !important; }
+    `;
+
+    // 他のモジュール（DiagramToolなど）がテーマ変更を検知できるようにカスタムイベントを発火
+    document.dispatchEvent(new CustomEvent('theme-changed', { detail: { mode: this.currentTheme.mode, theme: this.currentTheme } }));
   }
 
   isDark(hex) {

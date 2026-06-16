@@ -1,6 +1,6 @@
 <style>
   .layout-canvas.grid-active {
-    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.3) 1.5px, transparent 1.5px);
+    background-image: radial-gradient(circle, var(--grid-dot-color, rgba(128, 128, 128, 0.15)) 1.5px, transparent 1.5px);
     background-size: 20px 20px;
   }
 </style>
@@ -32,12 +32,15 @@
       <div class="editor-header-sep"></div>
     </div>
     <div class="editor-header-group">
+      <button class="editor-header-btn" data-label="グリッド状に整列" aria-label="グリッド状に整列" data-action="autoLayout"><i data-lucide="layout-grid" class="editor-icon"></i></button>
+      <div class="editor-header-sep"></div>
       <button class="editor-header-btn" data-label="インポート" aria-label="インポート" data-action="importJSONFromText"><i data-lucide="folder-input" class="editor-icon"></i></button>
       
       <div class="export-dropdown" style="position: relative; display: inline-flex;">
         <button class="editor-header-btn" data-label="エクスポート" aria-label="エクスポート" onclick="const menu = this.nextElementSibling; const isVisible = menu.style.display === 'flex'; document.querySelectorAll('.export-dropdown-content').forEach(el => el.style.display = 'none'); menu.style.display = isVisible ? 'none' : 'flex'; event.stopPropagation();"><i data-lucide="download" class="editor-icon"></i></button>
         <div class="export-dropdown-content" style="display: none; position: absolute; right: 0; top: 100%; background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; padding: 4px; min-width: 140px; flex-direction: column; gap: 2px;">
           <button class="editor-header-btn" style="width: 100%; justify-content: flex-start; padding: 6px 12px; border-radius: 4px;" data-action="exportJSON"><i data-lucide="save" class="editor-icon" style="margin-right: 8px; width: 16px; height: 16px;"></i>JSON保存</button>
+          <button class="editor-header-btn" style="width: 100%; justify-content: flex-start; padding: 6px 12px; border-radius: 4px;" data-action="exportSVG"><i data-lucide="image" class="editor-icon" style="margin-right: 8px; width: 16px; height: 16px;"></i>SVG保存</button>
           <button class="editor-header-btn" style="width: 100%; justify-content: flex-start; padding: 6px 12px; border-radius: 4px;" data-action="exportPNG"><i data-lucide="image" class="editor-icon" style="margin-right: 8px; width: 16px; height: 16px;"></i>PNG保存</button>
         </div>
       </div>
@@ -54,7 +57,7 @@
 <div class="toolbar layout-toolbar">
   <div class="toolbar-left-group">
     <button class="btn btn-sm btn-secondary sidebar-toggle-btn" data-action="toggleSidebar" title="サイドバー開閉">
-      <span style="color: white; font-size: 1.2rem; line-height: 1;">☰</span>
+      <span style="color: var(--text); font-size: 1.2rem; line-height: 1;">☰</span>
     </button>
     <button class="btn btn-sm btn-secondary" data-action="clearAll">クリア</button>
     <div class="toolbar-sep"></div>
@@ -92,7 +95,7 @@
     <div class="layout-palette-dropdown" id="layout-palette-dropdown"></div>
   </div>
 </div>
-<div class="diagram-workspace layout-workspace-wrap">
+<div class="diagram-workspace layout-workspace-wrap" style="background: var(--bg-primary);">
   <div class="layout-canvas-container" id="layout-canvas-container">
     <div class="layout-canvas grid-active" id="layout-canvas"></div>
   </div>

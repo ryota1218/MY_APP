@@ -5,6 +5,7 @@ class LayoutTool {
     this.elemIdCounter = 0;
     this.selectedEl = null;
     this.undoHistory = [];
+    this.redoHistory = [];
     this.isApplyingUndo = false;
     this.canvasMode = 'free'; // 'free' or preset name
     this.canvasW = 960;
@@ -44,18 +45,27 @@ class LayoutTool {
     }
   }
 
+  captureSnapshot() {
+    return {
+      elements: this.elements.map(el => ({ ...el })),
+      elemIdCounter: this.elemIdCounter,
+    };
+  }
+
+  saveSnapshot() { this.pushUndoAction({ type: 'clearAll', snapshot: this.captureSnapshot() }); }
+
   initPalette() {
     const items = [
-      { icon:'panel-top', label:'ヘッダー', w:360, h:50, bg:'#e2e8f0' },
-      { icon:'panel-left', label:'サイドバー', w:120, h:300, bg:'#f1f5f9' },
-      { icon:'mouse-pointer-2', label:'ボタン', w:120, h:40, bg:'#7c3aed', textColor:'#fff' },
-      { icon:'table', label:'テーブル', w:300, h:180, bg:'#f8fafc' },
-      { icon:'image', label:'画像', w:200, h:150, bg:'#e2e8f0' },
+      { icon:'panel-top', label:'ヘッダー', w:360, h:50, bg:'var(--bg-glass)' },
+      { icon:'panel-left', label:'サイドバー', w:120, h:300, bg:'var(--bg-glass)' },
+      { icon:'mouse-pointer-2', label:'ボタン', w:120, h:40, bg:'var(--accent)', textColor:'#fff' },
+      { icon:'table', label:'テーブル', w:300, h:180, bg:'var(--bg-card)' },
+      { icon:'image', label:'画像', w:200, h:150, bg:'var(--bg-glass)' },
       { icon:'type', label:'テキスト', w:200, h:30, bg:'transparent' },
-      { icon:'text-cursor-input', label:'フォーム', w:280, h:200, bg:'#f8fafc' },
-      { icon:'layout-template', label:'カード', w:200, h:140, bg:'#fff' },
-      { icon:'panel-bottom', label:'フッター', w:360, h:40, bg:'#e2e8f0' },
-      { icon:'search', label:'検索バー', w:240, h:36, bg:'#fff' },
+      { icon:'text-cursor-input', label:'フォーム', w:280, h:200, bg:'var(--bg-card)' },
+      { icon:'layout-template', label:'カード', w:200, h:140, bg:'var(--bg-card)' },
+      { icon:'panel-bottom', label:'フッター', w:360, h:40, bg:'var(--bg-glass)' },
+      { icon:'search', label:'検索バー', w:240, h:36, bg:'var(--bg-card)' },
     ];
     this.paletteItems = items;
 
@@ -192,6 +202,15 @@ class LayoutTool {
         }
       }
     });
+
+    // ドロップダウン外クリックで閉じる処理
+    document.addEventListener('click', e => {
+      const dropdown = document.getElementById('layout-palette-dropdown');
+      const btn = document.getElementById('layout-shape-add-btn');
+      if (dropdown && dropdown.classList.contains('open') && !dropdown.contains(e.target) && !btn.contains(e.target)) {
+        dropdown.classList.remove('open');
+      }
+    });
   }
 
   initPropertyPanel() {
@@ -301,7 +320,7 @@ class LayoutTool {
     const div = document.getElementById(el.id);
     if (!div) return;
 
-    let borderStyle = el.bg === 'transparent' ? 'none' : '2px dashed #cbd5e1';
+    let borderStyle = el.bg === 'transparent' ? 'none' : '2px dashed var(--border)';
     if (el.imageUrl) borderStyle = 'none';
 
     div.style.left = el.x + 'px';
@@ -382,7 +401,7 @@ class LayoutTool {
     div.className = 'layout-element';
     div.id = el.id;
     
-    let borderStyle = el.bg === 'transparent' ? 'none' : '2px dashed #cbd5e1';
+    let borderStyle = el.bg === 'transparent' ? 'none' : '2px dashed var(--border)';
     if (el.imageUrl) borderStyle = 'none';
     
     const fontSize = el.fontSize || 14;
@@ -558,6 +577,7 @@ class LayoutTool {
   pushUndoAction(action) {
     if (this.isApplyingUndo || !action) return;
     this.undoHistory.push(action);
+    this.redoHistory = [];
   }
 
   getElementById(elementId) {
@@ -577,6 +597,7 @@ class LayoutTool {
   restoreSnapshot(snapshot) {
     if (!snapshot) return;
     this.elements = snapshot.elements.map(element => ({ ...element }));
+    this.elements = (snapshot.elements || []).map(element => ({ ...element }));
     this.elemIdCounter = snapshot.elemIdCounter;
     this.selectedEl = null;
     this.canvas.querySelectorAll('.layout-element').forEach(element => element.remove());
@@ -589,84 +610,77 @@ class LayoutTool {
       showToast('戻せる操作がありません');
       return;
     }
-
+    
     this.isApplyingUndo = true;
     try {
-      if (action.type === 'removeElement') {
-        this.removeElementById(action.elementId);
-        this.elemIdCounter = action.elemIdCounter;
-        showToast('一つ戻しました');
-        return;
-      }
-
-      if (action.type === 'moveElement') {
-        const element = this.getElementById(action.elementId);
-        const div = element ? document.getElementById(element.id) : null;
-        if (element && div) {
-          element.x = action.x;
-          element.y = action.y;
-          div.style.left = `${element.x}px`;
-          div.style.top = `${element.y}px`;
-        }
-        showToast('一つ戻しました');
-        return;
-      }
-
-      if (action.type === 'resizeElement') {
-        const element = this.getElementById(action.elementId);
-        const div = element ? document.getElementById(element.id) : null;
-        if (element && div) {
-          element.w = action.w;
-          element.h = action.h;
-          div.style.width = `${element.w}px`;
-          div.style.height = `${element.h}px`;
-        }
-        showToast('一つ戻しました');
-        return;
-      }
-
-      if (action.type === 'renameElement') {
-        const element = this.getElementById(action.elementId);
-        const div = element ? document.getElementById(element.id) : null;
-        if (element && div) {
-          element.label = action.label;
-          const span = div.querySelector('.layout-label');
-          if (span) span.textContent = action.label;
-        }
-        showToast('一つ戻しました');
-        return;
-      }
-
-      if (action.type === 'changeZIndex') {
-        const element = this.getElementById(action.elementId);
-        if (element) {
-          element.zIndex = action.oldZIndex;
-          this.updateElementDOM(element);
-          if (this.propertyPanelEl && this.propertyPanelEl.id === element.id) {
-            this.syncPropertyPanel(element);
-          }
-        }
-        showToast('一つ戻しました');
-        return;
-      }
-
-      if (action.type === 'clearAll') {
-        this.restoreSnapshot(action.snapshot);
-        showToast('一つ戻しました');
-        return;
-      }
-
-      if (action.type === 'restoreElement') {
-        this.elements.push(action.element);
-        this.renderElement(action.element);
-        showToast('元に戻しました');
-        return;
-      }
-
-      showToast('戻し処理に失敗しました');
+      const redoAction = this.applyHistoryAction(action);
+      if (redoAction) this.pushRedoAction(redoAction);
+      showToast('一つ戻しました');
     } finally {
       this.isApplyingUndo = false;
     }
+  }
+
+  redoLastAction() {
+    const action = this.redoHistory.pop();
+    if (!action) {
+      showToast('進められる操作がありません');
+      return;
+    }
+    this.isApplyingUndo = true;
+    try {
+      const undoAction = this.applyHistoryAction(action);
+      if (undoAction) this.undoHistory.push(undoAction);
+      showToast('一つ先に進めました');
+    } finally {
+      this.isApplyingUndo = false;
+    }
+  }
+
+  pushRedoAction(action) { if (action) this.redoHistory.push(action); }
+
+  applyHistoryAction(action) {
+    if (!action) return null;
+    if (action.type === 'moveElement') {
+      const element = this.getElementById(action.elementId);
+      if (!element) return null;
+      const inverse = { type: 'moveElement', elementId: action.elementId, x: element.x, y: element.y };
+      element.x = action.x; element.y = action.y;
+      this.updateElementDOM(element);
+      return inverse;
+    }
+    if (action.type === 'resizeElement') {
+      const element = this.getElementById(action.elementId);
+      if (!element) return null;
+      const inverse = { type: 'resizeElement', elementId: action.elementId, w: element.w, h: element.h };
+      element.w = action.w; element.h = action.h;
+      this.updateElementDOM(element);
+      return inverse;
+    }
+    if (action.type === 'removeElement') {
+      const removed = this.removeElementById(action.elementId);
+      if (!removed) return null;
+      return { type: 'restoreElement', element: { ...removed } };
+    }
+    if (action.type === 'restoreElement') {
+      this.elements.push(action.element);
+      this.renderElement(action.element);
+      return { type: 'removeElement', elementId: action.element.id };
+    }
+    if (action.type === 'clearAll') {
+      const current = this.captureSnapshot();
+      this.restoreSnapshot(action.snapshot);
+      return { type: 'clearAll', snapshot: current };
+    }
+    if (action.type === 'changeZIndex') {
+      const element = this.getElementById(action.elementId);
+      if (!element) return null;
+      const inverse = { type: 'changeZIndex', elementId: action.elementId, oldZIndex: element.zIndex };
+      element.zIndex = action.oldZIndex;
+      this.updateElementDOM(element);
+      return inverse;
+    }
+    return null;
   }
 
   clearAll() {
@@ -684,6 +698,45 @@ class LayoutTool {
     this.deselectAll();
     showToast('キャンバスをクリアしました');
   }
+  exportSVG() {
+    const w = this.canvas.clientWidth, h = this.canvas.clientHeight;
+    const svgNamespace = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(svgNamespace, "svg");
+    svg.setAttribute("width", w); svg.setAttribute("height", h);
+    svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    const bg = document.createElementNS(svgNamespace, "rect");
+    bg.setAttribute("width", "100%"); bg.setAttribute("height", "100%");
+    bg.setAttribute("fill", getComputedStyle(this.canvas).backgroundColor || "#0a0e1a");
+    svg.appendChild(bg);
+    this.elements.forEach(el => {
+      const g = document.createElementNS(svgNamespace, "g");
+      const rect = document.createElementNS(svgNamespace, "rect");
+      rect.setAttribute("x", el.x); rect.setAttribute("y", el.y);
+      rect.setAttribute("width", el.w); rect.setAttribute("height", el.h);
+      rect.setAttribute("fill", el.bg === 'transparent' ? 'none' : el.bg);
+      rect.setAttribute("stroke", "rgba(255,255,255,0.2)"); rect.setAttribute("stroke-width", "1");
+      g.appendChild(rect);
+      if (el.label) {
+        const text = document.createElementNS(svgNamespace, "text");
+        text.setAttribute("x", el.x + el.w / 2); text.setAttribute("y", el.y + el.h / 2);
+        text.setAttribute("fill", el.textColor || "#fff");
+        text.setAttribute("font-size", el.fontSize || 14);
+        text.setAttribute("text-anchor", "middle"); text.setAttribute("dominant-baseline", "middle");
+        text.textContent = el.label;
+        g.appendChild(text);
+      }
+      svg.appendChild(g);
+    });
+    const serializer = new XMLSerializer();
+    const source = '<?xml version="1.0" standalone="no"?>\r\n' + serializer.serializeToString(svg);
+    const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'layout_export.svg';
+    a.click(); URL.revokeObjectURL(url);
+    showToast('SVGをエクスポートしました');
+  }
+
   exportJSON() {
     FileIO.exportJSON(this);
   }
@@ -786,6 +839,15 @@ class LayoutTool {
     if (window.themeManager) window.themeManager.toggleModal();
   }
 
+  autoLayout() {
+    const cols = Math.ceil(Math.sqrt(this.elements.length));
+    this.elements.forEach((el, i) => {
+      el.x = 40 + (i % cols) * 240;
+      el.y = 40 + Math.floor(i / cols) * 160;
+      this.updateElementDOM(el);
+    });
+    showToast('グリッド状に自動配置しました');
+  }
   
 
   exportPNG() {

@@ -126,6 +126,9 @@ class App {
           }
           umlSubmenu.style.left = (rect.right + 6) + 'px';
           umlSubmenu.style.top = top + 'px';
+          // テーマカラーを即時反映（JSによる動的配置のため直接指定）
+          umlSubmenu.style.background = 'var(--nav-submenu-bg)';
+          umlSubmenu.style.borderColor = 'var(--nav-submenu-border)';
         }
       });
     }
@@ -150,6 +153,9 @@ class App {
           this.uml.swapComponents(typeDef.components, umlType);
         }
         this.currentUmlType = umlType;
+
+        // テーマ反映・UI状態管理用に選択中のUMLタイプをbodyのデータ属性にセット
+        document.body.dataset.activeUmlType = umlType;
 
         // Update section title
         const umlSection = document.getElementById('uml');
@@ -179,6 +185,22 @@ class App {
     document.querySelectorAll('.diagram-property-panel, .diagram-ai-chat-panel').forEach(panel => {
       panel.classList.remove('open');
     });
+
+    // 現在のツール情報をbodyに反映（CSSでツールごとのテーマを制御可能にする）
+    document.body.dataset.activeTool = tool;
+
+    if (tool === 'uml') {
+      if (this.currentUmlType) {
+        document.body.dataset.activeUmlType = this.currentUmlType;
+        // サブメニューのアクティブ状態を現在のタイプに同期
+        document.querySelectorAll('#uml-submenu a').forEach(item => {
+          item.classList.toggle('active', item.dataset.umlType === this.currentUmlType);
+        });
+      }
+    } else {
+      // UML以外のツールに移動した場合はUML固有のデータ属性をクリア
+      delete document.body.dataset.activeUmlType;
+    }
 
     // サイドバーのリンク状態を更新
     document.querySelectorAll('.sidebar nav a, #auth-action-btn').forEach(x => x.classList.remove('active'));
@@ -326,7 +348,7 @@ class App {
 
     container.innerHTML = filtered.map(item => `
       <div class="card diagram-card" onclick="window.app.navigateTo('${item.toolType}')">
-        <div class="diagram-type-tag">${item.toolLabel}</div>
+        <div class="diagram-type-tag" style="background: var(--nav-active-bg); color: var(--nav-active-text); border: 1px solid var(--nav-submenu-border); font-weight: 600;">${item.toolLabel}</div>
         <h3>${item.title || '無題の図面'}</h3>
         <div class="diagram-meta">
           <span><i data-lucide="calendar" class="icon-xs"></i> ${item.updated_at ? item.updated_at.split(' ')[0] : '-'}</span>
