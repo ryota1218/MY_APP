@@ -62,52 +62,36 @@ class ERDiagramTool {
       viewMode: this.viewMode,
       sqlDialect: this.sqlDialect
     };
-    localStorage.setItem('upstream_er_diagram_save', JSON.stringify(data));
-
-    const projectId = window.DBIO?.getCurrentProjectId();
-    if (projectId) {
-      showToast('DBに保存中...', 'info');
-      const success = await window.DBIO.saveDiagramToDB('er', data);
-      if (success) {
-        showToast('設計をデータベースに保存しました');
-      } else {
-        showToast('DB保存に失敗。ブラウザにのみ保存しました', 'warning');
-      }
+    if (window.DBIO) {
+      await window.DBIO.saveDiagramToDB('er', data);
     } else {
-      showToast('設計をローカルストレージに保存しました');
+      if(window.showToast) window.showToast('データベース連携モジュールが見つかりません', 'danger');
+    }
+  }
+
+  async openDiagramModal() {
+    if (window.DBIO) {
+      await window.DBIO.showOpenModal('er', (data, id, name, status) => {
+        this.restoreSnapshot(data);
+        if(window.showToast) window.showToast(`${name} を読み込みました`);
+      });
+    } else {
+      if(window.showToast) window.showToast('データベース連携モジュールが見つかりません', 'danger');
     }
   }
 
   async loadDiagram(forceWithoutConfirm = false) {
-    let data = null;
-
-    const projectId = window.DBIO?.getCurrentProjectId();
-    if (projectId) {
-      data = await window.DBIO.loadDiagramFromDB('er');
+    // DB保存への一本化に伴い、自動ロード（プロジェクト切り替え時）は常に空のキャンバスで初期化します
+    this.entities = [];
+    this.relations = [];
+    this.entityIdCounter = 0;
+    if (this.canvas) {
+      this.canvas.querySelectorAll('.er-entity').forEach(e => e.remove());
     }
-
-    if (!data) {
-      const saved = localStorage.getItem('upstream_er_diagram_save');
-      if (saved) {
-        data = JSON.parse(saved);
-      }
+    if (this.svg) {
+      this.svg.innerHTML = '';
     }
-
-    if (!data) {
-      if (!forceWithoutConfirm) {
-        showToast('保存されたデータが見つかりません');
-      }
-      return;
-    }
-
-    if (forceWithoutConfirm || confirm('保存されているデータを読み込みますか？現在の内容は失われます。')) {
-      this.restoreSnapshot(data);
-      if (data.viewMode) this.viewMode = data.viewMode;
-      if (data.sqlDialect) this.sqlDialect = data.sqlDialect;
-      const btn = document.getElementById('er-toggle-name-btn');
-      if (btn) btn.textContent = this.viewMode === 'logical' ? '🌐 論理名を表示中' : '💻 物理名を表示中';
-      showToast('保存された設計を読み込みました');
-    }
+    if (window.DBIO) window.DBIO.resetCurrentDiagram();
   }
 
   redoLastAction() {
@@ -841,6 +825,7 @@ class ERDiagramTool {
     this.entities = []; this.relations = []; this.entityIdCounter = 0;
     this.canvas.querySelectorAll('.er-entity').forEach(e => e.remove());
     this.svg.innerHTML = '';
+    if (window.DBIO) window.DBIO.resetCurrentDiagram();
     this.pushUndoAction({ type: 'clearAll', snapshot });
     showToast('E-R図をクリアしました');
   }

@@ -30,11 +30,56 @@ const PHASE_COLOR = '#2563eb';
 // ============================================
 class GanttTool {
   constructor() {
-    // テストデータを使用する場合はロード
-    this.tasks = USE_GANTT_TEST_DATA ? JSON.parse(JSON.stringify(GANTT_TEST_DATA)) : [];
+    this.tasks = [];
+    this.selected = new Set(); // 選択状態を管理
+    this.expandedPhases = new Set(); // フェーズの展開状態を管理
+    this.overallStartOverride = null;
+    this.overallEndOverride = null;
+    this.taskIdCounter = 11;
+    this.isSyncingScroll = false;
+
+    this.setupButtons();
+    this.loadGanttData();
+  }
+
+  async loadGanttData() {
+    const projectId = window.DBIO ? window.DBIO.getCurrentProjectId() : null;
+    if (!projectId) {
+      this.loadFromLocal();
+      this.render();
+      return;
+    }
+
+    try {
+      const jsonStr = await window.DBIO.fetchGanttData(projectId);
+      if (jsonStr) {
+        const data = JSON.parse(jsonStr);
+        this.tasks = data.tasks || [];
+        this.overallStartOverride = data.overallStartOverride || null;
+        this.overallEndOverride = data.overallEndOverride || null;
+        this.taskIdCounter = (this.tasks.length > 0 ? Math.max(...this.tasks.map(t => t.id)) : 10) + 1;
+        this.expandedPhases.clear();
+        this.tasks.filter(t => t.phase).forEach(t => this.expandedPhases.add(t.id));
+      } else {
+        this.tasks = USE_GANTT_TEST_DATA ? JSON.parse(JSON.stringify(GANTT_TEST_DATA)) : [];
+        this.overallStartOverride = null;
+        this.overallEndOverride = null;
+        this.taskIdCounter = (this.tasks.length > 0 ? Math.max(...this.tasks.map(t => t.id)) : 10) + 1;
+        this.expandedPhases.clear();
+        this.tasks.filter(t => t.phase).forEach(t => this.expandedPhases.add(t.id));
+      }
+      this.render();
+    } catch (err) {
+      console.error("Failed to load gantt data from DB:", err);
+      if (window.showToast) showToast("DBからの読み込みに失敗しました。", "danger");
+      this.loadFromLocal();
+      this.render();
+    }
+  }
+
+  loadFromLocal() {
     this.tasks = [];
     try {
-      // テストデータまたはローカルストレージからのロード
       const saved = localStorage.getItem('gantt_tasks');
       if (saved) {
         this.tasks = JSON.parse(saved);
@@ -42,25 +87,13 @@ class GanttTool {
         this.tasks = JSON.parse(JSON.stringify(GANTT_TEST_DATA));
       }
     } catch (e) {
-      console.error("Failed to load tasks:", e);
-      showToast("データの読み込みに失敗しました。");
+      console.error("Failed to load tasks from local storage:", e);
     }
-
-    this.selected = new Set(); // 選択状態を管理
-    this.expandedPhases = new Set(); // フェーズの展開状態を管理
     this.overallStartOverride = null;
     this.overallEndOverride = null;
-
-    // taskIdCounterを最大IDから設定
     this.taskIdCounter = (this.tasks.length > 0 ? Math.max(...this.tasks.map(t => t.id)) : 10) + 1;
-    this.isSyncingScroll = false;
-
-    // 初期状態ではすべてのフェーズを展開
+    this.expandedPhases.clear();
     this.tasks.filter(t => t.phase).forEach(t => this.expandedPhases.add(t.id));
-
-    this.saveTasks(); // 初回ロード時に保存
-    this.render();
-    this.setupButtons();
   }
 
   setupButtons() {
@@ -231,10 +264,26 @@ class GanttTool {
     this.updateCalculator(); // 計算機も更新
   }
 
-  // ローカルストレージにデータを同期
-  saveTasks() {
-    localStorage.setItem('gantt_tasks', JSON.stringify(this.tasks));
+  // ローカルストレージとデータベースにデータを同期
+  async saveTasks() {
+    const serialized = JSON.stringify(this.tasks);
+    localStorage.setItem('gantt_tasks', serialized);
     if (window.app && window.app.renderDashboardGantt) window.app.renderDashboardGantt();
+
+    const projectId = window.DBIO ? window.DBIO.getCurrentProjectId() : null;
+    if (projectId) {
+      try {
+        const payload = {
+          tasks: this.tasks,
+          overallStartOverride: this.overallStartOverride,
+          overallEndOverride: this.overallEndOverride
+        };
+        await window.DBIO.saveGanttData(projectId, JSON.stringify(payload));
+      } catch (err) {
+        console.error("Failed to save gantt data to DB:", err);
+        if (window.showToast) showToast("DBへの保存に失敗しました。", "danger");
+      }
+    }
   }
 
   formatDate(date) {
@@ -341,6 +390,7 @@ class GanttTool {
       }
       this.overallStartOverride = start;
       this.overallEndOverride = end;
+      this.saveTasks();
       this.render();
       showToast('全体期間を更新しました');
     });

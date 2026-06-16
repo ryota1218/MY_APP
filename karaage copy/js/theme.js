@@ -20,17 +20,55 @@ class ThemeManager {
     this.setupUI();
   }
 
-  loadTheme() {
+  async loadTheme() {
     const saved = localStorage.getItem('upstream_theme');
     if (saved) {
       try {
         this.currentTheme = { ...this.defaultTheme, ...JSON.parse(saved) };
       } catch(e) {}
     }
+
+    // Supabaseからプロジェクトカラーを取得して上書き適用する
+    const projectId = window.DBIO ? window.DBIO.getCurrentProjectId() : null;
+    if (projectId && window.supabaseClient) {
+      try {
+        const dbColor = await window.DBIO.fetchProjectColor(projectId);
+        if (dbColor) {
+          this.currentTheme.mainBgColor = dbColor.main;
+          this.currentTheme.subBgColor = dbColor.sub;
+          this.currentTheme.accentColor = dbColor.accent;
+          this.applyTheme();
+          this.updateUI();
+        }
+      } catch (err) {
+        console.error('[ThemeManager] DBからのテーマカラー取得に失敗しました:', err);
+      }
+    }
   }
 
-  saveTheme() {
+  async saveTheme() {
     localStorage.setItem('upstream_theme', JSON.stringify(this.currentTheme));
+    
+    // Supabaseへプロジェクトカラーを同期保存する
+    const projectId = window.DBIO ? window.DBIO.getCurrentProjectId() : null;
+    if (projectId && window.supabaseClient) {
+      try {
+        await window.DBIO.saveProjectColor(
+          projectId,
+          this.currentTheme.mainBgColor,
+          this.currentTheme.subBgColor,
+          this.currentTheme.accentColor
+        );
+        if (window.showToast) {
+          showToast(`[デバッグ] テーマカラーをDBに同期しました！\nメイン: ${this.currentTheme.mainBgColor}\nサブ: ${this.currentTheme.subBgColor}\nアクセント: ${this.currentTheme.accentColor}`);
+        }
+      } catch (err) {
+        console.error('[ThemeManager] DBへのテーマカラー保存に失敗しました:', err);
+        if (window.showToast) {
+          showToast(`[デバッグエラー] DB保存失敗: ${err.message}`, 'danger');
+        }
+      }
+    }
   }
 
   /**
@@ -285,7 +323,8 @@ class ThemeManager {
       this.currentTheme.subBgColor = '#111827';
       this.currentTheme.accentColor = '#7c3aed';
       this.applyTheme();
-      this.saveTheme();
+      // ローカルストレージにのみ保存し、DB同期は行わない
+      localStorage.setItem('upstream_theme', JSON.stringify(this.currentTheme));
       this.updateUI();
     });
     
@@ -294,7 +333,8 @@ class ThemeManager {
       this.currentTheme.subBgColor = '#ffffff';  // 内側はクリーンな白
       this.currentTheme.accentColor = '#d97706'; // 唐揚げのようなこんがりとしたオレンジブラウン
       this.applyTheme();
-      this.saveTheme();
+      // ローカルストレージにのみ保存し、DB同期は行わない
+      localStorage.setItem('upstream_theme', JSON.stringify(this.currentTheme));
       this.updateUI();
     });
 
@@ -303,7 +343,8 @@ class ThemeManager {
       this.currentTheme.subBgColor = '#ffffff';
       this.currentTheme.accentColor = '#0ea5e9';
       this.applyTheme();
-      this.saveTheme();
+      // ローカルストレージにのみ保存し、DB同期は行わない
+      localStorage.setItem('upstream_theme', JSON.stringify(this.currentTheme));
       this.updateUI();
     });
   }
