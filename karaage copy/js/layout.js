@@ -135,8 +135,10 @@ class LayoutTool {
       const ctrl = e.ctrlKey || e.metaKey;
 
       if (ctrl && key === 'c') {
+        e.preventDefault();
         this.copySelected();
       } else if (ctrl && key === 'v') {
+        e.preventDefault();
         this.pasteSelected();
       } else if (key === 'delete' || key === 'backspace') {
         if (this.selectedEl) {
@@ -144,7 +146,11 @@ class LayoutTool {
         }
       } else if (ctrl && key === 'z') {
         e.preventDefault();
-        this.undoLastAction();
+        if (e.shiftKey) this.redoLastAction();
+        else this.undoLastAction();
+      } else if (ctrl && key === 'y') {
+        e.preventDefault();
+        this.redoLastAction();
       } else if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
         if (this.selectedEl) {
           e.preventDefault();

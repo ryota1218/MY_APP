@@ -107,10 +107,10 @@ class ProjectTool {
         const displayId = p.id.split('-')[0] + '...'; // 短縮表示用
         
         return `
-          <tr style="${isCurrent ? 'background: rgba(124, 58, 237, 0.1); border-left: 3px solid var(--accent);' : ''}">
+          <tr class="${isCurrent ? 'is-current' : ''}">
             <td><code title="${p.id}">${displayId}</code></td>
-            <td><strong>${this.escapeHTML(p.name)}</strong> ${isCurrent ? '<span style="color: var(--accent-light); font-size: 0.75rem; margin-left: 6px;">● 選択中</span>' : ''}</td>
-            <td style="color: var(--text-muted); font-size: 0.8rem;">
+            <td><strong style="color: var(--text);">${this.escapeHTML(p.name)}</strong> ${isCurrent ? '<span style="color: var(--accent); font-size: 0.75rem; margin-left: 6px; font-weight: 600;">● 選択中</span>' : ''}</td>
+            <td style="color: var(--text-dim); font-size: 0.8rem;">
               オーナー: ${this.escapeHTML(p.accountId.split('-')[0])}...
             </td>
             <td><span class="role-badge role-${p.role.toLowerCase()}">${this.getRoleLabel(p.role)}</span></td>
@@ -161,7 +161,7 @@ class ProjectTool {
     const projectName = nameEl.value.trim();
 
     errorEl.textContent = '作成中...';
-    errorEl.style.color = '#8b5cf6';
+    errorEl.style.color = 'var(--accent)';
 
     try {
       const user = window.Auth?.currentUser;
@@ -204,7 +204,7 @@ class ProjectTool {
 
     } catch (err) {
       console.error('Project creation failed:', err);
-      errorEl.style.color = '#ef4444';
+      errorEl.style.color = 'var(--danger)';
       errorEl.textContent = '作成エラー: ' + err.message;
     }
   }
@@ -221,7 +221,7 @@ class ProjectTool {
     const projectIdStr = idEl.value.trim();
 
     errorEl.textContent = '参加処理中...';
-    errorEl.style.color = '#8b5cf6';
+    errorEl.style.color = 'var(--accent)';
 
     try {
       const user = window.Auth?.currentUser;
@@ -273,7 +273,7 @@ class ProjectTool {
 
     } catch (err) {
       console.error('Project join failed:', err);
-      errorEl.style.color = '#ef4444';
+      errorEl.style.color = 'var(--danger)';
       errorEl.textContent = '参加エラー: ' + err.message;
     }
   }
