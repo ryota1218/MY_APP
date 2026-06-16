@@ -1142,10 +1142,15 @@ class DiagramTool {
     document.addEventListener('keydown', e => {
       const target = e.target;
       const isEditingField = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable);
-      
+
       if (e.ctrlKey || e.metaKey) {
-        if (e.key === 'c') { if(!isEditingField) { e.preventDefault(); this.copySelected(); } }
-        if (e.key === 'v') { if(!isEditingField) { e.preventDefault(); this.pasteSelected(); } }
+        const key = e.key.toLowerCase();
+        if (key === 'c') { if(!isEditingField) { e.preventDefault(); this.copySelected(); } }
+        else if (key === 'v') { if(!isEditingField) { e.preventDefault(); this.pasteSelected(); } }
+        else if (key === 'z') {
+          if(!isEditingField) { e.preventDefault(); if (e.shiftKey) this.redoLastAction(); else this.undoLastAction(); }
+        } 
+        if (key === 'y') { if(!isEditingField) { e.preventDefault(); this.redoLastAction(); } }
       }
 
       if (isEditingField) return;

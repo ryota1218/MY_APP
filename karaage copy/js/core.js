@@ -154,9 +154,6 @@ class App {
         }
         this.currentUmlType = umlType;
 
-        // テーマ反映・UI状態管理用に選択中のUMLタイプをbodyのデータ属性にセット
-        document.body.dataset.activeUmlType = umlType;
-
         // Update section title
         const umlSection = document.getElementById('uml');
         const h1 = umlSection?.querySelector('.section-header h1');

@@ -15,17 +15,19 @@
       width: 100%;
       padding: 20px;
       box-sizing: border-box;
+      background: var(--bg-primary);
     }
     .login-card {
-      background: rgba(30, 30, 30, 0.6);
+      background: var(--bg-card);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--border);
       padding: 40px;
       width: 100%;
       max-width: 400px;
       border-radius: 12px;
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      color: var(--text);
     }
     .login-logo {
       display: flex;
@@ -59,9 +61,9 @@
       width: 100%;
       padding: 12px;
       padding-right: 40px; /* アイコン用のスペース */
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: white;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      color: var(--text);
       border-radius: 4px;
       transition: border-color 0.2s, box-shadow 0.2s;
     }
@@ -137,7 +139,7 @@
     .login-footer {
       margin-top: 30px;
       padding-top: 20px;
-      border-top: 1px solid #333;
+      border-top: 1px solid var(--border);
       text-align: center;
       font-size: 0.8rem;
     }
@@ -214,6 +216,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- Supabase Config -->
   <script src="../js/supabase-config.js"></script>
+  <!-- Theme Manager -->
+  <script src="../js/theme.js"></script>
   <!-- Auth Logic -->
   <script src="../js/auth.js"></script>
   <script>

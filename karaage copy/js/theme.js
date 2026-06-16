@@ -7,8 +7,10 @@ class ThemeManager {
   constructor() {
     this.defaultTheme = {
       baseColor: '#7c3aed', // デフォルトの紫（hue: 262付近）
-      accentColor: '#06b6d4', // アクセント
-      mode: 'dark' // 'dark' or 'light'
+      accentColor: '#0ea5e9', // ライトモードに合うアクセント（青系）
+      mode: 'light', // デフォルトをライトモードに変更
+      mainBgColor: '#ffffff', // 純粋な白背景
+      subBgColor: '#ffffff'
     };
     this.currentTheme = { ...this.defaultTheme };
     this.init();
@@ -238,6 +240,23 @@ class ThemeManager {
       .palette-item .palette-icon { width: 18px; height: 18px; }
       .inline-shape-btn { background: var(--bg-glass); border: 1px solid var(--border); color: var(--text-muted); transition: all 0.2s; }
       .inline-shape-btn:hover { color: var(--accent) !important; }
+      .project-table th { background: var(--bg-secondary) !important; color: var(--text-dim) !important; border-bottom: 2px solid var(--border) !important; }
+      .project-table td { border-bottom: 1px solid var(--border) !important; color: var(--text-dim); background: transparent; }
+      .project-table tr:hover:not(:first-child) { background: var(--bg-glass); }
+      .project-table tr.is-current { background: var(--nav-active-bg) !important; border-left: 3px solid var(--accent) !important; }
+      .project-table tr.is-current td { color: var(--text) !important; }
+      .project-table, .project-table-container { background: var(--bg-card) !important; } /* テーブルとコンテナの背景色をテーマに合わせる */
+      .my-projects-card .btn-primary { background: var(--accent) !important; color: #fff !important; border: none !important; transition: transform 0.2s; }
+      .my-projects-card .btn-primary:hover { transform: translateY(-1px); filter: brightness(1.1); }
+      .my-projects-card .btn-secondary { background: var(--bg-glass) !important; color: var(--text-dim) !important; border: 1px solid var(--border) !important; }
+      .role-badge { background: var(--nav-active-bg); color: var(--nav-active-text); border: 1px solid var(--nav-submenu-border); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+      .role-badge.role-owner { border-color: var(--accent); color: var(--accent); }
+      .project-action-card, .my-projects-card { background: var(--bg-card) !important; border: 1px solid var(--border) !important; }
+      .my-projects-card .block-header h2 { color: var(--text) !important; border-left: 4px solid var(--accent); padding-left: 12px; }
+      .project-form .form-input { background: var(--bg-secondary) !important; color: var(--text) !important; border: 1px solid var(--border) !important; }
+      .project-form .form-input::placeholder { color: var(--text-muted); opacity: 0.6; }
+      .section-header h1 { color: var(--accent) !important; }
+      code { background: var(--nav-active-bg) !important; color: var(--accent-light) !important; padding: 2px 6px; border-radius: 4px; font-family: monospace; border: 1px solid var(--nav-submenu-border); }
     `;
 
     // 他のモジュール（DiagramToolなど）がテーマ変更を検知できるようにカスタムイベントを発火
