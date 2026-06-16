@@ -290,6 +290,11 @@ class ProjectTool {
     
     showToast('プロジェクト「' + name + '」に切り替えました。');
 
+    // 選択されたプロジェクトに応じたテーマカラーをロード
+    if (window.themeManager) {
+      await window.themeManager.loadTheme();
+    }
+
     // 選択されたプロジェクトの図データを自動ロード
     if (window.app) {
       const loadPromises = [];
@@ -308,6 +313,9 @@ class ProjectTool {
       }
       if (window.app.erdiagram && typeof window.app.erdiagram.loadDiagram === 'function') {
         loadPromises.push(window.app.erdiagram.loadDiagram(true));
+      }
+      if (window.app.gantt && typeof window.app.gantt.loadGanttData === 'function') {
+        loadPromises.push(window.app.gantt.loadGanttData());
       }
 
       try {

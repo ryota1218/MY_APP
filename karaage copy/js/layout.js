@@ -699,6 +699,7 @@ class LayoutTool {
     };
     this.elements = []; this.elemIdCounter = 0;
     this.canvas.querySelectorAll('.layout-element').forEach(e => e.remove());
+    if (window.DBIO) window.DBIO.resetCurrentDiagram();
     this.pushUndoAction({ type: 'clearAll', snapshot });
     this.deselectAll();
     showToast('キャンバスをクリアしました');
@@ -805,56 +806,33 @@ class LayoutTool {
       elements: this.elements,
       elemIdCounter: this.elemIdCounter
     };
-    localStorage.setItem('upstream_layout_save', JSON.stringify(data));
-
-    const projectId = window.DBIO?.getCurrentProjectId();
-    if (projectId) {
-      showToast('DBに保存中...', 'info');
-      const success = await window.DBIO.saveDiagramToDB('layout', data);
-      if (success) {
-        showToast('データベースに保存しました');
-      } else {
-        showToast('DB保存に失敗。ブラウザにのみ保存しました', 'warning');
-      }
+    if (window.DBIO) {
+      await window.DBIO.saveDiagramToDB('layout', data);
     } else {
-      showToast('ブラウザに保存しました');
+      showToast('データベース連携モジュールが見つかりません', 'danger');
+    }
+  }
+
+  async openDiagramModal() {
+    if (window.DBIO) {
+      await window.DBIO.showOpenModal('layout', (data, id, name, status) => {
+        this.restoreSnapshot(data);
+        showToast(`${name} を読み込みました`);
+      });
+    } else {
+      showToast('データベース連携モジュールが見つかりません', 'danger');
     }
   }
 
   async loadDiagram(forceWithoutConfirm = false) {
-    let data = null;
-
-    const projectId = window.DBIO?.getCurrentProjectId();
-    if (projectId) {
-      data = await window.DBIO.loadDiagramFromDB('layout');
-    }
-
-    if (!data) {
-      const saved = localStorage.getItem('upstream_layout_save');
-      if (saved) {
-        data = JSON.parse(saved);
-      }
-    }
-
-    if (!data) {
-      if (!forceWithoutConfirm) {
-        showToast('保存データがありません');
-      }
-      return;
-    }
-
-    if (forceWithoutConfirm || confirm('現在の内容を破棄して読み込みますか？')) {
-      this.elements = []; 
-      this.elemIdCounter = 0;
+    // DB保存への一本化に伴い、自動ロード（プロジェクト切り替え時）は常に空のキャンバスで初期化します
+    this.elements = [];
+    this.elemIdCounter = 0;
+    if (this.canvas) {
       this.canvas.querySelectorAll('.layout-element').forEach(e => e.remove());
-
-      this.elemIdCounter = data.elemIdCounter;
-      data.elements.forEach(el => {
-        this.elements.push(el);
-        this.renderElement(el);
-      });
-      showToast('読み込み完了');
     }
+    if (window.DBIO) window.DBIO.resetCurrentDiagram();
+    this.deselectAll();
   }
 
   /* ===== ヘルプ・その他モック ===== */

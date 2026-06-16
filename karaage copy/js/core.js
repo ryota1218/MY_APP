@@ -93,6 +93,19 @@ class App {
       });
     });
 
+    // --- Embedded tool links outside sidebar ---
+    document.querySelectorAll('[data-tool]').forEach(el => {
+      if (el.closest('.sidebar nav')) return;
+      if (el.closest('#uml-submenu')) return;
+      if (el.id === 'auth-action-btn') return;
+      el.addEventListener('click', (e) => {
+        const tool = el.dataset.tool;
+        if (!tool) return;
+        e.preventDefault();
+        this.navigateTo(tool);
+      });
+    });
+
     // --- UML Submenu trigger ---
     const umlTrigger = document.getElementById('uml-nav-trigger');
     const umlSubmenuContainer = umlTrigger?.closest('.nav-has-submenu');

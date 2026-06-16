@@ -1727,51 +1727,39 @@ async saveDiagram() {
     umlType: this.umlType
   };
   const typeKey = `${this.prefix}_${this.umlType || 'main'}`;
-  const key = `upstream_diagram_${typeKey}`;
-  localStorage.setItem(key, JSON.stringify(data));
 
-  const projectId = window.DBIO?.getCurrentProjectId();
-  if (projectId) {
-    showToast('DBに保存中...', 'info');
-    const success = await window.DBIO.saveDiagramToDB(typeKey, data);
-    if (success) {
-      showToast('データベースに保存しました');
-    } else {
-      showToast('DB保存に失敗。ブラウザにのみ保存しました', 'warning');
-    }
+  if (window.DBIO) {
+    await window.DBIO.saveDiagramToDB(typeKey, data);
   } else {
-    showToast('ブラウザに保存しました');
+    showToast('データベース連携モジュールが見つかりません', 'danger');
+  }
+}
+
+async openDiagramModal() {
+  const typeKey = `${this.prefix}_${this.umlType || 'main'}`;
+  if (window.DBIO) {
+    await window.DBIO.showOpenModal(typeKey, (data, id, name, status) => {
+      this.restoreSnapshot(data);
+      showToast(`${name} を読み込みました`);
+    });
+  } else {
+    showToast('データベース連携モジュールが見つかりません', 'danger');
   }
 }
 
 async loadDiagram(forceWithoutConfirm = false) {
-  const typeKey = `${this.prefix}_${this.umlType || 'main'}`;
-  const key = `upstream_diagram_${typeKey}`;
-  let data = null;
-
-  const projectId = window.DBIO?.getCurrentProjectId();
-  if (projectId) {
-    data = await window.DBIO.loadDiagramFromDB(typeKey);
+  // DB保存への一本化に伴い、自動ロード（プロジェクト切り替え時）は常に空のキャンバスで初期化します
+  this.nodes = [];
+  this.connections = [];
+  this.nodeIdCounter = 0;
+  this.quickAddCounter = 0;
+  if (this.canvas) {
+    this.canvas.querySelectorAll('.diagram-node').forEach(n => n.remove());
   }
-
-  if (!data) {
-    const saved = localStorage.getItem(key);
-    if (saved) {
-      data = JSON.parse(saved);
-    }
+  if (this.svg) {
+    this.svg.innerHTML = '';
   }
-
-  if (!data) {
-    if (!forceWithoutConfirm) {
-      showToast('保存されたデータが見つかりません');
-    }
-    return;
-  }
-
-  if (forceWithoutConfirm || confirm('保存されているデータを読み込みますか？現在の内容は失われます。')) {
-    this.restoreSnapshot(data);
-    showToast('データを読み込みました');
-  }
+  if (window.DBIO) window.DBIO.resetCurrentDiagram();
 }
 
 showHelp() {
@@ -4222,6 +4210,7 @@ clearAll() {
   this.quickAddCounter = 0;
   this.canvas.querySelectorAll('.diagram-node').forEach(n => n.remove());
   this.svg.innerHTML = '';
+  if (window.DBIO) window.DBIO.resetCurrentDiagram();
   this.pushUndoAction({ type: 'clearAll', snapshot });
   showToast('キャンバスをクリアしました');
 }
@@ -4365,8 +4354,9 @@ async sendAIChatMessage() {
     chat_history: this.chatHistory || []
   };
 
-  // 常にCloud Runのバックエンドを見に行くように設定（Pythonのローカル起動が不要になります）
-  const apiBaseUrl = 'https://upstream-ai-backend-976977069035.us-central1.run.app';
+  // ローカル開発中の場合はローカルサーバーを優先的に向き先とし、それ以外はCloud Runの本番環境を見に行くように設定
+  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:';
+  const apiBaseUrl = isLocal ? 'http://localhost:8000' : 'https://upstream-ai-backend-976977069035.us-central1.run.app';
 
   try {
     const response = await fetch(`${apiBaseUrl}/api/ai-chat-layout`, {
@@ -4426,6 +4416,17 @@ async sendAIChatMessage() {
 
     const assistantMsgDiv = document.createElement('div');
     assistantMsgDiv.className = 'ai-chat-msg assistant';
+    
+    let adviceHtml = '';
+    if (result.advice) {
+      adviceHtml = `
+        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.9em; line-height: 1.4;">
+          <div style="font-weight: 600; color: #a78bfa; margin-bottom: 4px;">💡 構成の評価・アドバイス:</div>
+          <div style="color: #e5e7eb;">${this.escapeHTML(result.advice)}</div>
+        </div>
+      `;
+    }
+
     assistantMsgDiv.innerHTML = `
       <div class="ai-chat-bubble">
         指示されたレイアウト調整を適用しました！
@@ -4433,13 +4434,14 @@ async sendAIChatMessage() {
           <li>指示: <em>「${this.escapeHTML(text)}」</em></li>
           <li>移動されたノード数: <strong>${result.nodes?.length || 0}</strong> 個</li>
         </ul>
+        ${adviceHtml}
       </div>
     `;
     msgArea.appendChild(assistantMsgDiv);
     msgArea.scrollTop = msgArea.scrollHeight;
 
     this.chatHistory.push({ role: 'user', content: text });
-    this.chatHistory.push({ role: 'model', content: `指示されたレイアウト調整を適用しました！移動ノード数: ${result.nodes?.length || 0}` });
+    this.chatHistory.push({ role: 'model', content: `指示されたレイアウト調整を適用しました！移動ノード数: ${result.nodes?.length || 0}. アドバイス: ${result.advice || ''}` });
 
   } catch (error) {
     console.error('[AI Chat Layout] Error:', error);
@@ -4526,8 +4528,9 @@ async aiAutoLayout() {
   showToast('🤖 AIが最適な配置を計算中...');
 
   try {
-    // 常にCloud Runのバックエンドを見に行くように設定（Pythonのローカル起動が不要になります）
-    const apiBaseUrl = 'https://upstream-ai-backend-976977069035.us-central1.run.app';
+    // ローカル開発中の場合はローカルサーバーを優先的に向き先とし、それ以外はCloud Runの本番環境を見に行くように設定
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:';
+    const apiBaseUrl = isLocal ? 'http://localhost:8000' : 'https://upstream-ai-backend-976977069035.us-central1.run.app';
 
     const response = await fetch(`${apiBaseUrl}/api/ai-layout`, {
       method: 'POST',
