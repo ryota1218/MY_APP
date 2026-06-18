@@ -1146,6 +1146,7 @@ class DiagramTool {
       if (e.ctrlKey || e.metaKey) {
         const key = e.key.toLowerCase();
         if (key === 'c') { if(!isEditingField) { e.preventDefault(); this.copySelected(); } }
+        else if (key === 'x') { if(!isEditingField) { e.preventDefault(); this.cutSelected(); } }
         else if (key === 'v') { if(!isEditingField) { e.preventDefault(); this.pasteSelected(); } }
         else if (key === 'z') {
           if(!isEditingField) { e.preventDefault(); if (e.shiftKey) this.redoLastAction(); else this.undoLastAction(); }
@@ -1700,6 +1701,20 @@ copySelected() {
     showToast('コピーしました');
   } else if (this.selectedConnection) {
     showToast('接続線のコピーには対応していません');
+  }
+}
+
+cutSelected() {
+  if (this.selectedNode) {
+    this.clipboard = { type: 'node', data: { ...this.selectedNode } };
+    showToast('切り取りました');
+    // 削除メッセージを表示しないように直接削除する
+    this.nodes = this.nodes.filter(node => node.id !== this.selectedNode.id);
+    this.selectedNode = null;
+    this.closePropertyPanel();
+    this.renderDiagram();
+  } else if (this.selectedConnection) {
+    showToast('接続線の切り取りには対応していません');
   }
 }
 

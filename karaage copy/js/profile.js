@@ -205,8 +205,6 @@ class ProfileManager {
       </div>
       <!-- アカウント設定モーダルHTML... -->
     `;
-    // (中略 - メソッド内のコードは全てそのまま残します)
-  }
 
     if (window.lucide) lucide.createIcons();
 
@@ -292,42 +290,12 @@ class ProfileManager {
 
       if (!updated) {
         feedback.textContent = '変更がありませんでした。';
-  // アバター画像をアップロードしてDB保存するメソッド（今回作成したもの）
-  async saveProfile(name, avatar) {
-    if (!Auth.currentUser) {
-      if (window.showToast) showToast('ログインしていません', 'warning');
-      return;
-    }
-    
-    // Supabaseの public.users テーブルを更新
-    if (window.supabaseClient) {
-      try {
-        const { error } = await window.supabaseClient
-          .from('users')
-          .upsert({
-            id: Auth.currentUser.id,
-            name: name,
-            icon: avatar,
-            update_at: new Date().toISOString()
-          });
-
-        if (error) throw error;
-      } catch (dbErr) {
-        console.error('[ProfileManager] DBのプロフィール更新に失敗しました:', dbErr);
-        throw new Error(`データベース保存に失敗しました: ${dbErr.message}`);
       }
-    }
-
-    Auth.currentUser.name = name;
-    Auth.currentUser.avatar = avatar;
-    
-    localStorage.setItem('upstream_user', JSON.stringify(Auth.currentUser));
-    Auth.updateUI();
-    
-    document.getElementById('modal-container').style.display = 'none';
-    if (window.showToast) showToast('プロフィールを更新しました');
+    };
   }
 
+  // アバター画像をアップロードしてDB保存するメソッド
+  async saveProfile(name, avatar) {
     if (!Auth.currentUser) {
       if (window.showToast) showToast('ログインしていません', 'warning');
       return;

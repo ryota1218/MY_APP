@@ -44,7 +44,7 @@
           <button class="editor-header-btn" style="width: 100%; justify-content: flex-start; padding: 6px 12px; border-radius: 4px;" data-action="exportPNG"><i data-lucide="image" class="editor-icon" style="margin-right: 8px; width: 16px; height: 16px;"></i>PNG保存</button>
         </div>
       </div>
-      <button class="editor-header-btn" data-label="共有" aria-label="共有"><i data-lucide="share-2" class="editor-icon"></i></button>
+      <button class="editor-header-btn" data-label="共有" aria-label="共有" data-action="shareDiagram"><i data-lucide="share-2" class="editor-icon"></i></button>
       <button class="editor-header-btn" data-label="ユーザー" aria-label="ユーザー" data-action="showUserProfile"><i data-lucide="user" class="editor-icon"></i></button>
     </div>
     <div class="editor-header-spacer"></div>
@@ -86,13 +86,13 @@
 
   </div>
 
-  <div class="toolbar-inline-shapes-group">
+  <div class="toolbar-inline-shapes-group" style="position: relative; display: flex; align-items: center; gap: 8px;">
     <div class="toolbar-inline-shapes" id="layout-inline-shapes"></div>
     <button class="inline-shape-more-btn" id="layout-shape-add-btn" data-action="togglePaletteDropdown" title="すべてのUI要素を表示">
       <i data-lucide="chevron-down" class="editor-icon"></i>
     </button>
     <!-- ▼ボタンから出るUI要素ドロップダウン -->
-    <div class="layout-palette-dropdown" id="layout-palette-dropdown"></div>
+    <div class="layout-palette-dropdown" id="layout-palette-dropdown" style="position: absolute; right: 0; top: 100%; z-index: 1000; margin-top: 8px; display: none;"></div>
   </div>
 </div>
 <div class="diagram-workspace layout-workspace-wrap" style="background: var(--bg-primary);">
