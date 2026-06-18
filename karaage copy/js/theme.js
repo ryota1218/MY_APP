@@ -7,8 +7,10 @@ class ThemeManager {
   constructor() {
     this.defaultTheme = {
       baseColor: '#7c3aed', // デフォルトの紫（hue: 262付近）
-      accentColor: '#06b6d4', // アクセント
-      mode: 'dark' // 'dark' or 'light'
+      accentColor: '#0ea5e9', // ライトモードに合うアクセント（青系）
+      mode: 'light', // デフォルトをライトモードに変更
+      mainBgColor: '#ffffff', // 純粋な白背景
+      subBgColor: '#ffffff'
     };
     this.currentTheme = { ...this.defaultTheme };
     this.init();
@@ -177,12 +179,14 @@ class ThemeManager {
       root.style.setProperty('--text-muted', '#94a3b8');
       root.style.setProperty('--border', 'rgba(255,255,255,0.15)');
       root.style.setProperty('--bg-glass', 'rgba(255,255,255,0.05)');
+      root.style.setProperty('--grid-dot-color', 'rgba(255,255,255,0.15)');
     } else {
       root.style.setProperty('--text', '#0f172a');
       root.style.setProperty('--text-dim', '#334155');
       root.style.setProperty('--text-muted', '#64748b');
       root.style.setProperty('--border', 'rgba(0,0,0,0.15)');
       root.style.setProperty('--bg-glass', 'rgba(0,0,0,0.03)');
+      root.style.setProperty('--grid-dot-color', 'rgba(0,0,0,0.1)');
     }
 
     // アクセントカラーの適用
@@ -205,6 +209,58 @@ class ThemeManager {
     root.style.setProperty('--danger-rgb', '239, 68, 68');
     root.style.setProperty('--text-rgb', `${this.hexToRgb(isDarkBg ? '#f8fafc' : '#0f172a').r}, ${this.hexToRgb(isDarkBg ? '#f8fafc' : '#0f172a').g}, ${this.hexToRgb(isDarkBg ? '#f8fafc' : '#0f172a').b}`);
     root.style.setProperty('--border-hover', `hsla(${accentHsl.h}, ${accentHsl.s}%, 50%, 0.5)`);
+
+    // UMLナビゲーション・サブメニュー用の詳細テーマ変数
+    root.style.setProperty('--nav-active-bg', `rgba(${accentRgb.r}, ${accentRgb.g}, ${accentRgb.b}, 0.15)`);
+    root.style.setProperty('--nav-active-text', accentColor);
+    root.style.setProperty('--nav-submenu-bg', subBgColor);
+    root.style.setProperty('--nav-submenu-border', `rgba(${accentRgb.r}, ${accentRgb.g}, ${accentRgb.b}, 0.3)`);
+
+    // 動的なUI要素のスタイル強制適用（CSSファイルが未対応の場合のフォールバック）
+    const styleId = 'theme-dynamic-overrides';
+    let styleTag = document.getElementById(styleId);
+    if (!styleTag) {
+      styleTag = document.createElement('style');
+      styleTag.id = styleId;
+      document.head.appendChild(styleTag);
+    }
+    styleTag.textContent = `
+      #uml-submenu a.active { background: var(--nav-active-bg) !important; color: var(--nav-active-text) !important; font-weight: 600; }
+      #uml-submenu a:hover:not(.active) { background: var(--bg-glass); }
+      .statusbar-preset.active { background: var(--nav-active-bg) !important; color: var(--nav-active-text) !important; border-color: var(--nav-active-text) !important; }
+      .layout-element.selected { border: 2px solid var(--accent) !important; box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.3); }
+      .layout-element .resize-handle { background: var(--accent); }
+      .inline-shape-btn:hover { border-color: var(--accent) !important; background: var(--nav-active-bg) !important; }
+      .layout-palette-dropdown { display: none; position: absolute; top: calc(100% + 8px); right: 0; background: var(--nav-submenu-bg) !important; border: 1px solid var(--nav-submenu-border) !important; border-radius: 8px; padding: 8px; min-width: 200px; box-shadow: var(--shadow); z-index: 1000; animation: fadeIn 0.2s ease; }
+      .layout-palette-dropdown.open { display: block; }
+      .layout-palette-dropdown .palette-title { color: var(--text-muted); font-size: 0.7rem; font-weight: 700; padding: 4px 8px 8px; margin-bottom: 6px; border-bottom: 1px solid var(--border); text-transform: uppercase; letter-spacing: 0.05em; }
+      .palette-item { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; color: var(--text-dim); font-size: 0.9rem; }
+      .palette-item:hover { background: var(--nav-active-bg) !important; color: var(--nav-active-text) !important; }
+      .palette-item .p-icon { color: var(--accent); display: flex; align-items: center; justify-content: center; }
+      .palette-item .palette-icon { width: 18px; height: 18px; }
+      .inline-shape-btn { background: var(--bg-glass); border: 1px solid var(--border); color: var(--text-muted); transition: all 0.2s; }
+      .inline-shape-btn:hover { color: var(--accent) !important; }
+      .project-table th { background: var(--bg-secondary) !important; color: var(--text-dim) !important; border-bottom: 2px solid var(--border) !important; }
+      .project-table td { border-bottom: 1px solid var(--border) !important; color: var(--text-dim); background: transparent; }
+      .project-table tr:hover:not(:first-child) { background: var(--bg-glass); }
+      .project-table tr.is-current { background: var(--nav-active-bg) !important; border-left: 3px solid var(--accent) !important; }
+      .project-table tr.is-current td { color: var(--text) !important; }
+      .project-table, .project-table-container { background: var(--bg-card) !important; } /* テーブルとコンテナの背景色をテーマに合わせる */
+      .my-projects-card .btn-primary { background: var(--accent) !important; color: #fff !important; border: none !important; transition: transform 0.2s; }
+      .my-projects-card .btn-primary:hover { transform: translateY(-1px); filter: brightness(1.1); }
+      .my-projects-card .btn-secondary { background: var(--bg-glass) !important; color: var(--text-dim) !important; border: 1px solid var(--border) !important; }
+      .role-badge { background: var(--nav-active-bg); color: var(--nav-active-text); border: 1px solid var(--nav-submenu-border); padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+      .role-badge.role-owner { border-color: var(--accent); color: var(--accent); }
+      .project-action-card, .my-projects-card { background: var(--bg-card) !important; border: 1px solid var(--border) !important; }
+      .my-projects-card .block-header h2 { color: var(--text) !important; border-left: 4px solid var(--accent); padding-left: 12px; }
+      .project-form .form-input { background: var(--bg-secondary) !important; color: var(--text) !important; border: 1px solid var(--border) !important; }
+      .project-form .form-input::placeholder { color: var(--text-muted); opacity: 0.6; }
+      .section-header h1 { color: var(--accent) !important; }
+      code { background: var(--nav-active-bg) !important; color: var(--accent-light) !important; padding: 2px 6px; border-radius: 4px; font-family: monospace; border: 1px solid var(--nav-submenu-border); }
+    `;
+
+    // 他のモジュール（DiagramToolなど）がテーマ変更を検知できるようにカスタムイベントを発火
+    document.dispatchEvent(new CustomEvent('theme-changed', { detail: { mode: this.currentTheme.mode, theme: this.currentTheme } }));
   }
 
   isDark(hex) {

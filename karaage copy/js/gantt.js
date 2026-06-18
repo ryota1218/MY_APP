@@ -39,6 +39,7 @@ class GanttTool {
     this.isSyncingScroll = false;
 
     this.setupButtons();
+    this.setupResizer();
     this.loadGanttData();
   }
 
@@ -942,6 +943,79 @@ enableDrag() {
         tasksEl.scrollTop = timelineEl.scrollTop;
         this.isSyncingScroll = false;
       }
+    });
+  }
+
+  /* ===== タスクリストのリサイズ機能 ===== */
+  setupResizer() {
+    const tasksEl = document.getElementById('gantt-tasks');
+    const timelineEl = document.getElementById('gantt-timeline');
+    if (!tasksEl || !timelineEl) return;
+
+    // リサイザー用のスタイルを動的に追加
+    if (!document.getElementById('gantt-resizer-style')) {
+      const style = document.createElement('style');
+      style.id = 'gantt-resizer-style';
+      style.textContent = `
+        .gantt-resizer {
+          width: 8px;
+          cursor: col-resize;
+          background: transparent;
+          z-index: 100;
+          flex-shrink: 0;
+          margin: 0 -4px;
+          transition: background 0.2s;
+        }
+        .gantt-resizer::after {
+          content: "";
+          position: absolute;
+          left: 3px;
+          top: 0;
+          bottom: 0;
+          width: 2px;
+          background: var(--border);
+        }
+        .gantt-resizer:hover::after, .gantt-resizer.active::after {
+          background: var(--accent);
+          width: 4px;
+          left: 2px;
+        }
+        #gantt-tasks { flex-shrink: 0; min-width: 150px; max-width: 600px; overflow-x: hidden; }
+        #gantt-timeline { flex: 1; }
+      `;
+      document.head.appendChild(style);
+    }
+
+    let resizer = document.getElementById('gantt-resizer');
+    if (!resizer) {
+      resizer = document.createElement('div');
+      resizer.id = 'gantt-resizer';
+      resizer.className = 'gantt-resizer';
+      // タスクリストとタイムラインの間に挿入
+      tasksEl.parentNode.insertBefore(resizer, timelineEl);
+    }
+
+    resizer.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      resizer.classList.add('active');
+      const startX = e.clientX;
+      const startWidth = tasksEl.offsetWidth;
+
+      const onMouseMove = (me) => {
+        const deltaX = me.clientX - startX;
+        const newWidth = Math.min(600, Math.max(150, startWidth + deltaX));
+        tasksEl.style.width = newWidth + 'px';
+        tasksEl.style.flex = 'none'; // Flexboxによる自動伸縮を無効化
+      };
+
+      const onMouseUp = () => {
+        resizer.classList.remove('active');
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+      };
+
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
     });
   }
 

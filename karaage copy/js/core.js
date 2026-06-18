@@ -126,6 +126,9 @@ class App {
           }
           umlSubmenu.style.left = (rect.right + 6) + 'px';
           umlSubmenu.style.top = top + 'px';
+          // テーマカラーを即時反映（JSによる動的配置のため直接指定）
+          umlSubmenu.style.background = 'var(--nav-submenu-bg)';
+          umlSubmenu.style.borderColor = 'var(--nav-submenu-border)';
         }
       });
     }
@@ -179,6 +182,22 @@ class App {
     document.querySelectorAll('.diagram-property-panel, .diagram-ai-chat-panel').forEach(panel => {
       panel.classList.remove('open');
     });
+
+    // 現在のツール情報をbodyに反映（CSSでツールごとのテーマを制御可能にする）
+    document.body.dataset.activeTool = tool;
+
+    if (tool === 'uml') {
+      if (this.currentUmlType) {
+        document.body.dataset.activeUmlType = this.currentUmlType;
+        // サブメニューのアクティブ状態を現在のタイプに同期
+        document.querySelectorAll('#uml-submenu a').forEach(item => {
+          item.classList.toggle('active', item.dataset.umlType === this.currentUmlType);
+        });
+      }
+    } else {
+      // UML以外のツールに移動した場合はUML固有のデータ属性をクリア
+      delete document.body.dataset.activeUmlType;
+    }
 
     // サイドバーのリンク状態を更新
     document.querySelectorAll('.sidebar nav a, #auth-action-btn').forEach(x => x.classList.remove('active'));
@@ -366,8 +385,7 @@ class App {
       tableBody.innerHTML = '<tr><td colspan="4" style="padding: 20px; text-align: center; color: var(--text-muted);">該当する図面が見つかりません</td></tr>';
       return;
     }
-
-    // テーブルビューのレンダリング
+// テーブルビューのレンダリング
     tableBody.innerHTML = filtered.map(item => `
       <tr style="border-bottom: 1px solid var(--border); cursor: pointer; transition: background-color 0.2s;" 
           onclick="window.app.loadDiagramAndNavigate('${item.toolType}', '${item.id}', '${item.toolLabel}')"
