@@ -69,11 +69,6 @@ class GanttTool {
         this.expandedPhases.clear();
         this.tasks.filter(t => t.phase).forEach(t => this.expandedPhases.add(t.id));
       }
-      
-      // Update localStorage and refresh dashboard preview to keep them in sync
-      localStorage.setItem('gantt_tasks', JSON.stringify(this.tasks));
-      if (window.app && window.app.renderDashboardGantt) window.app.renderDashboardGantt();
-      
       this.render();
     } catch (err) {
       console.error("Failed to load gantt data from DB:", err);
@@ -639,6 +634,7 @@ class GanttTool {
     `;
   }).join('');
 
+  header.style.width = days.length * dayWidth + 'px'; // ヘッダーの幅も設定
   bars.style.width = days.length * dayWidth + 'px';
 
   // ===== 今日ライン =====
@@ -920,8 +916,8 @@ enableDrag() {
 
   /* ===== スクロール同期 ===== */
   setupScrollSync() {
-    const tasksEl = document.getElementById('gantt-tasks');
-    const timelineEl = document.getElementById('gantt-timeline');
+    const tasksEl = document.getElementById('gantt-tasks'); // タスクリストのスクロールコンテナ
+    const timelineEl = document.getElementById('gantt-bars'); // タイムラインのバー部分のスクロールコンテナ
 
     if (!tasksEl || !timelineEl) return;
 
@@ -980,8 +976,10 @@ enableDrag() {
           width: 4px;
           left: 2px;
         }
-        #gantt-tasks { flex-shrink: 0; min-width: 150px; max-width: 600px; overflow-x: hidden; }
-        #gantt-timeline { flex: 1; }
+        #gantt-tasks { flex-shrink: 0; min-width: 150px; max-width: 540px; overflow-x: hidden; overflow-y: auto; }
+        #gantt-timeline { flex: 1; display: flex; flex-direction: column; overflow-x: auto; } /* タイムライン全体は横スクロール */
+        #gantt-header { position: sticky; top: 0; z-index: 50; background: var(--bg-primary); } /* ヘッダーは固定 */
+        #gantt-bars { flex: 1; overflow-x: hidden; overflow-y: auto; } /* バー部分が縦スクロール */
       `;
       document.head.appendChild(style);
     }
@@ -1003,7 +1001,7 @@ enableDrag() {
 
       const onMouseMove = (me) => {
         const deltaX = me.clientX - startX;
-        const newWidth = Math.min(600, Math.max(150, startWidth + deltaX));
+        const newWidth = Math.min(540, Math.max(150, startWidth + deltaX));
         tasksEl.style.width = newWidth + 'px';
         tasksEl.style.flex = 'none'; // Flexboxによる自動伸縮を無効化
       };
