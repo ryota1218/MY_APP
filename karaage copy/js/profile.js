@@ -293,7 +293,6 @@ class ProfileManager {
       }
     };
   }
-
   // アバター画像をアップロードしてDB保存するメソッド
   async saveProfile(name, avatar) {
     if (!Auth.currentUser) {
@@ -330,6 +329,7 @@ class ProfileManager {
     if (window.showToast) showToast('プロフィールを更新しました');
   }
 }
+
 
 window.addEventListener('DOMContentLoaded', () => {
   window.app = window.app || {};

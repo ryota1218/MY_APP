@@ -69,6 +69,11 @@ class GanttTool {
         this.expandedPhases.clear();
         this.tasks.filter(t => t.phase).forEach(t => this.expandedPhases.add(t.id));
       }
+      
+      // Update localStorage and refresh dashboard preview to keep them in sync
+      localStorage.setItem('gantt_tasks', JSON.stringify(this.tasks));
+      if (window.app && window.app.renderDashboardGantt) window.app.renderDashboardGantt();
+      
       this.render();
     } catch (err) {
       console.error("Failed to load gantt data from DB:", err);
