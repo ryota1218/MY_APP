@@ -975,7 +975,7 @@ enableDrag() {
           width: 4px;
           left: 2px;
         }
-        #gantt-tasks { flex-shrink: 0; min-width: 150px; overflow-x: hidden; }
+        #gantt-tasks { flex-shrink: 0; min-width: 150px; max-width: 600px; overflow-x: hidden; }
         #gantt-timeline { flex: 1; }
       `;
       document.head.appendChild(style);
@@ -998,7 +998,7 @@ enableDrag() {
 
       const onMouseMove = (me) => {
         const deltaX = me.clientX - startX;
-        const newWidth = Math.max(150, startWidth + deltaX);
+        const newWidth = Math.min(600, Math.max(150, startWidth + deltaX));
         tasksEl.style.width = newWidth + 'px';
         tasksEl.style.flex = 'none'; // Flexboxによる自動伸縮を無効化
       };
