@@ -205,8 +205,6 @@ class ProfileManager {
       </div>
       <!-- アカウント設定モーダルHTML... -->
     `;
-    // (中略 - メソッド内のコードは全てそのまま残します)
-  }
 
     if (window.lucide) lucide.createIcons();
 
@@ -292,7 +290,10 @@ class ProfileManager {
 
       if (!updated) {
         feedback.textContent = '変更がありませんでした。';
-  // アバター画像をアップロードしてDB保存するメソッド（今回作成したもの）
+      }
+    };
+  }
+  // アバター画像をアップロードしてDB保存するメソッド
   async saveProfile(name, avatar) {
     if (!Auth.currentUser) {
       if (window.showToast) showToast('ログインしていません', 'warning');
@@ -328,6 +329,7 @@ class ProfileManager {
     if (window.showToast) showToast('プロフィールを更新しました');
   }
 }
+
 
 window.addEventListener('DOMContentLoaded', () => {
   window.app = window.app || {};

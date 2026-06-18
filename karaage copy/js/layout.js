@@ -24,17 +24,26 @@ class LayoutTool {
     this.initActionButtons();
     this.initPropertyPanel();
     this.initCanvasConfig();
+    this.initThemeListener();
   }
 
   initActionButtons() {
     // data-action属性によるイベントバインディング
     const section = this.canvas.closest('.tool-section');
+    console.log('[LayoutTool] initActionButtons section:', section);
     if (section) {
-      section.querySelectorAll('[data-action]').forEach(btn => {
-        btn.addEventListener('click', () => {
+      const buttons = section.querySelectorAll('[data-action]');
+      console.log('[LayoutTool] found buttons with data-action:', buttons.length);
+      buttons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
           const action = btn.dataset.action;
+          console.log('[LayoutTool] button clicked, action:', action);
           if (typeof this[action] === 'function') {
+            console.log('[LayoutTool] calling method:', action);
+            e.stopPropagation();
             this[action]();
+          } else {
+            console.error('[LayoutTool] method not found:', action);
           }
         });
       });
@@ -56,25 +65,46 @@ class LayoutTool {
 
   initPalette() {
     const items = [
-      { icon:'panel-top', label:'ヘッダー', w:360, h:50, bg:'var(--bg-glass)' },
-      { icon:'panel-left', label:'サイドバー', w:120, h:300, bg:'var(--bg-glass)' },
-      { icon:'mouse-pointer-2', label:'ボタン', w:120, h:40, bg:'var(--accent)', textColor:'#fff' },
-      { icon:'table', label:'テーブル', w:300, h:180, bg:'var(--bg-card)' },
-      { icon:'image', label:'画像', w:200, h:150, bg:'var(--bg-glass)' },
-      { icon:'type', label:'テキスト', w:200, h:30, bg:'transparent' },
-      { icon:'text-cursor-input', label:'フォーム', w:280, h:200, bg:'var(--bg-card)' },
-      { icon:'layout-template', label:'カード', w:200, h:140, bg:'var(--bg-card)' },
-      { icon:'panel-bottom', label:'フッター', w:360, h:40, bg:'var(--bg-glass)' },
-      { icon:'search', label:'検索バー', w:240, h:36, bg:'var(--bg-card)' },
+      { icon:'panel-top', label:'ヘッダー', w:360, h:50, bg:'var(--bg-glass)', color:'#3b82f6' },
+      { icon:'panel-left', label:'サイドバー', w:120, h:300, bg:'var(--bg-glass)', color:'#10b981' },
+      { icon:'mouse-pointer-2', label:'ボタン', w:120, h:40, bg:'var(--accent)', textColor:'#fff', color:'#f59e0b' },
+      { icon:'table', label:'テーブル', w:300, h:180, bg:'var(--bg-card)', color:'#8b5cf6' },
+      { icon:'image', label:'画像', w:200, h:150, bg:'var(--bg-glass)', color:'#ec4899' },
+      { icon:'type', label:'テキスト', w:200, h:30, bg:'transparent', color:'#f97316' },
+      { icon:'text-cursor-input', label:'フォーム', w:280, h:200, bg:'var(--bg-card)', color:'#06b6d4' },
+      { icon:'layout-template', label:'カード', w:200, h:140, bg:'var(--bg-card)', color:'#6366f1' },
+      { icon:'panel-bottom', label:'フッター', w:360, h:40, bg:'var(--bg-glass)', color:'#14b8a6' },
+      { icon:'search', label:'検索バー', w:240, h:36, bg:'var(--bg-card)', color:'#a855f7' },
     ];
     this.paletteItems = items;
 
-    // インラインUI要素ボタン（ツールバーに横並び）
+    // ドロップダウンUI要素一覧（格子状配置）
+    const dropdown = document.getElementById('layout-palette-dropdown');
+    if (dropdown) {
+      dropdown.innerHTML = `<div class="palette-dropdown-menu" style="background-color: var(--bg-card, #111827); border: 1px solid var(--accent, #7c3aed); box-shadow: 0 8px 32px var(--shadow-color, rgba(0,0,0,0.4)); display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px; border-radius: 6px; min-width: 320px;">
+        ${items.map((it, i) => `<button type="button" class="shape-option" draggable="true" data-idx="${i}" data-label="${it.label}" aria-label="${it.label}" style="border: 1px solid color-mix(in srgb, ${it.color}, transparent 80%); border-left: 3px solid ${it.color}; color: ${it.color}; background-color: color-mix(in srgb, ${it.color}, transparent 92%); box-shadow: 0 2px 4px color-mix(in srgb, ${it.color}, transparent 96%); border-radius: 4px; padding: 8px; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 70px; font-size: 12px;">
+          <i data-lucide="${it.icon}" class="palette-icon" style="width: 24px; height: 24px;"></i>${it.label}</button>`).join('')}
+      </div>`;
+      dropdown.querySelectorAll('.shape-option').forEach(el => {
+        el.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', el.dataset.idx));
+        el.addEventListener('click', () => {
+          const idx = parseInt(el.dataset.idx);
+          if (!isNaN(idx)) {
+            this.addElementFromPalette(idx);
+            dropdown.classList.remove('open');
+            dropdown.style.display = 'none';
+          }
+        });
+      });
+    }
+
+    // インラインUI要素ボタン（ツールバーに横並び - 最初の4つのみ）
     const inlineContainer = document.getElementById('layout-inline-shapes');
     if (inlineContainer) {
-      inlineContainer.innerHTML = items.map((it, i) =>
-        `<button class="inline-shape-btn" draggable="true" data-idx="${i}" title="${it.label}">
-          <i data-lucide="${it.icon}" class="palette-icon"></i>
+      const visibleItems = items.slice(0, 4);
+      inlineContainer.innerHTML = visibleItems.map((it, i) =>
+        `<button type="button" class="inline-shape-btn" draggable="true" data-idx="${i}" data-label="${it.label}" aria-label="${it.label}" style="background-color: color-mix(in srgb, ${it.color}, transparent 90%); border: 1px solid color-mix(in srgb, ${it.color}, transparent 75%); border-radius: 4px;">
+          <span class="inline-shape-icon" style="color: ${it.color}"><i data-lucide="${it.icon}" class="palette-icon"></i></span>
         </button>`
       ).join('');
       inlineContainer.querySelectorAll('.inline-shape-btn').forEach(btn => {
@@ -86,23 +116,6 @@ class LayoutTool {
       });
     }
 
-    // ▼ボタンから出るドロップダウンUI要素一覧
-    const dropdown = document.getElementById('layout-palette-dropdown');
-    if (dropdown) {
-      dropdown.innerHTML = '<div class="palette-title">UI要素</div>' +
-        items.map((it, i) => `<div class="palette-item" draggable="true" data-idx="${i}">
-          <span class="p-icon"><i data-lucide="${it.icon}" class="palette-icon"></i></span><span>${it.label}</span></div>`).join('');
-      dropdown.querySelectorAll('.palette-item').forEach(el => {
-        el.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', el.dataset.idx));
-        el.addEventListener('click', () => {
-          const idx = parseInt(el.dataset.idx);
-          if (!isNaN(idx)) {
-            this.addElementFromPalette(idx);
-            dropdown.classList.remove('open');
-          }
-        });
-      });
-    }
     // アイコンの初期化
     if (window.lucide) lucide.createIcons();
   }
@@ -137,6 +150,9 @@ class LayoutTool {
       if (ctrl && key === 'c') {
         e.preventDefault();
         this.copySelected();
+      } else if (ctrl && key === 'x') {
+        e.preventDefault();
+        this.cutSelected();
       } else if (ctrl && key === 'v') {
         e.preventDefault();
         this.pasteSelected();
@@ -213,8 +229,8 @@ class LayoutTool {
     document.addEventListener('click', e => {
       const dropdown = document.getElementById('layout-palette-dropdown');
       const btn = document.getElementById('layout-shape-add-btn');
-      if (dropdown && dropdown.classList.contains('open') && !dropdown.contains(e.target) && !btn.contains(e.target)) {
-        dropdown.classList.remove('open');
+      if (dropdown && btn && !dropdown.contains(e.target) && !btn.contains(e.target)) {
+        dropdown.style.display = 'none';
       }
     });
   }
@@ -374,8 +390,13 @@ class LayoutTool {
 
   togglePaletteDropdown() {
     const dropdown = document.getElementById('layout-palette-dropdown');
-    if (!dropdown) return;
-    dropdown.classList.toggle('open');
+    if (!dropdown) {
+      console.error('[LayoutTool] layout-palette-dropdown not found');
+      return;
+    }
+    const isVisible = dropdown.style.display !== 'none' && dropdown.style.display !== '';
+    dropdown.style.display = isVisible ? 'none' : 'block';
+    console.log('[LayoutTool] togglePaletteDropdown:', isVisible ? 'hidden' : 'shown');
   }
 
   addElement(item, x, y) {
@@ -793,6 +814,21 @@ class LayoutTool {
     }
   }
 
+  cutSelected() {
+    if (this.selectedEl) {
+      this.clipboard = { ...this.selectedEl };
+      showToast('切り取りました');
+      // 削除メッセージを表示しないように直接削除する
+      const el = this.selectedEl;
+      this.pushUndoAction({
+        type: 'restoreElement',
+        element: JSON.parse(JSON.stringify(el))
+      });
+      this.removeElementById(el.id);
+      this.closePropertyPanel();
+    }
+  }
+
   pasteSelected() {
     if (!this.clipboard) return;
     const item = { ...this.clipboard };
@@ -841,8 +877,16 @@ class LayoutTool {
   }
 
   showSettings() {
-    showToast('設定画面を開きます');
+    showToast('設定パネルを開きます');
     if (window.themeManager) window.themeManager.toggleModal();
+  }
+
+  shareDiagram() {
+    showToast('共有機能は現在準備中です', 'info');
+  }
+
+  showUserProfile() {
+    if (window.app && window.app.profile) window.app.profile.showModal();
   }
 
   autoLayout() {
@@ -858,6 +902,14 @@ class LayoutTool {
 
   exportPNG() {
     showToast('PNGエクスポートは現在モック実装です', 'info');
+  }
+
+  initThemeListener() {
+    document.addEventListener('theme-changed', () => {
+      this.initPalette();
+      // キャンバス上の要素の色をリセット（テーマ変更時に反映）
+      this.elements.forEach(el => this.updateElementDOM(el));
+    });
   }
 
   initCanvasConfig() {
