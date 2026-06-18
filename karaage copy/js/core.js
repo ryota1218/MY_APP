@@ -216,6 +216,13 @@ class App {
       filterBtn.onclick = () => this.showFilterModal();
     }
 
+    // プロジェクトの選択状態を復元表示
+    const currentProjName = localStorage.getItem('current_project_name') || '未選択';
+    const displayEl = document.getElementById('current-project-display');
+    if (displayEl) {
+      displayEl.textContent = currentProjName;
+    }
+
     await this.refreshDashboardData();
     this.renderDashboardGantt();
   }
@@ -265,27 +272,63 @@ class App {
   }
 
   /**
-   * データベース（現在はlocalStorage）から図面データを取得する
-   * DB実装時はここをAPIリクエストに置き換えます
+   * Supabaseのimagesテーブルから現在選択中のプロジェクトに属する図面データを取得する
    */
   async fetchDiagrams() {
-    const keys = [
-      { key: 'arch_diagrams', type: 'architecture', label: 'システム構成図' },
-      { key: 'uml_diagrams', type: 'uml', label: 'UML図' },
-      { key: 'st_diagrams', type: 'screen-transition', label: '画面遷移図' },
-      { key: 'layout_screens', type: 'layout', label: '画面レイアウト' },
-      { key: 'er_diagrams', type: 'erdiagram', label: 'E-R図' }
-    ];
+    const projectId = localStorage.getItem('current_project_id');
+    if (!projectId) return [];
 
-    let allItems = [];
-    keys.forEach(k => {
-      const data = localStorage.getItem(k.key);
-      if (data) {
-        const items = JSON.parse(data).map(item => ({ ...item, toolType: k.type, toolLabel: k.label }));
-        allItems = [...allItems, ...items];
-      }
-    });
-    return allItems;
+    if (!window.supabaseClient) {
+      console.warn('[App] Supabase client is not initialized.');
+      return [];
+    }
+
+    try {
+      const { data, error } = await window.supabaseClient
+        .from('images')
+        .select('id, name, stats, chart_type, create_at, update_att')
+        .eq('project_id', projectId)
+        .order('update_att', { ascending: false });
+
+      if (error) throw error;
+      if (!data) return [];
+
+      const jpTypeToToolType = {
+        'システム構成図': 'architecture',
+        'UML図': 'uml',
+        '画面遷移図': 'screen-transition',
+        '画面レイアウト': 'layout',
+        'E-R図': 'erdiagram',
+        'ユースケース図': 'uml',
+        'アクティビティ図': 'uml',
+        'ステートマシン図': 'uml',
+        '配置図': 'uml',
+        'コンポーネント図': 'uml',
+        'クラス図': 'uml',
+        'オブジェクト図': 'uml',
+        'パッケージ図': 'uml',
+        '複合構造図': 'uml',
+        'コミュニケーション図': 'uml',
+        'シーケンス図': 'uml',
+        '相互作用図': 'uml',
+        'タイミング図': 'uml'
+      };
+
+      return data.map(item => {
+        const toolType = jpTypeToToolType[item.chart_type] || 'uml';
+        return {
+          id: item.id,
+          title: item.name,
+          status: item.stats,
+          toolType: toolType,
+          toolLabel: item.chart_type,
+          updated_at: item.update_att ? item.update_att.replace('T', ' ').substring(0, 19) : '-'
+        };
+      });
+    } catch (err) {
+      console.error('[App] Failed to fetch diagrams from DB:', err);
+      return [];
+    }
   }
 
   /**
@@ -308,8 +351,8 @@ class App {
   }
 
   renderDashboardCards() {
-    const container = document.getElementById('dashboard-cards');
-    if (!container || !this.allDiagrams) return;
+    const tableBody = document.getElementById('dashboard-table-body');
+    if (!tableBody || !this.allDiagrams) return;
 
     const filtered = this.allDiagrams.filter(item => {
       const matchName = !this.dashboardFilters.name || item.title?.toLowerCase().includes(this.dashboardFilters.name.toLowerCase());
@@ -320,19 +363,27 @@ class App {
     });
 
     if (filtered.length === 0) {
-      container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">該当する図面が見つかりません</div>';
+      tableBody.innerHTML = '<tr><td colspan="4" style="padding: 20px; text-align: center; color: var(--text-muted);">該当する図面が見つかりません</td></tr>';
       return;
     }
 
-    container.innerHTML = filtered.map(item => `
-      <div class="card diagram-card" onclick="window.app.navigateTo('${item.toolType}')">
-        <div class="diagram-type-tag">${item.toolLabel}</div>
-        <h3>${item.title || '無題の図面'}</h3>
-        <div class="diagram-meta">
-          <span><i data-lucide="calendar" class="icon-xs"></i> ${item.updated_at ? item.updated_at.split(' ')[0] : '-'}</span>
-          <span class="status-badge status-${item.status || 'creating'}">${this.getStatusLabel(item.status)}</span>
-        </div>
-      </div>
+    // テーブルビューのレンダリング
+    tableBody.innerHTML = filtered.map(item => `
+      <tr style="border-bottom: 1px solid var(--border); cursor: pointer; transition: background-color 0.2s;" 
+          onclick="window.app.loadDiagramAndNavigate('${item.toolType}', '${item.id}', '${item.toolLabel}')"
+          onmouseover="this.style.backgroundColor='rgba(124, 58, 237, 0.05)'"
+          onmouseout="this.style.backgroundColor='transparent'">
+        <td style="padding: 12px 16px; font-weight: 500; color: var(--text);">${item.title || '無題の図面'}</td>
+        <td style="padding: 12px 16px; color: var(--text); font-size: 0.85rem;">
+          ${item.toolLabel}
+        </td>
+        <td style="padding: 12px 16px;">
+          <span class="status-badge status-${item.status || 'creating'}" style="font-size: 0.75rem; font-weight: 600;">${this.getStatusLabel(item.status)}</span>
+        </td>
+        <td style="padding: 12px 16px; color: var(--text-muted); font-size: 0.8rem;">
+          <span><i data-lucide="calendar" class="icon-xs" style="vertical-align: middle; margin-right: 4px;"></i>${item.updated_at}</span>
+        </td>
+      </tr>
     `).join('');
     
     if (typeof lucide !== 'undefined') lucide.createIcons();
@@ -341,6 +392,93 @@ class App {
   getStatusLabel(status) {
     const labels = { creating: '作成中', completed: '完了', on_hold: '保留' };
     return labels[status] || '作成中';
+  }
+
+  /**
+   * ダッシュボードから選択した図をDBからロードし、該当のツール画面へ遷移させる
+   */
+  async loadDiagramAndNavigate(toolType, id, toolLabel) {
+    // 1. UML図の場合、サブタイプの設定を行う
+    let umlType = null;
+    if (toolType === 'uml') {
+      const labelToUmlType = {
+        'クラス図': 'class',
+        'オブジェクト図': 'object',
+        'パッケージ図': 'package',
+        'コンポーネント図': 'component',
+        '配置図': 'deployment',
+        'コンポジット構造図': 'composite',
+        'アクティビティ図': 'activity',
+        'ステートマシン図': 'state',
+        'ユースケース図': 'usecase',
+        'コミュニケーション図': 'communication',
+        'シーケンス図': 'sequence',
+        '相互作用図': 'interaction',
+        'タイミング図': 'timing'
+      };
+      umlType = labelToUmlType[toolLabel] || 'class';
+    }
+
+    // 2. 該当ツールセクションへのナビゲーション実行
+    this.navigateTo(toolType);
+
+    // 3. ツールインスタンスの特定
+    let toolInstance = null;
+    if (toolType === 'architecture') {
+      toolInstance = this.architecture;
+    } else if (toolType === 'uml') {
+      // UML図のタイプをスワップする
+      const typeDef = umlDiagramTypes[umlType];
+      if (typeDef) {
+        if (!this.uml) {
+          this.uml = new DiagramTool('uml', typeDef.components, { paletteMode: 'dropdown', umlType: umlType });
+        } else {
+          this.uml.swapComponents(typeDef.components, umlType);
+        }
+        this.currentUmlType = umlType;
+
+        // UI表示の更新
+        const umlSection = document.getElementById('uml');
+        const h1 = umlSection?.querySelector('.section-header h1');
+        const desc = umlSection?.querySelector('.section-header p');
+        if (h1) h1.textContent = `UML図 - ${typeDef.label}`;
+        if (desc) desc.textContent = `${typeDef.label}を作成・編集します`;
+
+        // サイドバーのサブメニューハイライト
+        document.querySelectorAll('#uml-submenu a').forEach(x => x.classList.remove('active'));
+        const activeSubmenuItem = document.querySelector(`#uml-submenu a[data-uml-type="${umlType}"]`);
+        if (activeSubmenuItem) activeSubmenuItem.classList.add('active');
+      }
+      toolInstance = this.uml;
+    } else if (toolType === 'screen-transition') {
+      toolInstance = this.screenTransition;
+    } else if (toolType === 'layout') {
+      toolInstance = this.layout;
+    } else if (toolType === 'erdiagram') {
+      toolInstance = this.erdiagram;
+    }
+
+    if (!toolInstance) {
+      console.error('[App] Target tool instance not found for:', toolType);
+      return;
+    }
+
+    // 4. DBIOに読み込みコールバックを設定して、DBからデータを取得・流し込む
+    if (window.DBIO) {
+      window.DBIO.pendingLoadCallback = (chartData, loadId, name, status) => {
+        if (typeof toolInstance.restoreSnapshot === 'function') {
+          toolInstance.restoreSnapshot(chartData);
+          showToast(`${name} を読み込みました`);
+        } else {
+          console.error('[App] restoreSnapshot method not found on toolInstance');
+        }
+      };
+
+      // 実際のロードを実行
+      await window.DBIO.executeLoad(id, '', '');
+    } else {
+      showToast('データベース連携モジュールが見つかりません', 'danger');
+    }
   }
 
   /**

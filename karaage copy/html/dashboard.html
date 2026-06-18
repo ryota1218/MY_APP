@@ -45,8 +45,22 @@
         <i data-lucide="filter"></i> フィルタ
       </button>
     </div>
-    <div class="card-grid" id="dashboard-cards">
-      <!-- ここに動的に図面カードが生成されます -->
+    
+    <!-- テーブルビュー -->
+    <div class="dashboard-table-container" style="overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); margin-top: 10px;">
+      <table class="dashboard-table" style="width: 100%; border-collapse: collapse; text-align: left; background: var(--bg-card); font-size: 0.9rem;">
+        <thead>
+          <tr style="border-bottom: 2px solid var(--border); background: rgba(0,0,0,0.12);">
+            <th style="padding: 12px 16px; font-weight: 600; color: var(--text);">タイトル (name)</th>
+            <th style="padding: 12px 16px; font-weight: 600; color: var(--text);">図の種類 (chart_type)</th>
+            <th style="padding: 12px 16px; font-weight: 600; color: var(--text);">状態 (stats)</th>
+            <th style="padding: 12px 16px; font-weight: 600; color: var(--text);">更新日時 (update_att)</th>
+          </tr>
+        </thead>
+        <tbody id="dashboard-table-body">
+          <!-- ここに動的にテーブル行が生成されます -->
+        </tbody>
+      </table>
     </div>
   </div>
 </div>

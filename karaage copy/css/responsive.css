@@ -1,9 +1,5 @@
 /* Responsive */
 @media (max-width: 1024px) {
-  .sidebar { width: 60px; }
-  .sidebar nav a span:not(.nav-icon) { display: none; }
-  .logo span:not(.logo-icon) { display: none; }
-  .logo { padding: 20px 10px; justify-content: center; }
   .proposal-layout { grid-template-columns: 1fr; }
   .stats-grid { grid-template-columns: repeat(2,1fr); }
   .diagram-overlay-palette { width: 200px; }
@@ -40,4 +36,7 @@
 
   /* Make main content scrollable behind overlay */
   .main-content { height: 100vh; }
+  
+  /* Hide desktop sidebar toggle handle on mobile/tablet */
+  .sidebar-toggle-handle { display: none !important; }
 }

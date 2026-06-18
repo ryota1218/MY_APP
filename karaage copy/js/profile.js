@@ -177,40 +177,6 @@ class ProfileManager {
     document.getElementById('modal-container').style.display = 'none';
     if (window.showToast) showToast('プロフィールを更新しました');
   }
-
-    if (!Auth.currentUser) {
-      if (window.showToast) showToast('ログインしていません', 'warning');
-      return;
-    }
-    
-    // Supabaseの public.users テーブルを更新
-    if (window.supabaseClient) {
-      try {
-        const { error } = await window.supabaseClient
-          .from('users')
-          .upsert({
-            id: Auth.currentUser.id,
-            name: name,
-            icon: avatar,
-            update_at: new Date().toISOString()
-          });
-
-        if (error) throw error;
-      } catch (dbErr) {
-        console.error('[ProfileManager] DBのプロフィール更新に失敗しました:', dbErr);
-        throw new Error(`データベース保存に失敗しました: ${dbErr.message}`);
-      }
-    }
-
-    Auth.currentUser.name = name;
-    Auth.currentUser.avatar = avatar;
-    
-    localStorage.setItem('upstream_user', JSON.stringify(Auth.currentUser));
-    Auth.updateUI();
-    
-    document.getElementById('modal-container').style.display = 'none';
-    if (window.showToast) showToast('プロフィールを更新しました');
-  }
 }
 
 window.addEventListener('DOMContentLoaded', () => {
