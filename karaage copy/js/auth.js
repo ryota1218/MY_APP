@@ -44,8 +44,8 @@ const Auth = {
       
       // メイン画面（index.html または ルートパス）にいてセッションが無い場合はログイン画面へリダイレクト
       const isMainPage = window.location.pathname.endsWith('index.html') || 
-                         window.location.pathname === '/' || 
-                         window.location.pathname.endsWith('/');
+        window.location.pathname === '/' || 
+        window.location.pathname.endsWith('/');
       if (isMainPage) {
         window.location.href = 'html/login.html' + window.location.search;
       }
