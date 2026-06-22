@@ -59,15 +59,18 @@ CREATE TABLE public.images (
 -- カラー設定
 -- ============================================================
 
-CREATE TABLE public.color (
+CREATE TABLE public.colors (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
-  project_id uuid,
-  main text NOT NULL DEFAULT '#FFFAF0'::text,
-  sub text NOT NULL DEFAULT '#FFFFFF'::text,
-  accent text NOT NULL DEFAULT '#D97706'::text,
-  CONSTRAINT color_pkey PRIMARY KEY (id),
-  CONSTRAINT color_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id)
-);
+  user_id uuid NOT NULL,
+  project_id uuid NOT NULL,
+  main text NOT NULL DEFAULT '#f8fafc'::text,
+  sub text NOT NULL DEFAULT '#ffffff'::text,
+  accent text NOT NULL DEFAULT '#0ea5e9'::text,
+  CONSTRAINT colors_pkey PRIMARY KEY (id),
+  CONSTRAINT colors_project_id_fkey FOREIGN KEY (project_id) REFERENCES public.projects(id) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT colors_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON UPDATE CASCADE ON DELETE CASCADE
+) TABLESPACE pg_default;
+
 
 -- ============================================================
 -- ガントチャート
