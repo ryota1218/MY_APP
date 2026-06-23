@@ -84,27 +84,24 @@ class ProfileManager {
       try {
         let finalAvatarUrl = tempAvatar;
 
-        // 画像ファイルが新しく選択されていたら、Supabase Storage にアップロードする
-        if (selectedFile && window.supabaseClient && user.id) {
+        // 画像ファイルが新しく選択されていたら、BFF経由で Supabase Storage にアップロードする
+        if (selectedFile && user.id) {
           const fileExt = selectedFile.name.split('.').pop();
-          const fileName = `${user.id}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
-          const filePath = `${fileName}`;
-
-          const { data: uploadData, error: uploadError } = await window.supabaseClient.storage
-            .from('avatars')
-            .upload(filePath, selectedFile, {
-              cacheControl: '3600',
-              upsert: true
-            });
-
-          if (uploadError) throw uploadError;
-
-          // 公開URLを取得
-          const { data: { publicUrl } } = window.supabaseClient.storage
-            .from('avatars')
-            .getPublicUrl(filePath);
-
-          finalAvatarUrl = publicUrl;
+          const fileName = `${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+          
+          const uploadRes = await fetch('/api/db/upload-avatar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fileData: tempAvatar, // base64データ
+              fileName: fileName,
+              mimeType: selectedFile.type
+            })
+          });
+          const uploadData = await uploadRes.json();
+          if (!uploadRes.ok) throw new Error(uploadData.error || 'Upload failed');
+          
+          finalAvatarUrl = uploadData.publicUrl;
         }
 
         await this.saveProfile(newName, finalAvatarUrl);
@@ -300,23 +297,20 @@ class ProfileManager {
       return;
     }
     
-    // Supabaseの public.users テーブルを更新
-    if (window.supabaseClient) {
-      try {
-        const { error } = await window.supabaseClient
-          .from('users')
-          .upsert({
-            id: Auth.currentUser.id,
-            name: name,
-            icon: avatar,
-            update_at: new Date().toISOString()
-          });
-
-        if (error) throw error;
-      } catch (dbErr) {
-        console.error('[ProfileManager] DBのプロフィール更新に失敗しました:', dbErr);
-        throw new Error(`データベース保存に失敗しました: ${dbErr.message}`);
+    // API経由で public.users テーブルを更新
+    try {
+      const res = await fetch('/api/db/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name, icon: avatar })
+      });
+      if (!res.ok) {
+        const resData = await res.json();
+        throw new Error(resData.error || 'Failed to update profile');
       }
+    } catch (dbErr) {
+      console.error('[ProfileManager] DBのプロフィール更新に失敗しました:', dbErr);
+      throw new Error(`データベース保存に失敗しました: ${dbErr.message}`);
     }
 
     Auth.currentUser.name = name;

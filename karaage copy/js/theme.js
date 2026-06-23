@@ -32,7 +32,7 @@ class ThemeManager {
 
     // Supabaseからプロジェクトカラーを取得して上書き適用する
     const projectId = window.DBIO ? window.DBIO.getCurrentProjectId() : null;
-    if (projectId && window.supabaseClient) {
+    if (projectId) {
       try {
         const dbColor = await window.DBIO.fetchProjectColor(projectId);
         if (dbColor) {
@@ -53,7 +53,7 @@ class ThemeManager {
     
     // Supabaseへプロジェクトカラーを同期保存する
     const projectId = window.DBIO ? window.DBIO.getCurrentProjectId() : null;
-    if (projectId && window.supabaseClient) {
+    if (projectId) {
       try {
         await window.DBIO.saveProjectColor(
           projectId,

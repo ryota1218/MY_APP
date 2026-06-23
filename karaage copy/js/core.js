@@ -297,19 +297,11 @@ class App {
     const projectId = localStorage.getItem('current_project_id');
     if (!projectId) return [];
 
-    if (!window.supabaseClient) {
-      console.warn('[App] Supabase client is not initialized.');
-      return [];
-    }
-
     try {
-      const { data, error } = await window.supabaseClient
-        .from('images')
-        .select('id, name, stats, chart_type, create_at, update_att')
-        .eq('project_id', projectId)
-        .order('update_att', { ascending: false });
-
-      if (error) throw error;
+      const res = await fetch(`/api/db/images?projectId=${projectId}`);
+      const resData = await res.json();
+      if (!res.ok) throw new Error(resData.error || 'Failed to fetch diagrams');
+      const data = resData.data;
       if (!data) return [];
 
       const jpTypeToToolType = {
