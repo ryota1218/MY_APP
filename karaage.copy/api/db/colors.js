@@ -1,4 +1,4 @@
-﻿const { supabase } = require('../_utils/supabase');
+const { supabase } = require('../_utils/supabase');
 
 module.exports = async (req, res) => {
   const token = req.cookies['sb-access-token'];
@@ -18,7 +18,7 @@ module.exports = async (req, res) => {
     if (!projectId) return res.status(400).json({ error: 'projectId required' });
 
     const { data, error } = await supabaseClient
-      .from('color')
+      .from('colors')
       .select('main, sub, accent')
       .eq('project_id', projectId)
       .maybeSingle();
@@ -32,7 +32,7 @@ module.exports = async (req, res) => {
     if (!project_id) return res.status(400).json({ error: 'project_id required' });
 
     const { data: existing } = await supabaseClient
-      .from('color')
+      .from('colors')
       .select('project_id')
       .eq('project_id', project_id)
       .maybeSingle();
@@ -40,14 +40,14 @@ module.exports = async (req, res) => {
     if (existing) {
       // 更新
       const { error } = await supabaseClient
-        .from('color')
+        .from('colors')
         .update({ main, sub, accent })
         .eq('project_id', project_id);
       if (error) return res.status(500).json({ error: error.message });
     } else {
       // 新規挿入
       const { error } = await supabaseClient
-        .from('color')
+        .from('colors')
         .insert([{ project_id, main, sub, accent }]);
       if (error) return res.status(500).json({ error: error.message });
     }
