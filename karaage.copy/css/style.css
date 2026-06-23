@@ -42,9 +42,6 @@
 /* E-R図 */
 @import url('er-diagram.css');
 
-/* ログイン画面 */
-@import url('login.css');
-
 /* プロジェクト管理画面 */
 @import url('project.css');
 
