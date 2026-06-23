@@ -225,6 +225,19 @@ class App {
     if (tool === 'layout' && !this.layout) this.layout = new LayoutTool();
     if (tool === 'erdiagram' && !this.erdiagram) this.erdiagram = new ERDiagramTool();
     if (tool === 'gantt' && !this.gantt) this.gantt = new GanttTool();
+
+    if (tool === 'dashboard') {
+      this.refreshDashboardData();
+      this.renderDashboardGantt();
+    }
+
+    // 各タブ遷移時にデータを最新化（再読み込み）
+    if (tool === 'project' && this.project) {
+      this.project.refreshProjects();
+    }
+    if (tool === 'gantt' && this.gantt) {
+      this.gantt.loadGanttData();
+    }
   }
   async initDashboard() {
     console.log("Dashboard initialized.");
