@@ -121,56 +121,58 @@ const DBIO = {
   async insertDiagram(projectId, name, type, jsonStr, status) {
     const jpType = this.getJapaneseChartType(type);
     const newId = crypto.randomUUID();
-    const { error } = await window.supabaseClient
-      .from('images')
-      .insert([
-        {
-          id: newId,
-          project_id: projectId,
-          name: name,
-          json: jsonStr,
-          stats: status,
-          chart_type: jpType
-        }
-      ]);
-    if (error) throw error;
+    
+    const res = await fetch('/api/db/images', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: newId,
+        project_id: projectId,
+        name: name,
+        json: jsonStr,
+        stats: status,
+        chart_type: jpType
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to insert diagram');
     return newId;
   },
 
   async updateDiagram(id, name, jsonStr, status) {
-    const { error } = await window.supabaseClient
-      .from('images')
-      .update({
+    const projectId = this.getCurrentProjectId();
+    const res = await fetch('/api/db/images', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: id,
+        project_id: projectId,
         name: name,
         json: jsonStr,
-        stats: status,
-        update_att: new Date().toISOString()
+        stats: status
       })
-      .eq('id', id);
-    if (error) throw error;
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to update diagram');
     return id;
   },
 
   async fetchDiagrams(projectId, type) {
     const jpType = this.getJapaneseChartType(type);
-    const { data, error } = await window.supabaseClient
-      .from('images')
-      .select('id, name, stats, create_at, update_att')
-      .eq('project_id', projectId)
-      .eq('chart_type', jpType)
-      .order('update_att', { ascending: false });
-    if (error) throw error;
-    return data;
+    const res = await fetch(`/api/db/images?projectId=${projectId}`);
+    const resData = await res.json();
+    if (!res.ok) throw new Error(resData.error || 'Failed to fetch diagrams');
+    
+    // APIはプロジェクト内の全画像を返すのでクライアントでフィルタする
+    const data = resData.data || [];
+    return data.filter(item => item.chart_type === jpType);
   },
 
   async fetchDiagramById(id) {
-    const { data, error } = await window.supabaseClient
-      .from('images')
-      .select('json')
-      .eq('id', id)
-      .maybeSingle();
-    if (error) throw error;
-    return data;
+    const res = await fetch(`/api/db/images?id=${id}`);
+    const resData = await res.json();
+    if (!res.ok) throw new Error(resData.error || 'Failed to fetch diagram');
+    return resData.data;
   },
 
   // ----------------------------------------------------
@@ -340,50 +342,23 @@ const DBIO = {
   // ----------------------------------------------------
   async fetchProjectColor(projectId) {
     if (!projectId) return null;
-    const { data, error } = await window.supabaseClient
-      .from('color')
-      .select('main, sub, accent')
-      .eq('project_id', projectId)
-      .maybeSingle();
-    if (error) throw error;
-    return data;
+    const res = await fetch(`/api/db/colors?projectId=${projectId}`);
+    const resData = await res.json();
+    if (!res.ok) throw new Error(resData.error || 'Failed to fetch colors');
+    return resData.data;
   },
 
   async saveProjectColor(projectId, main, sub, accent) {
     if (!projectId) return null;
     
-    // 既存のレコードがあるか確認
-    const existing = await this.fetchProjectColor(projectId);
-    
-    if (existing) {
-      // 更新
-      const { data, error } = await window.supabaseClient
-        .from('color')
-        .update({
-          main: main,
-          sub: sub,
-          accent: accent
-        })
-        .eq('project_id', projectId)
-        .select();
-      if (error) throw error;
-      return data;
-    } else {
-      // 新規作成
-      const { data, error } = await window.supabaseClient
-        .from('color')
-        .insert([
-          {
-            project_id: projectId,
-            main: main,
-            sub: sub,
-            accent: accent
-          }
-        ])
-        .select();
-      if (error) throw error;
-      return data;
-    }
+    const res = await fetch('/api/db/colors', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ project_id: projectId, main, sub, accent })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to save colors');
+    return data;
   },
 
   // ----------------------------------------------------
@@ -391,45 +366,23 @@ const DBIO = {
   // ----------------------------------------------------
   async fetchGanttData(projectId) {
     if (!projectId) return null;
-    const { data, error } = await window.supabaseClient
-      .from('gantt')
-      .select('json')
-      .eq('project_id', projectId)
-      .maybeSingle();
-    if (error) throw error;
-    return data ? data.json : null;
+    const res = await fetch(`/api/db/gantt?projectId=${projectId}`);
+    const resData = await res.json();
+    if (!res.ok) throw new Error(resData.error || 'Failed to fetch gantt data');
+    return resData.data ? resData.data.json : null;
   },
 
   async saveGanttData(projectId, jsonStr) {
     if (!projectId) return null;
     
-    // Check if record exists
-    const { data: existing, error: checkError } = await window.supabaseClient
-      .from('gantt')
-      .select('id')
-      .eq('project_id', projectId)
-      .maybeSingle();
-      
-    if (checkError) throw checkError;
-    
-    if (existing) {
-      // Update
-      const { data, error } = await window.supabaseClient
-        .from('gantt')
-        .update({ json: jsonStr })
-        .eq('project_id', projectId)
-        .select();
-      if (error) throw error;
-      return data;
-    } else {
-      // Insert
-      const { data, error } = await window.supabaseClient
-        .from('gantt')
-        .insert([{ project_id: projectId, json: jsonStr }])
-        .select();
-      if (error) throw error;
-      return data;
-    }
+    const res = await fetch('/api/db/gantt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ project_id: projectId, json: jsonStr })
+    });
+    const resData = await res.json();
+    if (!res.ok) throw new Error(resData.error || 'Failed to save gantt data');
+    return resData;
   }
 };
 

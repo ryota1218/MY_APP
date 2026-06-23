@@ -51,22 +51,11 @@ class ProjectTool {
         throw new Error('ユーザーが認証されていません。');
       }
 
-      // Supabaseからユーザーの所属プロジェクト一覧を結合クエリで取得
-      // project_members を経由して projects と users (owner) を取得
-      const { data: memberships, error } = await window.supabaseClient
-        .from('project_members')
-        .select(`
-          role,
-          joined_at,
-          projects (
-            id,
-            name,
-            account_id
-          )
-        `)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
+      // Node.js API を経由して所属プロジェクト一覧を取得
+      const res = await fetch('/api/db/project-members');
+      const resData = await res.json();
+      if (!res.ok) throw new Error(resData.error || 'Failed to fetch projects');
+      const memberships = resData.memberships;
 
       if (!memberships || memberships.length === 0) {
         listContainer.innerHTML = `
@@ -167,30 +156,16 @@ class ProjectTool {
       const user = window.Auth?.currentUser;
       if (!user) throw new Error('ユーザーが認証されていません。');
 
-      // UUIDをクライアント側で生成 (安全策)
-      const newProjectId = crypto.randomUUID();
-
-      // 1. projects テーブルにレコードを新規追加 (id, account_id, name)
-      const { data: newProj, error: projError } = await window.supabaseClient
-        .from('projects')
-        .insert([
-          { id: newProjectId, name: projectName, account_id: user.id }
-        ])
-        .select();
-
-      if (projError) throw projError;
-      if (!newProj || newProj.length === 0) throw new Error('プロジェクトの作成結果を取得できませんでした。');
-
-      const createdProject = newProj[0];
-
-      // 2. project_members テーブルに所属メンバーとしてオーナーを追加
-      const { error: memberError } = await window.supabaseClient
-        .from('project_members')
-        .insert([
-          { project_id: createdProject.id, user_id: user.id, role: 'owner' }
-        ]);
-
-      if (memberError) throw memberError;
+      // Node.js API を経由してプロジェクトを作成
+      const res = await fetch('/api/db/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: projectName })
+      });
+      const resData = await res.json();
+      if (!res.ok) throw new Error(resData.error || 'Failed to create project');
+      
+      const createdProject = resData.project;
 
       // 3. 成功！作成したプロジェクトを現在の選択プロジェクトにする
       this.selectProject(createdProject.id, createdProject.name);
@@ -227,40 +202,16 @@ class ProjectTool {
       const user = window.Auth?.currentUser;
       if (!user) throw new Error('ユーザーが認証されていません。');
 
-      // 1. そのプロジェクトが本当に存在するかチェック
-      const { data: proj, error: checkError } = await window.supabaseClient
-        .from('projects')
-        .select('id, name')
-        .eq('id', projectIdStr);
-
-      if (checkError) throw checkError;
-      if (!proj || proj.length === 0) {
-        throw new Error('指定されたIDのプロジェクトは見つかりませんでした。正しいUUIDを入力してください。');
-      }
-
-      const targetProj = proj[0];
-
-      // 2. 既に参加しているかチェック
-      const { data: memberCheck, error: memberCheckError } = await window.supabaseClient
-        .from('project_members')
-        .select('role')
-        .eq('project_id', targetProj.id)
-        .eq('user_id', user.id);
-
-      if (memberCheckError) throw memberCheckError;
-
-      if (memberCheck && memberCheck.length > 0) {
-        throw new Error('既にこのプロジェクトに参加しています。');
-      }
-
-      // 3. メンバーとして新規追加 (roleは editor とします)
-      const { error: joinError } = await window.supabaseClient
-        .from('project_members')
-        .insert([
-          { project_id: targetProj.id, user_id: user.id, role: 'editor' }
-        ]);
-
-      if (joinError) throw joinError;
+      // Node.js API を経由してプロジェクトに参加
+      const res = await fetch('/api/db/project-members', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId: projectIdStr })
+      });
+      const resData = await res.json();
+      if (!res.ok) throw new Error(resData.error || 'Failed to join project');
+      
+      const targetProj = resData.project;
 
       // 4. 成功！
       this.selectProject(targetProj.id, targetProj.name);

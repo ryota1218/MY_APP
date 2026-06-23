@@ -5,30 +5,40 @@ const Auth = {
   currentUser: null,
 
   async init() {
-    // Supabaseから現在のセッション（ログイン状態）を取得
-    const { data: { session }, error } = await window.supabaseClient.auth.getSession();
+    let sessionUser = null;
+
+    try {
+      // Node.js API からセッション（ログイン状態）を取得
+      const res = await fetch('/api/auth?action=session');
+      if (res.ok) {
+        const data = await res.json();
+        sessionUser = data.user;
+      }
+    } catch (e) {
+      console.warn('Session check failed', e);
+    }
     
-    if (session) {
+    if (sessionUser) {
       this.currentUser = {
-        id: session.user.id,
-        email: session.user.email,
-        name: session.user.email.split('@')[0],
+        id: sessionUser.id,
+        email: sessionUser.email,
+        name: sessionUser.email.split('@')[0],
         avatar: null
       };
       
-      // public.users からプロフィール情報を取得
+      // BFF経由でプロフィール情報を取得
       try {
-        const { data: profile, error: profileError } = await window.supabaseClient
-          .from('users')
-          .select('name, icon')
-          .eq('id', session.user.id)
-          .maybeSingle();
-        if (profile && !profileError) {
-          this.currentUser.name = profile.name || this.currentUser.name;
-          this.currentUser.avatar = profile.icon || null;
+        const profileRes = await fetch('/api/db/users');
+        if (profileRes.ok) {
+          const profileData = await profileRes.json();
+          const profile = profileData.profile;
+          if (profile) {
+            this.currentUser.name = profile.name || this.currentUser.name;
+            this.currentUser.avatar = profile.icon || null;
+          }
         }
       } catch (err) {
-        console.warn('Failed to load user profile from public.users:', err);
+        console.warn('Failed to load user profile via API:', err);
       }
 
       localStorage.setItem('isLoggedIn', 'true');
@@ -75,17 +85,7 @@ const Auth = {
       }
     });
 
-    // Supabaseの認証状態の変更を監視（別タブでログアウトした場合など）
-    window.supabaseClient.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT') {
-        this.currentUser = null;
-        localStorage.removeItem('isLoggedIn');
-        this.updateUI();
-        if (window.location.pathname.endsWith('index.html') || window.location.pathname === '/') {
-          window.location.href = 'html/login.html';
-        }
-      }
-    });
+
   },
 
   async handleLogin() {
@@ -103,10 +103,22 @@ const Auth = {
     errorEl.textContent = 'ログイン中...';
     errorEl.style.color = '#8b5cf6';
 
-    const { data, error } = await window.supabaseClient.auth.signInWithPassword({
-      email: email,
-      password: pass,
-    });
+    let data, error;
+    try {
+      const res = await fetch('/api/auth?action=login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pass })
+      });
+      const resData = await res.json();
+      if (!res.ok) {
+        error = { message: resData.error || 'Login failed' };
+      } else {
+        data = resData;
+      }
+    } catch (e) {
+      error = { message: e.message };
+    }
 
     if (error) {
       console.error('Login error:', error.message);
@@ -130,16 +142,16 @@ const Auth = {
       avatar: null
     };
     
-    // public.users からプロフィール情報を取得して上書き
+    // BFF経由でプロフィール情報を取得して上書き
     try {
-      const { data: profile, error: profileError } = await window.supabaseClient
-        .from('users')
-        .select('name, icon')
-        .eq('id', data.user.id)
-        .maybeSingle();
-      if (profile && !profileError) {
-        this.currentUser.name = profile.name || this.currentUser.name;
-        this.currentUser.avatar = profile.icon || null;
+      const profileRes = await fetch('/api/db/users');
+      if (profileRes.ok) {
+        const profileData = await profileRes.json();
+        const profile = profileData.profile;
+        if (profile) {
+          this.currentUser.name = profile.name || this.currentUser.name;
+          this.currentUser.avatar = profile.icon || null;
+        }
       }
     } catch (err) {
       console.warn('Failed to load user profile on login:', err);
@@ -186,10 +198,22 @@ const Auth = {
     errorEl.textContent = 'アカウント作成中...';
     errorEl.style.color = '#8b5cf6';
 
-    const { data, error } = await window.supabaseClient.auth.signUp({
-      email: email,
-      password: pass,
-    });
+    let data, error;
+    try {
+      const res = await fetch('/api/auth?action=register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pass })
+      });
+      const resData = await res.json();
+      if (!res.ok) {
+        error = { message: resData.error || 'Registration failed' };
+      } else {
+        data = resData;
+      }
+    } catch (e) {
+      error = { message: e.message };
+    }
 
     if (error) {
       console.error('Register error:', error.message);
@@ -203,16 +227,15 @@ const Auth = {
     }
 
     // 登録成功（メール確認が必要ない設定の場合、そのままログイン状態になることが多い）
-    // DBの public.users にもレコードを作っておく
     if (data?.user) {
-      const { error: dbError } = await window.supabaseClient
-        .from('users')
-        .insert([
-          { id: data.user.id, name: email.split('@')[0] }
-        ]);
-        
-      if (dbError) {
-        console.warn('Profile creation failed:', dbError);
+      try {
+        await fetch('/api/db/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: email.split('@')[0] })
+        });
+      } catch (dbError) {
+        console.warn('Profile creation failed via API:', dbError);
       }
     }
 
@@ -223,7 +246,12 @@ const Auth = {
   },
 
   async logout() {
-    await window.supabaseClient.auth.signOut();
+    try {
+      await fetch('/api/auth?action=logout', { method: 'POST' });
+    } catch(e) {
+      console.warn("Logout error", e);
+    }
+    // 不要になったLocalStorageの削除
     this.currentUser = null;
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('upstream_user');
@@ -255,11 +283,18 @@ const Auth = {
       return { error: { message: 'ログインしてください。' } };
     }
 
-    const { data, error } = await window.supabaseClient.auth.updateUser({ password: newPassword });
-    if (!error) {
-      return { data, error: null };
+    try {
+      const res = await fetch('/api/auth?action=update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: newPassword })
+      });
+      const resData = await res.json();
+      if (!res.ok) return { error: { message: resData.error || 'Password update failed' } };
+      return { data: resData, error: null };
+    } catch (e) {
+      return { error: { message: e.message } };
     }
-    return { data, error };
   },
 
   getLoginAttemptState(email) {
@@ -331,30 +366,43 @@ const Auth = {
       return { error: { message: '有効なメールアドレスを入力してください。' } };
     }
 
-    const { data, error } = await window.supabaseClient.auth.updateUser({ email: newEmail });
-    if (!error) {
+    try {
+      const res = await fetch('/api/auth?action=update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: newEmail })
+      });
+      const resData = await res.json();
+      if (!res.ok) return { error: { message: resData.error || 'Email update failed' } };
+      
       this.currentUser.email = newEmail;
       this.currentUser.name = newEmail.split('@')[0];
-      return { data, error: null };
+      return { data: resData, error: null };
+    } catch (e) {
+      return { error: { message: e.message } };
     }
-    return { data, error };
   },
 
   async deleteAccount() {
     if (!this.currentUser) {
       return { error: { message: 'ログインしてください。' } };
     }
-    if (typeof window.supabaseClient.auth.deleteUser === 'function') {
-      const { data, error } = await window.supabaseClient.auth.deleteUser();
-      if (!error) {
+    try {
+      const res = await fetch('/api/auth?action=update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ deleteUser: true })
+      });
+      if (res.ok) {
         this.currentUser = null;
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('upstream_user');
-        return { data, error: null };
+        return { data: await res.json(), error: null };
       }
-      return { data, error };
+      return { error: { message: 'サーバーでのアカウント削除に失敗しました。' } };
+    } catch (e) {
+      return { error: { message: e.message } };
     }
-    return { error: { message: 'アカウント削除はクライアントでは対応していません。サーバー側の管理機能が必要です。' } };
   },
 
   recordLoginEvent(userId, email) {
