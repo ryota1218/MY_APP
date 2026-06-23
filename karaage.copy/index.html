@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="上流工程サポートツール - 要件定義、システム構成図、UML、画面レイアウト、E-R図、ガントチャートを効率的に作成">
+  <title>UpStream | 上流工程サポートツール</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script>
+    // ログイン状態を簡易確認し、未ログインの場合はログイン画面へ強制遷移させます
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
+      window.location.href = 'html/login.html' + window.location.search;
+    }
+  </script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+  <button id="hamburger" class="hamburger" aria-label="メニュー"><i data-lucide="menu"></i></button>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logo">
+      <span class="logo-icon"><i data-lucide="triangle"></i></span>
+      <span>KFC</span>
+    </div>
+    <nav>
+      <a data-tool="dashboard" class="active"><span class="nav-icon"><i data-lucide="bar-chart-3"></i></span><span>ダッシュボード</span></a>
+      <a data-tool="requirements"><span class="nav-icon"><i data-lucide="clipboard-list"></i></span><span>要件定義書</span></a>
+      <a data-tool="architecture"><span class="nav-icon"><i data-lucide="boxes"></i></span><span>システム構成図</span></a>
+      <div class="nav-has-submenu">
+        <a data-tool="uml" id="uml-nav-trigger"><span class="nav-icon"><i data-lucide="share-2"></i></span><span>UML図</span><span class="nav-arrow">▶</span></a>
+        <div class="nav-submenu" id="uml-submenu">
+          <div class="nav-submenu-title">UML図の種類</div>
+          <div class="nav-submenu-group">■構造図</div>
+          <a data-tool="uml" data-uml-type="class">クラス図</a>
+          <a data-tool="uml" data-uml-type="object">オブジェクト図</a>
+          <a data-tool="uml" data-uml-type="component">コンポーネント図</a>
+          <a data-tool="uml" data-uml-type="deployment">配置図</a>
+          <a data-tool="uml" data-uml-type="composite">コンポジット構造図</a>
+          <a data-tool="uml" data-uml-type="package">パッケージ図</a>
+          <div class="nav-submenu-group">■振る舞い図</div>
+          <a data-tool="uml" data-uml-type="activity">アクティビティ図</a>
+          <a data-tool="uml" data-uml-type="state">ステートマシン図</a>
+          <a data-tool="uml" data-uml-type="usecase">ユースケース図</a>
+          <a data-tool="uml" data-uml-type="communication">コミュニケーション図</a>
+          <a data-tool="uml" data-uml-type="sequence">シーケンス図</a>
+          <a data-tool="uml" data-uml-type="interaction">相互作用図</a>
+          <a data-tool="uml" data-uml-type="timing">タイミング図</a>
+        </div>
+      </div>
+      <a data-tool="screen-transition"><span class="nav-icon"><i data-lucide="arrow-right-left"></i></span><span>画面遷移図</span></a>
+      <a data-tool="layout"><span class="nav-icon"><i data-lucide="layout"></i></span><span>画面レイアウト</span></a>
+      <a data-tool="erdiagram"><span class="nav-icon"><i data-lucide="database"></i></span><span>E-R図</span></a>
+      <a data-tool="gantt"><span class="nav-icon"><i data-lucide="calendar"></i></span><span>ガントチャート</span></a>
+    </nav>
+    <div class="sidebar-footer">
+      <div id="user-status-area" style="display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 10px 0;">
+        <div class="user-profile-trigger" data-action="showUserProfile" style="cursor: pointer; text-align: center;">
+          <div id="user-avatar-display" style="width: 40px; height: 40px; background: #333; border-radius: 50%; margin: 0 auto 5px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #444;">
+            <i data-lucide="user" style="width: 20px; height: 20px;"></i>
+          </div>
+          <span id="display-user-name" style="font-size: 0.85rem; font-weight: 600; display: block;">ゲスト</span>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button id="account-settings-btn" class="btn btn-secondary btn-sm" style="display:flex; align-items:center; gap:6px; padding: 6px 10px;" title="アカウント設定">
+            <i data-lucide="settings" style="width:16px; height:16px;"></i>
+            設定
+          </button>
+          <button id="auth-action-btn" class="btn-auth-link" data-tool="login" style="font-size: 0.75rem; opacity: 0.8;">ログイン</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+
+  <!-- Main Content — セクションは html/ フォルダから動的に読み込まれます -->
+  <main class="main-content" id="main-content">
+    <!-- セクションは core.js の loadSections() で挿入されます -->
+  </main>
+
+  <!-- Modal Container -->
+  <div id="modal-container"></div>
+
+  <!-- Menu overlay for mobile hamburger -->
+  <div id="menu-overlay"></div>
+
+  <script src="js/db-io.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/core.js"></script>
+  <script src="js/project.js"></script>
+  <script src="js/profile.js"></script>
+  <script src="js/proposal.js"></script>
+  <script src="js/requirements.js"></script>
+  <script src="js/behavior-diagram.js"></script>
+  <script src="js/usecase-diagram.js"></script>
+  <script src="js/sequence-diagram.js"></script>
+  <script src="js/timing-diagram.js"></script>
+  <script src="js/file-io.js"></script>
+  <script src="js/diagram.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/erdiagram.js"></script>
+  <script src="js/gantt.js"></script>
+  <script>
+    window.addEventListener('load', () => {
+      // URLパラメータを確認して指定のツールを表示する
+      const params = new URLSearchParams(window.location.search);
+      const tool = params.get('tool');
+      if (tool && tool !== 'dashboard') {
+        const navLink = document.querySelector(`nav a[data-tool="${tool}"]`);
+        if (navLink) {
+          navLink.click();
+        }
+      }
+    });
+  </script>
+</body>
+</html>
