@@ -31,7 +31,6 @@ const Auth = {
       localStorage.setItem('isLoggedIn', 'true');
       localStorage.setItem('upstream_user', JSON.stringify(this.currentUser));
       
-      // ログイン画面にいる場合はプロジェクト選択を促すためにプロジェクト管理画面へリダイレクト
       if (window.location.pathname.includes('login.html')) {
         window.location.href = '../index.html?tool=project';
       }
@@ -39,7 +38,6 @@ const Auth = {
       this.currentUser = null;
       localStorage.removeItem('isLoggedIn');
       
-      // メイン画面（index.html または ルートパス）にいてセッションが無い場合はログイン画面へリダイレクト
       const isMainPage = window.location.pathname.endsWith('index.html') || 
         window.location.pathname === '/' || 
         window.location.pathname.endsWith('/');
@@ -48,12 +46,10 @@ const Auth = {
       }
     }
 
-    // グローバルに公開
     window.Auth = this;
 
     this.updateUI();
 
-    // イベント委譲でフォーム送信をキャッチ
     document.addEventListener('submit', (e) => {
       if (e.target.id === 'login-form') {
         e.preventDefault();
@@ -64,15 +60,12 @@ const Auth = {
       }
     });
 
-    // ログアウトボタンの処理
     document.addEventListener('click', (e) => {
       const btn = e.target.closest('#auth-action-btn');
       if (btn && this.currentUser) {
         this.logout();
       }
     });
-
-
   },
 
   async handleLogin() {
@@ -119,7 +112,7 @@ const Auth = {
       }
       return;
     }
-
+    
     this.clearLoginAttempts(email);
     // ログイン成功
     this.currentUser = {
@@ -128,23 +121,18 @@ const Auth = {
       name: data.profile?.name || data.user.email.split('@')[0],
       avatar: data.profile?.icon || null
     };
-
     // ログインイベントを記録
     if (typeof this.recordLoginEvent === 'function') {
       this.recordLoginEvent(data.user.id, data.user.email);
     }
-
     localStorage.setItem('isLoggedIn', 'true');
     localStorage.setItem('upstream_user', JSON.stringify(this.currentUser));
     this.updateUI();
-
-    // ログイン画面にいる場合はプロジェクト管理画面へ（新規プロジェクトの選択・作成を促すため）
     if (window.location.pathname.includes('login.html')) {
       window.location.href = '../index.html?tool=project';
     } else {
       errorEl.textContent = 'ログイン成功！';
       
-      // 画面の切り替えやリロードを少し遅延させて実行
       setTimeout(() => {
         if (window.app) {
           window.app.navigateTo('project');
@@ -154,7 +142,6 @@ const Auth = {
       }, 500);
     }
   },
-
 
   async handleRegister() {
     const email = document.getElementById('reg-email').value;
@@ -198,7 +185,6 @@ const Auth = {
       return;
     }
 
-    // 登録成功（メール確認が必要ない設定の場合、そのままログイン状態になることが多い）
     if (data?.user) {
       try {
         await fetch('/api/db/users', {
@@ -212,8 +198,6 @@ const Auth = {
     }
 
     alert('アカウント作成が完了しました！');
-    
-    // 自動的にログインフォームへ切り替える
     document.getElementById('show-login').click();
   },
 
@@ -223,7 +207,6 @@ const Auth = {
     } catch(e) {
       console.warn("Logout error", e);
     }
-    // 不要になったLocalStorageの削除
     this.currentUser = null;
     localStorage.removeItem('isLoggedIn');
     localStorage.removeItem('upstream_user');
@@ -248,6 +231,25 @@ const Auth = {
       result.label = labels[Math.min(result.score - 1, labels.length - 1)];
     }
     return result;
+  },
+
+  // ★ 修正箇所: 本人確認モーダルから呼び出される再認証メソッドを新設
+  async signInWithPassword(email, password) {
+    try {
+      const res = await fetch('/api/auth?action=login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const resData = await res.json();
+      
+      if (!res.ok) {
+        return { error: { message: resData.error || 'パスワードが正しくありません。' } };
+      }
+      return { data: resData, error: null };
+    } catch (e) {
+      return { error: { message: e.message } };
+    }
   },
 
   async updatePassword(newPassword) {
@@ -407,20 +409,17 @@ const Auth = {
     const authBtn = document.getElementById('auth-action-btn');
 
     if (this.currentUser) {
-      // ログイン中
       if (nameDisplay) nameDisplay.textContent = this.currentUser.name;
       if (dashNameDisplay) dashNameDisplay.textContent = this.currentUser.name;
       if (authBtn) {
         authBtn.textContent = 'ログアウト';
         authBtn.removeAttribute('data-tool'); 
       }
-      // アバターの反映（存在する場合）
       const avatarEl = document.getElementById('user-avatar-display');
       if (avatarEl && this.currentUser.avatar) {
         avatarEl.innerHTML = `<img src="${this.currentUser.avatar}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
       }
     } else {
-      // ログアウト状態
       if (nameDisplay) nameDisplay.textContent = 'ゲスト';
       if (dashNameDisplay) dashNameDisplay.textContent = 'ゲスト';
       if (authBtn) {

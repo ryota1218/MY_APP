@@ -84,7 +84,6 @@ class ProfileManager {
       try {
         let finalAvatarUrl = tempAvatar;
 
-        // 画像ファイルが新しく選択されていたら、BFF経由で Supabase Storage にアップロードする
         if (selectedFile && user.id) {
           const fileExt = selectedFile.name.split('.').pop();
           const fileName = `${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
@@ -93,7 +92,7 @@ class ProfileManager {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              fileData: tempAvatar, // base64データ
+              fileData: tempAvatar,
               fileName: fileName,
               mimeType: selectedFile.type
             })
@@ -114,7 +113,8 @@ class ProfileManager {
       }
     };
   }
-  // 競合相手の新規メソッドを追加
+
+  // ★ 修正箇所: 本人確認モーダルのボタン処理を追加
   async showAccountSettings() {
     const user = Auth.currentUser || { name: 'ゲスト', email: '', id: '' };
     if (!user.email) {
@@ -140,9 +140,45 @@ class ProfileManager {
           </div>
         </div>
       </div>
-      <!-- 本人確認モーダルHTML... -->
     `;
-    // (中略 - メソッド内のコードは全てそのまま残します)
+
+    // 認証ボタンに対するロジックを追加
+    const verifyBtn = document.getElementById('verify-reauth-btn');
+    const passwordInput = document.getElementById('reauth-password');
+    const errorDiv = document.getElementById('reauth-error');
+
+    verifyBtn.onclick = async () => {
+      const password = passwordInput.value;
+      if (!password) {
+        errorDiv.textContent = 'パスワードを入力してください。';
+        return;
+      }
+
+      verifyBtn.disabled = true;
+      verifyBtn.textContent = '認証中...';
+      errorDiv.textContent = '';
+
+      try {
+        // 他のメソッドで Auth クラスが利用されているため、
+        // SupabaseやカスタムAuthの再認証（ログイン確認）メソッドを呼び出します。
+        // ※プロジェクトのAuth仕様に合わせて、適切なメソッド（signInWithPassword等）に変更してください。
+        const result = await Auth.signInWithPassword(user.email, password);
+
+        if (result && result.error) {
+          throw new Error(result.error.message || 'パスワードが正しくありません。');
+        }
+
+        // 認証に成功したら、本来のアカウント設定画面へ遷移
+        if (window.showToast) showToast('本人確認が完了しました');
+        this.renderFullAccountSettings(user);
+
+      } catch (err) {
+        console.error('[Profile] Re-authentication failed:', err);
+        errorDiv.textContent = err.message || '認証に失敗しました。';
+        verifyBtn.disabled = false;
+        verifyBtn.textContent = '認証する';
+      }
+    };
   }
 
   async renderFullAccountSettings(user) {
@@ -200,7 +236,6 @@ class ProfileManager {
           </div>
         </div>
       </div>
-      <!-- アカウント設定モーダルHTML... -->
     `;
 
     if (window.lucide) lucide.createIcons();
@@ -270,7 +305,7 @@ class ProfileManager {
           return;
         }
         if (password.length < 6) {
-          feedback.textContent = 'パスワードは6文字以上で入力してください。';
+          feedback.textContent = 'パスワードは8文字以上で入力してください。';
           return;
         }
 
@@ -290,14 +325,13 @@ class ProfileManager {
       }
     };
   }
-  // アバター画像をアップロードしてDB保存するメソッド
+
   async saveProfile(name, avatar) {
     if (!Auth.currentUser) {
       if (window.showToast) showToast('ログインしていません', 'warning');
       return;
     }
     
-    // API経由で public.users テーブルを更新
     try {
       const res = await fetch('/api/db/users', {
         method: 'POST',
@@ -323,7 +357,6 @@ class ProfileManager {
     if (window.showToast) showToast('プロフィールを更新しました');
   }
 }
-
 
 window.addEventListener('DOMContentLoaded', () => {
   window.app = window.app || {};
