@@ -97,11 +97,11 @@ class ProjectTool {
         
         return `
           <tr class="${isCurrent ? 'is-current' : ''}">
-            <td><code title="${p.id}">${displayId}</code></td>
+            <td>
+            <button class="btn btn-sm btn-secondary btn-icon-only" style="margin-left: 2px;" onclick="window.app.project.copyProjectId('${p.id}')" title="プロジェクトIDをコピー">
+              ${displayId}
+            </button></td>
             <td><strong style="color: var(--text);">${this.escapeHTML(p.name)}</strong> ${isCurrent ? '<span style="color: var(--accent); font-size: 0.75rem; margin-left: 6px; font-weight: 600;">● 選択中</span>' : ''}</td>
-            <td style="color: var(--text-dim); font-size: 0.8rem;">
-              オーナー: ${this.escapeHTML(p.accountId.split('-')[0])}...
-            </td>
             <td><span class="role-badge role-${p.role.toLowerCase()}">${this.getRoleLabel(p.role)}</span></td>
             <td>${formattedDate}</td>
             <td>
@@ -114,9 +114,6 @@ class ProjectTool {
                   切り替え
                 </button>
               `}
-              <button class="btn btn-sm btn-secondary btn-icon-only" style="margin-left: 4px;" onclick="window.app.project.copyProjectId('${p.id}')" title="プロジェクトIDをコピー">
-                IDコピー
-              </button>
             </td>
           </tr>
         `;
