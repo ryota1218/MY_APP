@@ -268,6 +268,12 @@ class ProjectTool {
 
       try {
         await Promise.all(loadPromises);
+        if (typeof window.app.refreshDashboardData === 'function') {
+          await window.app.refreshDashboardData();
+        }
+        if (typeof window.app.renderDashboardGantt === 'function') {
+          window.app.renderDashboardGantt();
+        }
       } catch (err) {
         console.error('[ProjectTool] 図の自動ロードに失敗しました:', err);
       }
