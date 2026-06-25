@@ -1,4 +1,4 @@
-﻿const { supabase } = require('../_utils/supabase');
+const { createAuthClient, decodeJwtPayload } = require('../_utils/supabase');
 
 module.exports = async (req, res) => {
   const token = req.cookies['sb-access-token'];
@@ -6,20 +6,11 @@ module.exports = async (req, res) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-  if (authError || !user) {
-    return res.status(401).json({ error: 'Invalid session' });
-  }
+  const payload = decodeJwtPayload(token);
+  if (!payload || !payload.sub) return res.status(401).json({ error: 'Invalid session' });
+  const userId = payload.sub;
 
-  const SUPABASE_URL = process.env.SUPABASE_URL || 'https://ylgumuwmpnnqzrfleyoc.supabase.co';
-  const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlsZ3VtdXdtcG5ucXpyZmxleW9jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNzA2MjgsImV4cCI6MjA5MTk0NjYyOH0.HP5miiB3Gbjvi0iDKgi9b1kXsf4FaOFY9AUt5fyun5Q';
-
-  // トークン付きクライアントでRLSを通過
-  const supabaseClient = require('@supabase/supabase-js').createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY,
-    { global: { headers: { Authorization: `Bearer ${token}` } } }
-  );
+  const supabaseClient = createAuthClient(token);
 
   // プロジェクト一覧取得 (GET)
   if (req.method === 'GET') {
@@ -34,7 +25,7 @@ module.exports = async (req, res) => {
           account_id
         )
       `)
-      .eq('user_id', user.id);
+      .eq('user_id', userId);
 
     if (error) return res.status(500).json({ error: error.message });
     return res.status(200).json({ memberships });
@@ -63,7 +54,7 @@ module.exports = async (req, res) => {
       .from('project_members')
       .select('role')
       .eq('project_id', targetProj.id)
-      .eq('user_id', user.id);
+      .eq('user_id', userId);
 
     if (memberCheckError) return res.status(500).json({ error: memberCheckError.message });
     if (memberCheck && memberCheck.length > 0) {
@@ -73,7 +64,7 @@ module.exports = async (req, res) => {
     // 参加
     const { error: joinError } = await supabaseClient
       .from('project_members')
-      .insert([{ project_id: targetProj.id, user_id: user.id, role: 'editor' }]);
+      .insert([{ project_id: targetProj.id, user_id: userId, role: 'editor' }]);
 
     if (joinError) return res.status(500).json({ error: joinError.message });
 

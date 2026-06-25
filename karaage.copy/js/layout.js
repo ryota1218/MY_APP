@@ -18,6 +18,11 @@ class LayoutTool {
     this.canvas = document.getElementById('layout-canvas');
     this.canvas.classList.add('free-size');
     this.propertyPanelEl = null;
+
+    // AI Chat state
+    this.prefix = 'layout';
+    this.aiChatListenersInitialized = false;
+    this.chatHistory = [];
     
     this.initPalette();
     this.initCanvasEvents();
@@ -984,5 +989,299 @@ class LayoutTool {
       this.canvas.style.width = Math.round(targetW) + 'px';
       this.canvas.style.height = Math.round(targetH) + 'px';
     }
+  }
+
+  async aiAutoLayout() {
+    if (!this.elements || this.elements.length === 0) {
+      showToast('配置する要素がありません');
+      return;
+    }
+
+    const requestBody = {
+      diagram_type: 'layout',
+      nodes: this.elements.map(el => ({
+        id: el.id,
+        label: el.label || '',
+        x: el.x,
+        y: el.y,
+        width: el.w || 100,
+        height: el.h || 100,
+      })),
+      existing_connections: [],
+      canvas_width: (this.canvas.clientWidth || 960),
+      canvas_height: (this.canvas.clientHeight || 600),
+    };
+
+    showToast('🤖 AIが最適な配置を計算中...');
+
+    try {
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:';
+      const apiBaseUrl = isLocal ? 'http://localhost:8000' : 'https://upstream-ai-backend-976977069035.us-central1.run.app';
+
+      const response = await fetch(`${apiBaseUrl}/api/ai-layout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `サーバーエラー (${response.status})`);
+      }
+
+      const result = await response.json();
+
+      if (result.nodes && result.nodes.length > 0) {
+        const duration = 400;
+        const startTime = performance.now();
+        const startPositions = {};
+        const targetPositions = {};
+
+        result.nodes.forEach(rn => {
+          const el = this.elements.find(e => e.id === rn.id);
+          if (el) {
+            startPositions[rn.id] = { x: el.x, y: el.y };
+            targetPositions[rn.id] = { x: rn.x, y: rn.y };
+          }
+        });
+
+        const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+        const animate = (currentTime) => {
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const easedProgress = easeOutCubic(progress);
+
+          Object.keys(startPositions).forEach(nodeId => {
+            const elObj = this.elements.find(e => e.id === nodeId);
+            const domEl = document.getElementById(nodeId);
+            if (!elObj || !domEl) return;
+            const start = startPositions[nodeId];
+            const target = targetPositions[nodeId];
+            elObj.x = start.x + (target.x - start.x) * easedProgress;
+            elObj.y = start.y + (target.y - start.y) * easedProgress;
+            domEl.style.left = elObj.x + 'px';
+            domEl.style.top = elObj.y + 'px';
+          });
+
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          } else {
+            showToast('AIレイアウト最適化が完了しました');
+          }
+        };
+        requestAnimationFrame(animate);
+      } else {
+        showToast('配置の変更はありませんでした');
+      }
+
+      if (result.advice) {
+        console.log("AI Advice:", result.advice);
+      }
+    } catch (error) {
+      console.error('[AI Layout] Error:', error);
+      showToast(`AI最適化エラー: ${error.message}`, 'danger');
+    }
+  }
+
+  toggleAIChat() {
+    const panel = document.getElementById(this.prefix + '-ai-chat-panel');
+    if (!panel) return;
+
+    const isOpen = panel.classList.toggle('open');
+    // layout.js uses right property panel differently, but we can assume standard behavior.
+    if (isOpen) {
+      // this.closePropertyPanel() -> actually in layout.js, deselecting might close property panel.
+      if (this.selectedEl) {
+        document.getElementById(this.selectedEl.id)?.classList.remove('selected');
+        this.selectedEl = null;
+        const pp = document.getElementById('layout-property-panel');
+        if (pp) pp.style.display = 'none';
+      }
+      document.body.classList.add('sidebar-collapsed');
+      
+      const msgArea = document.getElementById(this.prefix + '-ai-chat-messages');
+      if (msgArea) msgArea.scrollTop = msgArea.scrollHeight;
+      this.initAIChatListeners();
+    } else {
+      if (document.body.dataset.sidebarCollapsedByUser !== 'true') {
+        document.body.classList.remove('sidebar-collapsed');
+      }
+    }
+  }
+
+  initAIChatListeners() {
+    if (this.aiChatListenersInitialized) return;
+
+    const sendBtn = document.getElementById(this.prefix + '-ai-chat-send-btn');
+    const input = document.getElementById(this.prefix + '-ai-chat-input');
+    if (!sendBtn || !input) return;
+
+    sendBtn.addEventListener('click', () => {
+      this.sendAIChatMessage();
+    });
+
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        this.sendAIChatMessage();
+      }
+    });
+
+    this.aiChatListenersInitialized = true;
+    this.chatHistory = [];
+  }
+
+  async sendAIChatMessage() {
+    const input = document.getElementById(this.prefix + '-ai-chat-input');
+    const msgArea = document.getElementById(this.prefix + '-ai-chat-messages');
+    if (!input || !msgArea) return;
+
+    const text = input.value.trim();
+    if (!text) return;
+
+    input.value = '';
+
+    const userMsgDiv = document.createElement('div');
+    userMsgDiv.className = 'ai-chat-msg user';
+    userMsgDiv.innerHTML = `<div class="ai-chat-bubble">${this.escapeHTML(text)}</div>`;
+    msgArea.appendChild(userMsgDiv);
+    msgArea.scrollTop = msgArea.scrollHeight;
+
+    const loaderMsgDiv = document.createElement('div');
+    loaderMsgDiv.className = 'ai-chat-msg assistant';
+    loaderMsgDiv.innerHTML = `
+      <div class="ai-chat-bubble" style="color: #9ca3af; display: flex; align-items: center; gap: 8px;">
+        <span class="icon-spin" style="display:inline-block; width:12px; height:12px; border:2px solid #a78bfa; border-top-color:transparent; border-radius:50%; animation: spin 1s linear infinite;"></span>
+        <span>AIが配置を再計算しています...</span>
+      </div>
+    `;
+    msgArea.appendChild(loaderMsgDiv);
+    msgArea.scrollTop = msgArea.scrollHeight;
+
+    const requestBody = {
+      diagram_type: 'layout',
+      nodes: this.elements.map(el => ({
+        id: el.id,
+        label: el.label || '',
+        x: el.x,
+        y: el.y,
+        width: el.w || 100,
+        height: el.h || 100,
+      })),
+      existing_connections: [],
+      canvas_width: (this.canvas.clientWidth || 960),
+      canvas_height: (this.canvas.clientHeight || 600),
+      user_instruction: text,
+      chat_history: this.chatHistory || []
+    };
+
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:';
+    const apiBaseUrl = isLocal ? 'http://localhost:8000' : 'https://upstream-ai-backend-976977069035.us-central1.run.app';
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/ai-chat-layout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
+
+      loaderMsgDiv.remove();
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `サーバーエラー (${response.status})`);
+      }
+
+      const result = await response.json();
+
+      if (result.nodes && result.nodes.length > 0) {
+        const duration = 400;
+        const startTime = performance.now();
+        const startPositions = {};
+        const targetPositions = {};
+
+        result.nodes.forEach(rn => {
+          const el = this.elements.find(e => e.id === rn.id);
+          if (el) {
+            startPositions[rn.id] = { x: el.x, y: el.y };
+            targetPositions[rn.id] = { x: rn.x, y: rn.y };
+          }
+        });
+
+        const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+        const animate = (currentTime) => {
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const easedProgress = easeOutCubic(progress);
+
+          Object.keys(startPositions).forEach(nodeId => {
+            const elObj = this.elements.find(e => e.id === nodeId);
+            const domEl = document.getElementById(nodeId);
+            if (!elObj || !domEl) return;
+            const start = startPositions[nodeId];
+            const target = targetPositions[nodeId];
+            elObj.x = start.x + (target.x - start.x) * easedProgress;
+            elObj.y = start.y + (target.y - start.y) * easedProgress;
+            domEl.style.left = elObj.x + 'px';
+            domEl.style.top = elObj.y + 'px';
+          });
+
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          }
+        };
+        requestAnimationFrame(animate);
+      }
+
+      const assistantMsgDiv = document.createElement('div');
+      assistantMsgDiv.className = 'ai-chat-msg assistant';
+      
+      let adviceHtml = '';
+      if (result.advice) {
+        adviceHtml = `
+          <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.9em; line-height: 1.4;">
+            <div style="font-weight: 600; color: #a78bfa; margin-bottom: 4px;">💡 構成の評価・アドバイス:</div>
+            <div style="color: #e5e7eb;">${this.escapeHTML(result.advice)}</div>
+          </div>
+        `;
+      }
+
+      assistantMsgDiv.innerHTML = `
+        <div class="ai-chat-bubble">
+          指示されたレイアウト調整を適用しました！
+          <ul>
+            <li>指示: <em>「${this.escapeHTML(text)}」</em></li>
+            <li>移動されたノード数: <strong>${result.nodes?.length || 0}</strong> 個</li>
+          </ul>
+          ${adviceHtml}
+        </div>
+      `;
+      msgArea.appendChild(assistantMsgDiv);
+      msgArea.scrollTop = msgArea.scrollHeight;
+
+      this.chatHistory.push({ role: 'user', content: text });
+      this.chatHistory.push({ role: 'model', content: `指示されたレイアウト調整を適用しました！移動ノード数: ${result.nodes?.length || 0}. アドバイス: ${result.advice || ''}` });
+
+    } catch (error) {
+      console.error('[AI Chat Layout] Error:', error);
+      loaderMsgDiv.remove();
+
+      const errorMsgDiv = document.createElement('div');
+      errorMsgDiv.className = 'ai-chat-msg assistant';
+      errorMsgDiv.innerHTML = `
+        <div class="ai-chat-bubble" style="border-color: #f87171; background-color: rgba(239, 68, 68, 0.05);">
+          <span style="color: #f87171; font-weight: 600;">⚠️ エラーが発生しました</span><br>
+          ${this.escapeHTML(error.message)}
+        </div>
+      `;
+      msgArea.appendChild(errorMsgDiv);
+      msgArea.scrollTop = msgArea.scrollHeight;
+    }
+  }
+
+  escapeHTML(str) {
+    return str.replace(/[&<>'"]/g,
+      tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+    );
   }
 }
