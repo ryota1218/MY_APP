@@ -1,4 +1,4 @@
-const { supabase } = require('./_utils/supabase');
+const { supabase, createAuthClient, decodeJwtPayload } = require('./_utils/supabase');
 const cookie = require('cookie');
 
 module.exports = async (req, res) => {
@@ -11,7 +11,15 @@ module.exports = async (req, res) => {
     try {
       const { data, error } = await supabase.auth.getUser(token);
       if (error || !data.user) return res.status(401).json({ error: 'Invalid or expired session' });
-      return res.status(200).json({ user: data.user });
+
+      const supabaseClient = createAuthClient(token);
+      const { data: profile } = await supabaseClient
+        .from('users')
+        .select('name, icon')
+        .eq('id', data.user.id)
+        .maybeSingle();
+
+      return res.status(200).json({ user: data.user, profile: profile || null });
     } catch (err) {
       return res.status(500).json({ error: 'Internal server error' });
     }
@@ -42,7 +50,14 @@ module.exports = async (req, res) => {
         cookie.serialize('sb-refresh-token', refreshToken, cookieOptions)
       ]);
 
-      return res.status(200).json({ user: data.user, message: 'Logged in successfully' });
+      const supabaseClient = createAuthClient(token);
+      const { data: profile } = await supabaseClient
+        .from('users')
+        .select('name, icon')
+        .eq('id', data.user.id)
+        .maybeSingle();
+
+      return res.status(200).json({ user: data.user, profile: profile || null, message: 'Logged in successfully' });
     } catch (err) {
       return res.status(500).json({ error: 'Internal server error' });
     }
@@ -100,14 +115,10 @@ module.exports = async (req, res) => {
     const token = req.cookies['sb-access-token'];
     if (!token) return res.status(401).json({ error: 'Unauthorized' });
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user) return res.status(401).json({ error: 'Invalid session' });
+    const payload = decodeJwtPayload(token);
+    if (!payload || !payload.sub) return res.status(401).json({ error: 'Invalid session' });
 
-    const supabaseClient = require('@supabase/supabase-js').createClient(
-      process.env.SUPABASE_URL || 'https://ylgumuwmpnnqzrfleyoc.supabase.co',
-      process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlsZ3VtdXdtcG5ucXpyZmxleW9jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNzA2MjgsImV4cCI6MjA5MTk0NjYyOH0.HP5miiB3Gbjvi0iDKgi9b1kXsf4FaOFY9AUt5fyun5Q',
-      { global: { headers: { Authorization: `Bearer ${token}` } } }
-    );
+    const supabaseClient = createAuthClient(token);
 
     const { password, email, deleteUser } = req.body || {};
 

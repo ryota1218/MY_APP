@@ -130,4 +130,46 @@
       <button class="btn btn-sm btn-danger" data-action="deleteSelected" style="width: 100%; margin-top: 16px;">要素を削除</button>
     </div>
   </div>
+
+  <!-- AIチャットアシスタントパネル -->
+  <div class="diagram-ai-chat-panel" id="layout-ai-chat-panel">
+    <div class="ai-chat-header">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <i data-lucide="bot" class="ai-chat-bot-icon"></i>
+        <span class="ai-chat-title">Layout AIアシスタント</span>
+      </div>
+      <button class="ai-chat-close" data-action="toggleAIChat"><i data-lucide="x" class="editor-icon"></i></button>
+    </div>
+    <div class="ai-chat-messages" id="layout-ai-chat-messages">
+      <div class="ai-chat-msg assistant">
+        <div class="ai-chat-bubble">
+          こんにちは！Layout AIアシスタントです。画面レイアウトや構成の最適化をお手伝いします。<br><br>
+          <strong>【できることの例】</strong>
+          <ul>
+            <li>「ログイン画面の標準的なレイアウトを組んで」</li>
+            <li>「ヘッダーとサイドバー、メインコンテンツの配置を整えて」</li>
+            <li>「ボタンを右下に揃えて」</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="ai-chat-input-container">
+      <div class="ai-chat-meta-row">
+        <span class="ai-chat-meta-left"><i data-lucide="check" class="icon-xs" style="color:#10b981; width:12px; height:12px;"></i> レイアウト準備完了</span>
+        <span class="ai-chat-meta-right">Canvas Active</span>
+      </div>
+      <div class="ai-chat-input-box">
+        <textarea class="ai-chat-input" id="layout-ai-chat-input" placeholder="AIへの指示を入力... (例: 'ログイン画面のレイアウトを組んで')"></textarea>
+        <div class="ai-chat-input-footer">
+          <div class="ai-chat-model-selector">
+            <span>✨ Gemini 2.5 Flash</span>
+            <i data-lucide="chevron-up" class="icon-xs" style="margin-left: 2px; width:12px; height:12px;"></i>
+          </div>
+          <button class="ai-chat-send-btn" id="layout-ai-chat-send-btn" title="送信">
+            <i data-lucide="arrow-up" class="send-icon"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
