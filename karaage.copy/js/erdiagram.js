@@ -17,6 +17,12 @@ class ERDiagramTool {
     this.svg = document.getElementById('er-svg');
     if (this.canvas) this.canvas.classList.add('grid-active');
     this.connectingFrom = null;
+    
+    // AI Chat state
+    this.prefix = 'er';
+    this.aiChatListenersInitialized = false;
+    this.chatHistory = [];
+
     // Add sample entities
     this.addEntityAt('ユーザー', 'users', [
       {logicalName:'ユーザーID', physicalName:'user_id', type:'INT', pk:true, fk:false},
@@ -189,11 +195,305 @@ class ERDiagramTool {
     showToast('エンティティを再配置しました');
   }
 
-  aiAutoLayout() { showToast('AIによるレイアウト最適化を開始します...'); }
+  async aiAutoLayout() {
+    if (!this.entities || this.entities.length === 0) {
+      showToast('配置するノードがありません');
+      return;
+    }
+
+    const requestBody = {
+      diagram_type: 'erdiagram',
+      nodes: this.entities.map(e => ({
+        id: e.id,
+        label: e.label || '',
+        x: e.x,
+        y: e.y,
+        width: e.width || 160,
+        height: e.height || 50,
+      })),
+      existing_connections: this.relations.map(r => ({
+        from: r.from,
+        to: r.to,
+        label: r.label || '',
+      })),
+      canvas_width: (this.canvas.clientWidth || 1200) - 200,
+      canvas_height: (this.canvas.clientHeight || 800) - 80,
+    };
+
+    showToast('🤖 AIが最適な配置を計算中...');
+
+    try {
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:';
+      const apiBaseUrl = isLocal ? 'http://localhost:8000' : 'https://upstream-ai-backend-976977069035.us-central1.run.app';
+
+      const response = await fetch(`${apiBaseUrl}/api/ai-layout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `サーバーエラー (${response.status})`);
+      }
+
+      const result = await response.json();
+
+      if (result.nodes && result.nodes.length > 0) {
+        const duration = 400;
+        const startTime = performance.now();
+        const startPositions = {};
+        const targetPositions = {};
+
+        result.nodes.forEach(rn => {
+          const node = this.entities.find(n => n.id === rn.id);
+          if (node) {
+            startPositions[rn.id] = { x: node.x, y: node.y };
+            targetPositions[rn.id] = { x: rn.x, y: rn.y };
+          }
+        });
+
+        const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+        const animate = (currentTime) => {
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const easedProgress = easeOutCubic(progress);
+
+          Object.keys(startPositions).forEach(nodeId => {
+            const node = this.entities.find(n => n.id === nodeId);
+            const el = document.getElementById(nodeId);
+            if (!node || !el) return;
+            const start = startPositions[nodeId];
+            const target = targetPositions[nodeId];
+            node.x = start.x + (target.x - start.x) * easedProgress;
+            node.y = start.y + (target.y - start.y) * easedProgress;
+            el.style.left = node.x + 'px';
+            el.style.top = node.y + 'px';
+          });
+
+          this.drawRelations();
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          } else {
+            showToast('AIレイアウト最適化が完了しました');
+          }
+        };
+        requestAnimationFrame(animate);
+      } else {
+        showToast('配置の変更はありませんでした');
+      }
+
+      if (result.advice) {
+        console.log("AI Advice:", result.advice);
+      }
+    } catch (error) {
+      console.error('[AI Layout] Error:', error);
+      showToast(`AI最適化エラー: ${error.message}`, 'danger');
+    }
+  }
   
   toggleAIChat() {
-    const panel = document.getElementById('er-ai-chat-panel');
-    if (panel) panel.classList.toggle('visible');
+    const panel = document.getElementById(this.prefix + '-ai-chat-panel');
+    if (!panel) return;
+
+    const isOpen = panel.classList.toggle('open');
+    if (isOpen) {
+      this.closePropertyPanel();
+      document.body.classList.add('sidebar-collapsed');
+      
+      const msgArea = document.getElementById(this.prefix + '-ai-chat-messages');
+      if (msgArea) msgArea.scrollTop = msgArea.scrollHeight;
+      this.initAIChatListeners();
+    } else {
+      const propPanel = document.getElementById(this.prefix + '-property-panel');
+      const isPropOpen = propPanel && propPanel.classList.contains('open');
+      if (!isPropOpen) {
+        if (document.body.dataset.sidebarCollapsedByUser !== 'true') {
+          document.body.classList.remove('sidebar-collapsed');
+        }
+      }
+    }
+  }
+
+  initAIChatListeners() {
+    if (this.aiChatListenersInitialized) return;
+
+    const sendBtn = document.getElementById(this.prefix + '-ai-chat-send-btn');
+    const input = document.getElementById(this.prefix + '-ai-chat-input');
+    if (!sendBtn || !input) return;
+
+    sendBtn.addEventListener('click', () => {
+      this.sendAIChatMessage();
+    });
+
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        this.sendAIChatMessage();
+      }
+    });
+
+    this.aiChatListenersInitialized = true;
+    this.chatHistory = [];
+  }
+
+  async sendAIChatMessage() {
+    const input = document.getElementById(this.prefix + '-ai-chat-input');
+    const msgArea = document.getElementById(this.prefix + '-ai-chat-messages');
+    if (!input || !msgArea) return;
+
+    const text = input.value.trim();
+    if (!text) return;
+
+    input.value = '';
+
+    const userMsgDiv = document.createElement('div');
+    userMsgDiv.className = 'ai-chat-msg user';
+    userMsgDiv.innerHTML = `<div class="ai-chat-bubble">${this.escapeHTML(text)}</div>`;
+    msgArea.appendChild(userMsgDiv);
+    msgArea.scrollTop = msgArea.scrollHeight;
+
+    const loaderMsgDiv = document.createElement('div');
+    loaderMsgDiv.className = 'ai-chat-msg assistant';
+    loaderMsgDiv.innerHTML = `
+      <div class="ai-chat-bubble" style="color: #9ca3af; display: flex; align-items: center; gap: 8px;">
+        <span class="icon-spin" style="display:inline-block; width:12px; height:12px; border:2px solid #a78bfa; border-top-color:transparent; border-radius:50%; animation: spin 1s linear infinite;"></span>
+        <span>AIが配置を再計算しています...</span>
+      </div>
+    `;
+    msgArea.appendChild(loaderMsgDiv);
+    msgArea.scrollTop = msgArea.scrollHeight;
+
+    const requestBody = {
+      diagram_type: 'erdiagram',
+      nodes: this.entities.map(e => ({
+        id: e.id,
+        label: e.label || '',
+        x: e.x,
+        y: e.y,
+        width: e.width || 160,
+        height: e.height || 50,
+      })),
+      existing_connections: this.relations.map(c => ({
+        from: c.from,
+        to: c.to,
+        label: c.label || '',
+      })),
+      canvas_width: (this.canvas.clientWidth || 1200) - 200,
+      canvas_height: (this.canvas.clientHeight || 800) - 80,
+      user_instruction: text,
+      chat_history: this.chatHistory || []
+    };
+
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:';
+    const apiBaseUrl = isLocal ? 'http://localhost:8000' : 'https://upstream-ai-backend-976977069035.us-central1.run.app';
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/ai-chat-layout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestBody),
+      });
+
+      loaderMsgDiv.remove();
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `サーバーエラー (${response.status})`);
+      }
+
+      const result = await response.json();
+
+      if (result.nodes && result.nodes.length > 0) {
+        const duration = 400;
+        const startTime = performance.now();
+        const startPositions = {};
+        const targetPositions = {};
+
+        result.nodes.forEach(rn => {
+          const node = this.entities.find(n => n.id === rn.id);
+          if (node) {
+            startPositions[rn.id] = { x: node.x, y: node.y };
+            targetPositions[rn.id] = { x: rn.x, y: rn.y };
+          }
+        });
+
+        const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+        const animate = (currentTime) => {
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const easedProgress = easeOutCubic(progress);
+
+          Object.keys(startPositions).forEach(nodeId => {
+            const node = this.entities.find(n => n.id === nodeId);
+            const el = document.getElementById(nodeId);
+            if (!node || !el) return;
+            const start = startPositions[nodeId];
+            const target = targetPositions[nodeId];
+            node.x = start.x + (target.x - start.x) * easedProgress;
+            node.y = start.y + (target.y - start.y) * easedProgress;
+            el.style.left = node.x + 'px';
+            el.style.top = node.y + 'px';
+          });
+
+          this.drawRelations();
+          if (progress < 1) {
+            requestAnimationFrame(animate);
+          }
+        };
+        requestAnimationFrame(animate);
+      }
+
+      const assistantMsgDiv = document.createElement('div');
+      assistantMsgDiv.className = 'ai-chat-msg assistant';
+      
+      let adviceHtml = '';
+      if (result.advice) {
+        adviceHtml = `
+          <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.9em; line-height: 1.4;">
+            <div style="font-weight: 600; color: #a78bfa; margin-bottom: 4px;">💡 構成の評価・アドバイス:</div>
+            <div style="color: #e5e7eb;">${this.escapeHTML(result.advice)}</div>
+          </div>
+        `;
+      }
+
+      assistantMsgDiv.innerHTML = `
+        <div class="ai-chat-bubble">
+          指示されたレイアウト調整を適用しました！
+          <ul>
+            <li>指示: <em>「${this.escapeHTML(text)}」</em></li>
+            <li>移動されたノード数: <strong>${result.nodes?.length || 0}</strong> 個</li>
+          </ul>
+          ${adviceHtml}
+        </div>
+      `;
+      msgArea.appendChild(assistantMsgDiv);
+      msgArea.scrollTop = msgArea.scrollHeight;
+
+      this.chatHistory.push({ role: 'user', content: text });
+      this.chatHistory.push({ role: 'model', content: `指示されたレイアウト調整を適用しました！移動ノード数: ${result.nodes?.length || 0}. アドバイス: ${result.advice || ''}` });
+
+    } catch (error) {
+      console.error('[AI Chat Layout] Error:', error);
+      loaderMsgDiv.remove();
+
+      const errorMsgDiv = document.createElement('div');
+      errorMsgDiv.className = 'ai-chat-msg assistant';
+      errorMsgDiv.innerHTML = `
+        <div class="ai-chat-bubble" style="border-color: #f87171; background-color: rgba(239, 68, 68, 0.05);">
+          <span style="color: #f87171; font-weight: 600;">⚠️ エラーが発生しました</span><br>
+          ${this.escapeHTML(error.message)}
+        </div>
+      `;
+      msgArea.appendChild(errorMsgDiv);
+      msgArea.scrollTop = msgArea.scrollHeight;
+    }
+  }
+
+  escapeHTML(str) {
+    return str.replace(/[&<>'"]/g,
+      tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+    );
   }
 
   shareDiagram() { showToast('共有用URLを作成しました'); }

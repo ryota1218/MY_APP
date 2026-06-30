@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="上流工程サポートツール - 要件定義、システム構成図、UML、画面レイアウト、E-R図、ガントチャートを効率的に作成">
   <title>KFC</title>
+  <meta name="description" content="上流工程サポートツール">
+  <title>KFC | Karaage Flow Chart</title>
   <link rel="stylesheet" href="css/style.css">
   <script>
     // ログイン状態を簡易確認し、未ログインの場合はログイン画面へ強制遷移させます
@@ -19,12 +21,11 @@
   <!-- Sidebar -->
   <aside class="sidebar">
     <div class="logo">
-      <span class="logo-icon"><i data-lucide="triangle"></i></span>
+      <span class="logo-icon"><img src="asset/logo.png" alt="ロゴ" class="user-photo"></span>
       <span>KFC</span>
     </div>
     <nav>
       <a data-tool="dashboard" class="active"><span class="nav-icon"><i data-lucide="bar-chart-3"></i></span><span>ダッシュボード</span></a>
-      <a data-tool="requirements"><span class="nav-icon"><i data-lucide="clipboard-list"></i></span><span>要件定義書</span></a>
       <a data-tool="architecture"><span class="nav-icon"><i data-lucide="boxes"></i></span><span>システム構成図</span></a>
       <div class="nav-has-submenu">
         <a data-tool="uml" id="uml-nav-trigger"><span class="nav-icon"><i data-lucide="share-2"></i></span><span>UML図</span><span class="nav-arrow">▶</span></a>

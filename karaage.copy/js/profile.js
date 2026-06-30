@@ -305,7 +305,7 @@ class ProfileManager {
           return;
         }
         if (password.length < 6) {
-          feedback.textContent = 'パスワードは6文字以上で入力してください。';
+          feedback.textContent = 'パスワードは8文字以上で入力してください。';
           return;
         }
 
