@@ -684,18 +684,19 @@ class GanttTool {
   const todayDayNumber = Math.floor(todayUTC.getTime() / 86400000);
   const todayOffset = (todayDayNumber - startDayNumber) * dayWidth;
 
-  const todayLine = `
-    <div style="
-      position:absolute;
-      left:${todayOffset}px;
-      top:0;
-      bottom:0;
-      width:2px;
-      background:#ef4444;
-      z-index:10;
-      box-shadow: 0 0 3px rgba(239,68,68,0.5);
-    "></div>
-  `;
+ const todayLine = `
+  <div style="
+    position: absolute;
+    left: ${todayOffset}px;
+    top: 0;
+    bottom: 0; /* height: 100% ではなく bottom: 0 にします */
+    width: 2px;
+    background: #ef4444;
+    z-index: 10;
+    box-shadow: 0 0 3px rgba(239,68,68,0.5);
+    pointer-events: none; /* 線の下の要素を触れるように念のため追加 */
+  "></div>
+`;
 
     // バー
     let barsHtml = todayLine;
