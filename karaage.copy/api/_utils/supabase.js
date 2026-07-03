@@ -12,4 +12,28 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   }
 });
 
-module.exports = { supabase };
+// トークン付きクライアントを生成するヘルパー
+function createAuthClient(token) {
+  return createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false
+    }
+  });
+}
+
+// JWTからペイロードを取得するヘルパー（署名検証なし・RLSに委任）
+function decodeJwtPayload(token) {
+  try {
+    const payload = token.split('.')[1];
+    const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = Buffer.from(base64, 'base64').toString('utf8');
+    return JSON.parse(jsonPayload);
+  } catch (err) {
+    return null;
+  }
+}
+
+module.exports = { supabase, createAuthClient, decodeJwtPayload };
