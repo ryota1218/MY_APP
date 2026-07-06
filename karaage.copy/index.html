@@ -7,11 +7,12 @@
     <title>KFC | Karaage Flow Chart</title>
     <link rel="stylesheet" href="css/style.css?v=2">
 
+    <script>
     // ログイン状態を簡易確認し、未ログインの場合はログイン画面へ強制遷移させます
     if (localStorage.getItem('isLoggedIn') !== 'true') {
       window.location.href = 'html/login.html' + window.location.search;
     }
-  </script>
+    </script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
