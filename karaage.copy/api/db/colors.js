@@ -1,8 +1,13 @@
-const { supabase, createAuthClient } = require('../_utils/supabase');
+const { createAuthClient, decodeJwtPayload } = require('../_utils/supabase');
 
 module.exports = async (req, res) => {
   const token = req.cookies['sb-access-token'];
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
+
+  // JWTからuser_idを取得
+  const payload = decodeJwtPayload(token);
+  if (!payload || !payload.sub) return res.status(401).json({ error: 'Invalid session' });
+  const userId = payload.sub;
 
   const supabaseClient = createAuthClient(token);
 
@@ -14,6 +19,7 @@ module.exports = async (req, res) => {
       .from('colors')
       .select('main, sub, accent')
       .eq('project_id', projectId)
+      .eq('user_id', userId)
       .maybeSingle();
 
     if (error) return res.status(500).json({ error: error.message });
@@ -24,10 +30,12 @@ module.exports = async (req, res) => {
     const { project_id, main, sub, accent } = req.body;
     if (!project_id) return res.status(400).json({ error: 'project_id required' });
 
+    // 既存レコードを確認（user_id + project_id の組み合わせで検索）
     const { data: existing } = await supabaseClient
       .from('colors')
-      .select('project_id')
+      .select('id')
       .eq('project_id', project_id)
+      .eq('user_id', userId)
       .maybeSingle();
 
     if (existing) {
@@ -35,13 +43,14 @@ module.exports = async (req, res) => {
       const { error } = await supabaseClient
         .from('colors')
         .update({ main, sub, accent })
-        .eq('project_id', project_id);
+        .eq('project_id', project_id)
+        .eq('user_id', userId);
       if (error) return res.status(500).json({ error: error.message });
     } else {
-      // 新規挿入
+      // 新規挿入（user_idも含める）
       const { error } = await supabaseClient
         .from('colors')
-        .insert([{ project_id, main, sub, accent }]);
+        .insert([{ project_id, user_id: userId, main, sub, accent }]);
       if (error) return res.status(500).json({ error: error.message });
     }
 

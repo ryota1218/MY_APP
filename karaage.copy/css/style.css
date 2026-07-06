@@ -12,11 +12,14 @@
 /* 共通レイアウト: メインコンテンツ、セクション、カード、統計 */
 @import url('layout-common.css');
 
+/* ダッシュボード */
+@import url('dashboard.css');
+
 /* 共通コンポーネント: ボタン、フォーム、ツールバー、モーダル、トースト */
 @import url('components.css');
 
 /* ダイアグラム共通: キャンバス、ノード、パレット、カラーピッカー */
-@import url('diagram.css');
+@import url('diagram.css?v=2');
 
 /* シーケンス図 */
 @import url('sequence-diagram.css');

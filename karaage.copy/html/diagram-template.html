@@ -49,8 +49,9 @@
       <label class="diagram-style-field">
         <span>文字サイズ</span>
         <select id="{{prefix}}-font-size">
+          <option value="" disabled selected>-</option>
           <option value="12">12</option>
-          <option value="14" selected>14</option>
+          <option value="14">14</option>
           <option value="16">16</option>
           <option value="18">18</option>
           <option value="20">20</option>
@@ -61,8 +62,7 @@
         <details class="diagram-color-picker" id="{{prefix}}-text-color-picker">
           <summary class="diagram-color-button" id="{{prefix}}-text-color-btn">
             <span class="diagram-color-sample" id="{{prefix}}-text-color-sample"></span>
-            <span class="diagram-color-text" id="{{prefix}}-text-color-text">自動</span>
-            <span class="diagram-color-caret">▾</span>
+            <span class="diagram-color-text" id="{{prefix}}-text-color-text" style="display:none;"></span>
           </summary>
           <div class="diagram-color-menu" id="{{prefix}}-text-color-menu" aria-label="文字色の選択">
             <button type="button" class="diagram-color-auto-row diagram-color-option" data-color="" data-label="自動">

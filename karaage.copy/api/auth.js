@@ -119,6 +119,15 @@ module.exports = async (req, res) => {
     if (!payload || !payload.sub) return res.status(401).json({ error: 'Invalid session' });
 
     const supabaseClient = createAuthClient(token);
+    const refreshToken = req.cookies['sb-refresh-token'];
+    
+    // Auth session missing エラーを回避するため、取得したトークンでセッションを復元する
+    if (refreshToken) {
+      await supabaseClient.auth.setSession({
+        access_token: token,
+        refresh_token: refreshToken
+      });
+    }
 
     const { password, email, deleteUser } = req.body || {};
 
