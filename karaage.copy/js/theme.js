@@ -19,7 +19,6 @@ class ThemeManager {
   init() {
     this.loadTheme();
     this.applyTheme();
-    this.setupUI();
   }
 
   async loadTheme() {
@@ -40,7 +39,7 @@ class ThemeManager {
           this.currentTheme.subBgColor = dbColor.sub;
           this.currentTheme.accentColor = dbColor.accent;
           this.applyTheme();
-          this.updateUI();
+          this.updateSection(document.getElementById('account-theme-section'));
         }
       } catch (err) {
         console.error('[ThemeManager] DBからのテーマカラー取得に失敗しました:', err);
@@ -61,14 +60,10 @@ class ThemeManager {
           this.currentTheme.subBgColor,
           this.currentTheme.accentColor
         );
-        if (window.showToast) {
-          showToast(`[デバッグ] テーマカラーをDBに同期しました！\nメイン: ${this.currentTheme.mainBgColor}\nサブ: ${this.currentTheme.subBgColor}\nアクセント: ${this.currentTheme.accentColor}`);
-        }
+
       } catch (err) {
         console.error('[ThemeManager] DBへのテーマカラー保存に失敗しました:', err);
-        if (window.showToast) {
-          showToast(`[デバッグエラー] DB保存失敗: ${err.message}`, 'danger');
-        }
+
       }
     }
   }
@@ -273,34 +268,28 @@ class ThemeManager {
     return yiq < 128;
   }
 
-  setupUI() {
-    if (document.getElementById('settings-modal')) return;
+  renderThemeSection(container) {
+    if (!container) return;
 
-    const modalHTML = `
-      <div id="settings-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9998; backdrop-filter: blur(4px);"></div>
-      <div id="settings-modal" class="card" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 320px; padding: 20px; z-index: 9999; box-shadow: var(--shadow); background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
-          <h3 style="font-size: 1.1rem; margin: 0; color: var(--text);">テーマ＆表示設定</h3>
-          <button id="close-settings" style="background: none; border: none; color: var(--text-dim); cursor: pointer; transition: color 0.2s;"><i data-lucide="x" style="width: 20px; height: 20px;"></i></button>
+    const sectionHTML = `
+      <div style="background: var(--bg-glass); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 15px;">
+          <div>
+            <label style="display: block; margin-bottom: 6px; font-size: 0.8rem; color: var(--text-dim);">メイン背景色</label>
+            <input type="color" id="theme-main-bg" style="width: 100%; height: 32px; cursor: pointer; border: none; padding: 0; border-radius: 6px;">
+          </div>
+          <div>
+            <label style="display: block; margin-bottom: 6px; font-size: 0.8rem; color: var(--text-dim);">サブ背景色</label>
+            <input type="color" id="theme-sub-bg" style="width: 100%; height: 32px; cursor: pointer; border: none; padding: 0; border-radius: 6px;">
+          </div>
+          <div>
+            <label style="display: block; margin-bottom: 6px; font-size: 0.8rem; color: var(--text-dim);">アクセント色</label>
+            <input type="color" id="theme-accent-color" style="width: 100%; height: 32px; cursor: pointer; border: none; padding: 0; border-radius: 6px;">
+          </div>
         </div>
 
-        <div style="margin-bottom: 15px;">
-          <label style="display: block; margin-bottom: 6px; font-size: 0.85rem; color: var(--text-dim);">メイン背景色 (外側)</label>
-          <input type="color" id="theme-main-bg" style="width: 100%; height: 36px; cursor: pointer; border: none; padding: 0; border-radius: 6px;">
-        </div>
-
-        <div style="margin-bottom: 15px;">
-          <label style="display: block; margin-bottom: 6px; font-size: 0.85rem; color: var(--text-dim);">サブ背景色 (内側・カード)</label>
-          <input type="color" id="theme-sub-bg" style="width: 100%; height: 36px; cursor: pointer; border: none; padding: 0; border-radius: 6px;">
-        </div>
-
-        <div style="margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 6px; font-size: 0.85rem; color: var(--text-dim);">アクセント色 (ボタン等)</label>
-          <input type="color" id="theme-accent-color" style="width: 100%; height: 36px; cursor: pointer; border: none; padding: 0; border-radius: 6px;">
-        </div>
-
-        <div style="padding-top: 15px; border-top: 1px solid var(--border);">
-          <label style="display: block; margin-bottom: 10px; font-size: 0.85rem; color: var(--text-dim);">プリセットから選ぶ</label>
+        <div style="padding-top: 12px; border-top: 1px solid var(--border);">
+          <label style="display: block; margin-bottom: 8px; font-size: 0.8rem; color: var(--text-dim);">プリセットから選ぶ</label>
           <div style="display: flex; gap: 8px;">
             <button class="btn btn-secondary btn-sm" id="preset-dark" style="flex: 1; padding: 6px;">黒系</button>
             <button class="btn btn-secondary btn-sm" id="preset-karaage" style="flex: 1; padding: 6px; color: #b45309; border-color: #fde68a; background: #fef3c7;">唐揚げ</button>
@@ -310,108 +299,94 @@ class ThemeManager {
       </div>
     `;
 
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    container.innerHTML = sectionHTML;
 
-    if (window.lucide) {
-      window.lucide.createIcons();
+    const mainBg = document.getElementById('theme-main-bg');
+    const subBg = document.getElementById('theme-sub-bg');
+    const accentColor = document.getElementById('theme-accent-color');
+
+    if (mainBg) {
+      mainBg.addEventListener('input', (e) => {
+        this.currentTheme.mainBgColor = e.target.value;
+        this.applyTheme();
+      });
+      mainBg.addEventListener('change', () => this.saveTheme());
     }
 
-    document.getElementById('close-settings').addEventListener('click', () => this.closeModal());
-    document.getElementById('settings-overlay').addEventListener('click', () => this.closeModal());
+    if (subBg) {
+      subBg.addEventListener('input', (e) => {
+        this.currentTheme.subBgColor = e.target.value;
+        this.applyTheme();
+      });
+      subBg.addEventListener('change', () => this.saveTheme());
+    }
 
-    document.getElementById('theme-main-bg').addEventListener('input', (e) => {
-      this.currentTheme.mainBgColor = e.target.value;
-      this.applyTheme();
-    });
-    document.getElementById('theme-main-bg').addEventListener('change', () => this.saveTheme());
+    if (accentColor) {
+      accentColor.addEventListener('input', (e) => {
+        this.currentTheme.accentColor = e.target.value;
+        this.applyTheme();
+      });
+      accentColor.addEventListener('change', () => this.saveTheme());
+    }
 
-    document.getElementById('theme-sub-bg').addEventListener('input', (e) => {
-      this.currentTheme.subBgColor = e.target.value;
-      this.applyTheme();
-    });
-    document.getElementById('theme-sub-bg').addEventListener('change', () => this.saveTheme());
-
-    document.getElementById('theme-accent-color').addEventListener('input', (e) => {
-      this.currentTheme.accentColor = e.target.value;
-      this.applyTheme();
-    });
-    document.getElementById('theme-accent-color').addEventListener('change', () => this.saveTheme());
-
-    document.getElementById('preset-dark').addEventListener('click', () => {
+    document.getElementById('preset-dark')?.addEventListener('click', () => {
       this.currentTheme.mainBgColor = '#0a0e1a';
       this.currentTheme.subBgColor = '#111827';
       this.currentTheme.accentColor = '#7c3aed';
       this.applyTheme();
-      // ローカルストレージにのみ保存し、DB同期は行わない
       localStorage.setItem('upstream_theme', JSON.stringify(this.currentTheme));
-      this.updateUI();
+      this.updateSection(container);
     });
     
-    document.getElementById('preset-karaage').addEventListener('click', () => {
-      this.currentTheme.mainBgColor = '#fffaf0'; // 暖かみのあるクリーム白
-      this.currentTheme.subBgColor = '#ffffff';  // 内側はクリーンな白
-      this.currentTheme.accentColor = '#d97706'; // 唐揚げのようなこんがりとしたオレンジブラウン
+    document.getElementById('preset-karaage')?.addEventListener('click', () => {
+      this.currentTheme.mainBgColor = '#fffaf0';
+      this.currentTheme.subBgColor = '#ffffff';
+      this.currentTheme.accentColor = '#d97706';
       this.applyTheme();
-      // ローカルストレージにのみ保存し、DB同期は行わない
       localStorage.setItem('upstream_theme', JSON.stringify(this.currentTheme));
-      this.updateUI();
+      this.updateSection(container);
     });
 
-    document.getElementById('preset-light').addEventListener('click', () => {
+    document.getElementById('preset-light')?.addEventListener('click', () => {
       this.currentTheme.mainBgColor = '#f8fafc';
       this.currentTheme.subBgColor = '#ffffff';
       this.currentTheme.accentColor = '#0ea5e9';
       this.applyTheme();
-      // ローカルストレージにのみ保存し、DB同期は行わない
       localStorage.setItem('upstream_theme', JSON.stringify(this.currentTheme));
-      this.updateUI();
+      this.updateSection(container);
     });
+
+    this.updateSection(container);
   }
 
-  updateUI() {
+  updateSection(container) {
+    if (!container) return;
+    
     if (!this.currentTheme.mainBgColor) {
       this.currentTheme.mainBgColor = this.currentTheme.mode === 'light' ? '#f8fafc' : '#0a0e1a';
       this.currentTheme.subBgColor = this.currentTheme.mode === 'light' ? '#ffffff' : '#111827';
     }
-    document.getElementById('theme-main-bg').value = this.currentTheme.mainBgColor;
-    document.getElementById('theme-sub-bg').value = this.currentTheme.subBgColor;
-    document.getElementById('theme-accent-color').value = this.currentTheme.accentColor;
-  }
-
-  toggleModal() {
-    const modal = document.getElementById('settings-modal');
-    const overlay = document.getElementById('settings-overlay');
-    if (!modal || !overlay) {
-      this.setupUI(); // Ensure it exists
-      return this.toggleModal();
-    }
-
-    if (modal.style.display === 'none') {
-      this.updateUI();
-      modal.style.display = 'block';
-      overlay.style.display = 'block';
-    } else {
-      this.closeModal();
-    }
-  }
-
-  closeModal() {
-    const modal = document.getElementById('settings-modal');
-    const overlay = document.getElementById('settings-overlay');
-    if (modal) modal.style.display = 'none';
-    if (overlay) overlay.style.display = 'none';
+    
+    const mainBg = document.getElementById('theme-main-bg');
+    const subBg = document.getElementById('theme-sub-bg');
+    const accentColor = document.getElementById('theme-accent-color');
+    
+    if (mainBg) mainBg.value = this.currentTheme.mainBgColor;
+    if (subBg) subBg.value = this.currentTheme.subBgColor;
+    if (accentColor) accentColor.value = this.currentTheme.accentColor;
   }
 }
 
 window.addEventListener('DOMContentLoaded', () => {
   window.themeManager = new ThemeManager();
 
+  // data-action="showSettings" のボタンは何もしないようにする（または将来削除する）
   document.body.addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-action="showSettings"]');
     if (btn) {
       e.preventDefault();
       e.stopPropagation();
-      window.themeManager.toggleModal();
+      // do nothing
     }
   });
 });

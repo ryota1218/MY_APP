@@ -340,10 +340,12 @@ class App {
 
       return data.map(item => {
         const toolType = jpTypeToToolType[item.chart_type] || 'uml';
+        const statsMap = { '作成中': 'creating', '完了': 'completed', '保留': 'on_hold' };
+        const mappedStatus = statsMap[item.stats] || 'creating';
         return {
           id: item.id,
           title: item.name,
-          status: item.stats,
+          status: mappedStatus,
           toolType: toolType,
           toolLabel: item.chart_type,
           updated_at: item.update_att ? item.update_att.replace('T', ' ').substring(0, 19) : '-'
@@ -387,24 +389,26 @@ class App {
     });
 
     if (filtered.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="4" style="padding: 20px; text-align: center; color: var(--text-muted);">該当する図面が見つかりません</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--text-muted);">該当する図面が見つかりません</td></tr>';
       return;
     }
 // テーブルビューのレンダリング
     tableBody.innerHTML = filtered.map(item => `
-      <tr style="border-bottom: 1px solid var(--border); cursor: pointer; transition: background-color 0.2s;" 
-          onclick="window.app.loadDiagramAndNavigate('${item.toolType}', '${item.id}', '${item.toolLabel}')"
-          onmouseover="this.style.backgroundColor='rgba(124, 58, 237, 0.05)'"
-          onmouseout="this.style.backgroundColor='transparent'">
-        <td style="padding: 12px 16px; font-weight: 500; color: var(--text);">${item.title || '無題の図面'}</td>
-        <td style="padding: 12px 16px; color: var(--text); font-size: 0.85rem;">
+      <tr class="dashboard-table-row" onclick="window.app.loadDiagramAndNavigate('${item.toolType}', '${item.id}', '${item.toolLabel}')">
+        <td class="dashboard-table-cell title-cell">${item.title || '無題の図面'}</td>
+        <td class="dashboard-table-cell type-cell">
           ${item.toolLabel}
         </td>
-        <td style="padding: 12px 16px;">
-          <span class="status-badge status-${item.status || 'creating'}" style="font-size: 0.75rem; font-weight: 600;">${this.getStatusLabel(item.status)}</span>
+        <td class="dashboard-table-cell">
+          <span class="status-badge status-${item.status || 'creating'}">${this.getStatusLabel(item.status)}</span>
         </td>
-        <td style="padding: 12px 16px; color: var(--text-muted); font-size: 0.8rem;">
-          <span><i data-lucide="calendar" class="icon-xs" style="vertical-align: middle; margin-right: 4px;"></i>${item.updated_at}</span>
+        <td class="dashboard-table-cell muted-cell">
+          <span><i data-lucide="calendar" class="icon-xs"></i>${item.updated_at}</span>
+        </td>
+        <td class="dashboard-table-cell" style="text-align: center;">
+          <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); window.app.deleteDiagram('${item.id}', '${item.title || '無題の図面'}')" title="削除" style="padding: 4px 8px; font-size: 0.8rem; display: inline-flex; align-items: center; justify-content: center;">
+            <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+          </button>
         </td>
       </tr>
     `).join('');
@@ -415,6 +419,46 @@ class App {
   getStatusLabel(status) {
     const labels = { creating: '作成中', completed: '完了', on_hold: '保留' };
     return labels[status] || '作成中';
+  }
+
+  async deleteDiagram(id, title) {
+    if (!confirm(`図面「${title}」を本当に削除しますか？`)) return;
+    
+    try {
+      if (window.DBIO) {
+        await window.DBIO.deleteDiagram(id);
+        if (window.showToast) showToast('図面を削除しました');
+        
+        // 再取得して再描画
+        const projectId = window.DBIO.getCurrentProjectId();
+        if (projectId) {
+          const rawData = await window.DBIO.fetchDiagrams(projectId, null);
+          const formatted = rawData.map(item => {
+            let label = item.chart_type;
+            let typeKey = 'system-flow';
+            if (label === 'システム構成図') typeKey = 'system-flow';
+            else if (label === '画面遷移図') typeKey = 'screen-transition';
+            else if (label === 'ステートマシン図') typeKey = 'state-machine';
+            else if (label === 'E-R図') typeKey = 'er-diagram';
+            else if (label === 'クラス図') typeKey = 'class-diagram';
+            return {
+              id: item.id,
+              toolType: typeKey,
+              toolLabel: label,
+              title: item.name || '無題の図面',
+              updated_at: new Date(item.update_att || item.create_at).toLocaleString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' }).replace(/\//g, '-'),
+              status: item.stats || 'creating',
+            };
+          });
+          this.allDiagrams = formatted;
+          this.updateStats();
+          this.renderDashboardCards();
+        }
+      }
+    } catch (e) {
+      console.error(e);
+      if (window.showToast) showToast('削除に失敗しました', 'danger');
+    }
   }
 
   /**

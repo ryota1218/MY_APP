@@ -7,7 +7,6 @@
     document.getElementById('dashboard-user-name').textContent = window.Auth.currentUser.name;
   }
 </script>
-<link rel="stylesheet" href="css/dashboard.css">
 <!-- Dashboard -->
 <div class="section-header">
   <div class="welcome-message">
@@ -39,7 +38,7 @@
 
   <!-- 4. 作成した図（下段） -->
   <div class="card main-diagrams-block">
-    <div class="block-header">
+    <div class="block-header dashboard-diagrams-header">
       <h2>作成した図</h2>
       <button class="btn btn-sm btn-secondary" id="diagram-filter-btn">
         <i data-lucide="filter"></i> フィルタ
@@ -47,20 +46,29 @@
     </div>
     
     <!-- テーブルビュー -->
-    <div class="dashboard-table-container" style="overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); margin-top: 10px;">
-      <table class="dashboard-table" style="width: 100%; border-collapse: collapse; text-align: left; background: var(--bg-card); font-size: 0.9rem;">
-        <thead>
-          <tr style="border-bottom: 2px solid var(--border); background: rgba(0,0,0,0.12);">
-            <th style="padding: 12px 16px; font-weight: 600; color: var(--text);">タイトル (name)</th>
-            <th style="padding: 12px 16px; font-weight: 600; color: var(--text);">図の種類 (chart_type)</th>
-            <th style="padding: 12px 16px; font-weight: 600; color: var(--text);">状態 (stats)</th>
-            <th style="padding: 12px 16px; font-weight: 600; color: var(--text);">更新日時 (update_att)</th>
-          </tr>
-        </thead>
-        <tbody id="dashboard-table-body">
-          <!-- ここに動的にテーブル行が生成されます -->
-        </tbody>
-      </table>
+    <div class="dashboard-table-container">
+      <!-- ヘッダーエリア（固定） -->
+      <div class="dashboard-table-header">
+        <table class="dashboard-table">
+          <thead>
+            <tr>
+              <th>タイトル (name)</th>
+              <th>図の種類 (chart_type)</th>
+              <th>状態 (stats)</th>
+              <th>更新日時 (update_att)</th>
+              <th style="text-align: center;">操作</th>
+            </tr>
+          </thead>
+        </table>
+      </div>
+      <!-- ボディエリア（スクロール） -->
+      <div class="dashboard-table-body-wrapper">
+        <table class="dashboard-table">
+          <tbody id="dashboard-table-body">
+            <!-- ここに動的にテーブル行が生成されます -->
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>

@@ -1,3 +1,12 @@
+/* ダッシュボードがアクティブな時のコンテナ制御 */
+#dashboard.active {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
 /* ダッシュボード全体のコンテナ */
 .dashboard-layout {
   display: flex;
@@ -6,9 +15,15 @@
   padding: 20px;
   background-color: var(--bg-secondary);
   border-radius: var(--radius);
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* 1. プロジェクト名エリア（上段） */
+.dashboard-row {
+  flex-shrink: 0;
+}
 .dashboard-row.top {
   display: flex;
   justify-content: flex-start;
@@ -34,34 +49,37 @@
 
 /* 2 & 3. 中段エリア */
 .dashboard-row.middle {
-  display: grid;
-  grid-template-columns: 1fr; /* 図の総数を削除し、ガントチャートを全幅に広げる */
-  gap: 20px;
-  min-height: 200px; /* 固定高さだとコンテンツが溢れて下の要素と重なるため、最小高さに変更 */
+  display: block; /* gridによる予期せぬstretchを防ぐ */
+  flex: 0 0 auto !important; /* 絶対に伸びないように強制 */
+}
+
+.card.gantt-preview-block {
+  height: 280px; /* テーブルを広くするため、ガントチャートの高さを少し抑える */
+  display: flex;
+  flex-direction: column;
+  padding: 10px 20px 20px 20px;
 }
 
 @media (max-width: 900px) {
   .dashboard-row.middle {
-    grid-template-columns: 1fr; /* 画面幅が狭い場合は縦並びにして、要素の重なりや潰れを防ぐ */
+    display: block;
     height: auto;
   }
 }
 
 /* 4. 下段エリア */
 .main-diagrams-block {
-  flex-grow: 1;
-  min-height: 400px;
+  flex: 1;
+  min-height: 0;
   border: 1px solid var(--border);
-  padding: 20px;
+  padding: 1px 20px 20px 20px; /* 上の余白を狭くする */
+  display: flex;
+  flex-direction: column;
 }
 
-/* カード共通スタイル（画像の外枠を再現） */
-.card {
-  border: 1px solid var(--border);
-  background: var(--bg-card);
-  border-radius: var(--radius, 12px);
+/* ダッシュボード固有のカードスタイル調整（必要であれば） */
+.dashboard-layout .card {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  padding: 15px;
 }
 
 /* ヘッダー部分のレイアウト（タイトルとフィルタボタン） */
@@ -149,7 +167,8 @@
 
 /* ミニガントチャート用 */
 .gantt-mini-view {
-  height: 220px; /* 表示領域の高さを固定 */
+  flex: 1;
+  min-height: 0;
   padding: 0;
   background: #ffffff;
   border: 1px solid #333;
@@ -171,6 +190,112 @@
   background: #f8fafc;
 }
 
+/* --- 作成した図（テーブル部分）のスタイル --- */
+.dashboard-diagrams-header {
+  margin-bottom: 5px;
+}
+
+.dashboard-table-container {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  overflow: hidden; /* コンテナ自体はスクロールしない */
+}
+
+/* 疑似テーブル */
+.dashboard-table {
+  width: 100%;
+  table-layout: fixed; /* これで列幅がテーブル間で一致する */
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+/* 第1列〜第5列の幅を固定 */
+.dashboard-table th:nth-child(1), .dashboard-table td:nth-child(1) { width: 35%; }
+.dashboard-table th:nth-child(2), .dashboard-table td:nth-child(2) { width: 20%; }
+.dashboard-table th:nth-child(3), .dashboard-table td:nth-child(3) { width: 15%; }
+.dashboard-table th:nth-child(4), .dashboard-table td:nth-child(4) { width: 22%; }
+.dashboard-table th:nth-child(5), .dashboard-table td:nth-child(5) { width: 8%; text-align: center; }
+
+/* ヘッダーエリア */
+.dashboard-table-header {
+  background: rgba(0,0,0,0.12);
+  border-bottom: 2px solid var(--border);
+  scrollbar-gutter: stable; /* スクロールバー幅を動的に確保して列を揃える */
+}
+
+.dashboard-table-header th {
+  padding: 12px 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* スクロールするボディエリア */
+.dashboard-table-body-wrapper {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto; /* ここにスクロールバーが出る */
+}
+
+.dashboard-table-body-wrapper::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.dashboard-table-body-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+.dashboard-table-body-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ボディの行スタイル */
+.dashboard-table-row {
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.dashboard-table-row:hover {
+  background-color: rgba(124, 58, 237, 0.05);
+}
+
+.dashboard-table-cell {
+  padding: 12px 16px;
+  color: var(--text);
+  font-size: 1rem; /* 全体的に少し大きく */
+}
+
+.dashboard-table-cell.title-cell {
+  font-weight: 500;
+  font-size: 1.05rem; /* タイトルはさらに強調 */
+}
+
+.dashboard-table-cell.type-cell {
+  font-size: 0.95rem; /* 0.85 -> 0.95 */
+}
+
+.dashboard-table-cell .status-badge {
+  font-size: 0.85rem; /* 0.75 -> 0.85 */
+  font-weight: 600;
+  padding: 4px 10px; /* 文字が大きくなった分、余白も調整 */
+}
+
+.dashboard-table-cell.muted-cell {
+  color: var(--text-muted);
+  font-size: 0.9rem; /* 0.8 -> 0.9 */
+}
+
+.dashboard-table-cell.muted-cell .icon-xs {
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
 .mini-gantt-wrapper {
   display: grid;
   grid-template-columns: 120px 1fr; /* タスク名列を少し広げる */
@@ -189,7 +314,6 @@
 }
 
 .mini-task-label {
-  padding: 6px 8px;
   padding: 8px 12px;
   font-size: 0.65rem;
   font-weight: 600;
