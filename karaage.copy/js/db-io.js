@@ -175,6 +175,18 @@ const DBIO = {
     return resData.data;
   },
 
+  async deleteDiagram(id) {
+    if (!id) return false;
+    const res = await fetch('/api/db/images', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id })
+    });
+    const resData = await res.json();
+    if (!res.ok) throw new Error(resData.error || 'Failed to delete diagram');
+    return true;
+  },
+
   // ----------------------------------------------------
   // Workflows
   // ----------------------------------------------------

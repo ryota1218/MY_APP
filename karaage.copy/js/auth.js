@@ -90,7 +90,14 @@ const Auth = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password: pass })
       });
-      const resData = await res.json();
+      const text = await res.text();
+      let resData;
+      try {
+        resData = JSON.parse(text);
+      } catch (err) {
+        throw new Error(`サーバーエラー: ${text.slice(0, 50)}...`);
+      }
+
       if (!res.ok) {
         error = { message: resData.error || 'Login failed' };
       } else {
@@ -164,7 +171,14 @@ const Auth = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password: pass })
       });
-      const resData = await res.json();
+      const text = await res.text();
+      let resData;
+      try {
+        resData = JSON.parse(text);
+      } catch (err) {
+        throw new Error(`サーバーエラー: ${text.slice(0, 50)}...`);
+      }
+
       if (!res.ok) {
         error = { message: resData.error || 'Registration failed' };
       } else {

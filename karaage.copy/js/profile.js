@@ -212,6 +212,10 @@ class ProfileManager {
               <input type="password" id="account-password-confirm" class="form-input" placeholder="再入力">
             </div>
             <div class="form-group">
+              <label>テーマ設定</label>
+              <div id="account-theme-section"></div>
+            </div>
+            <div class="form-group">
               <label>セキュリティ</label>
               <div style="padding: 12px; background: var(--bg-glass); border-radius: 8px; color: var(--text-dim);">
                 <p style="margin:0 0 8px;">2段階認証は未設定です。セキュリティを強化したい場合は外部認証サービスと連携してください。</p>
@@ -239,6 +243,9 @@ class ProfileManager {
     `;
 
     if (window.lucide) lucide.createIcons();
+    if (window.themeManager) {
+      window.themeManager.renderThemeSection(document.getElementById('account-theme-section'));
+    }
 
     const renderHistory = () => {
       const historyContainer = document.getElementById('account-login-history');
