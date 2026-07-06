@@ -565,6 +565,33 @@ class GanttTool {
     }
   }
 
+  // ============================================
+  // ★追加：期間内における同名タスクの重複チェック
+  // ============================================
+  checkDuplicateTask(name, start, end, excludeId = null) {
+    if (!name || !start || !end) return false;
+    
+    const newStart = new Date(start);
+    const newEnd = new Date(end);
+
+    return this.tasks.some(task => {
+      // 編集中の自分自身(同一ID)はチェック対象から外す
+      if (excludeId !== null && task.id === parseInt(excludeId)) {
+        return false;
+      }
+
+      // 1. タスク名が一致しているか（前後の空白を除去して判定）
+      const isSameName = (task.name.trim() === name.trim());
+
+      // 2. 期間が1日でも被っているか
+      const existStart = new Date(task.start);
+      const existEnd = new Date(task.end);
+      const isOverlapping = (newStart <= existEnd && newEnd >= existStart);
+
+      return isSameName && isOverlapping;
+    });
+  }
+
   editTask(task) {
     showModal('タスク編集', `
       <div class="form-group"><label>タスク名</label><input class="form-input" id="edit-task-name" value="${this.escapeHTML(task.name)}"></div>
@@ -597,6 +624,12 @@ class GanttTool {
 
       if (actualStart && actualEnd && actualStart > actualEnd) {
         showToast('実績開始日が実績終了日より後になっています');
+        return;
+      }
+
+      // ★追加：重複チェックバリデーション
+      if (this.checkDuplicateTask(name, start, end, task.id)) {
+        showToast(`エラー: 変更先の期間内に「${name}」という同名のタスクが既に存在します。`, 'danger');
         return;
       }
 
@@ -890,6 +923,7 @@ enableDrag() {
         if (mode === 'resize-left') {
           startDate.setUTCDate(startDate.getUTCDate() + diffDays);
           if (startDate <= endDate) {
+            // ドラッグでも重複チェックを行いたい場合はここにバリデーションを追加可能
             task.start = this.formatDate(startDate);
           }
         }
@@ -1349,6 +1383,12 @@ enableDrag() {
         return;
       }
 
+      // ★追加：同じ期間内に同名のタスクがすでに存在するかチェック
+      if (this.checkDuplicateTask(name, start, end)) {
+        showToast(`エラー: 同じ期間内に「${name}」という同名のタスクが既に存在します。`, 'danger');
+        return; // 登録処理を中断
+      }
+
       this.tasks.push({
         id: this.taskIdCounter++,
         name,
@@ -1499,6 +1539,3 @@ enableDrag() {
     }
   }
 }
-
-// 初期化は core.js の initNav() で自動的に行われます
-// ここではボタンセットアップは setupButtons() で処理済み
