@@ -713,6 +713,26 @@ function showModal(title, bodyHtml, onConfirm) {
   container.querySelector('.modal-overlay').addEventListener('click', e => { if(e.target === e.currentTarget) close(); });
 }
 
+function showConfirm(title, bodyHtml, onConfirm, confirmText = 'はい', cancelText = 'いいえ', onCancel = null) {
+  const container = document.getElementById('modal-container');
+  container.style.display = 'block';
+  container.innerHTML = `
+    <div class="modal-overlay">
+      <div class="modal" style="max-width: 400px;">
+        <h2>${title}</h2>
+        <div class="modal-body">${bodyHtml}</div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary" id="modal-cancel">${cancelText}</button>
+          <button class="btn btn-primary" id="modal-confirm">${confirmText}</button>
+        </div>
+      </div>
+    </div>`;
+  const close = () => { container.innerHTML = ''; container.style.display = 'none'; };
+  container.querySelector('#modal-cancel').onclick = () => { if(onCancel) onCancel(); close(); };
+  container.querySelector('#modal-confirm').onclick = () => { if(onConfirm) onConfirm(); close(); };
+  container.querySelector('.modal-overlay').addEventListener('click', e => { if(e.target === e.currentTarget) close(); });
+}
+
 function installInstantTooltips() {
   if (document.getElementById('instant-label-tooltip')) return;
 

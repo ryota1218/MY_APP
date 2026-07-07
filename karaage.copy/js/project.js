@@ -101,7 +101,12 @@ class ProjectTool {
             <button class="btn btn-sm btn-secondary btn-icon-only" style="margin-left: 2px;" onclick="window.app.project.copyProjectId('${p.id}')" title="プロジェクトIDをコピー">
               ${displayId}
             </button></td>
-            <td><strong style="color: var(--text);">${this.escapeHTML(p.name)}</strong> ${isCurrent ? '<span style="color: var(--accent); font-size: 0.75rem; margin-left: 6px; font-weight: 600;">● 選択中</span>' : ''}</td>
+            <td>
+              <span class="project-name-link" onclick="window.app.project.openSettingsDrawer('${p.id}', '${this.escapeHTML(p.name).replace(/'/g, "\\'")}')" title="メンバー管理を開く">
+                <strong style="color: var(--text);">${this.escapeHTML(p.name)}</strong>
+              </span>
+              ${isCurrent ? '<span style="color: var(--accent); font-size: 0.75rem; margin-left: 6px; font-weight: 600;">● 選択中</span>' : ''}
+            </td>
             <td><span class="role-badge role-${p.role.toLowerCase()}">${this.getRoleLabel(p.role)}</span></td>
             <td>${formattedDate}</td>
             <td>
@@ -277,6 +282,178 @@ class ProjectTool {
       } catch (err) {
         console.error('[ProjectTool] 図の自動ロードに失敗しました:', err);
       }
+    }
+  }
+
+  /**
+   * プロジェクト設定ドロワーを開く
+   */
+  openSettingsDrawer(projectId, projectName) {
+    const drawer = document.getElementById('project-settings-drawer');
+    const nameEl = document.getElementById('drawer-project-name');
+    if (!drawer) return;
+
+    nameEl.textContent = projectName;
+    drawer.classList.add('open');
+
+    // 閉じるボタンのイベント
+    const closeBtn = document.getElementById('drawer-close-btn');
+    closeBtn.onclick = () => this.closeSettingsDrawer();
+
+    // メンバーリストのロード
+    this.loadProjectMembers(projectId);
+  }
+
+  closeSettingsDrawer() {
+    const drawer = document.getElementById('project-settings-drawer');
+    if (drawer) drawer.classList.remove('open');
+  }
+
+  /**
+   * プロジェクトメンバーを取得して表示
+   */
+  async loadProjectMembers(projectId) {
+    try {
+      const res = await fetch(`/api/db/project-members?projectId=${projectId}`);
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || 'Failed to load members');
+
+      this.renderMembersList(projectId, data.members || []);
+    } catch (err) {
+      console.error('Failed to load project members:', err);
+      showToast('メンバーの読み込みに失敗しました');
+    }
+  }
+
+  renderMembersList(projectId, members) {
+    const currentUser = window.Auth?.currentUser;
+    const currentUserId = currentUser ? currentUser.id : null;
+
+    // 自分がオーナーかどうか判定
+    const myMember = members.find(m => m.user_id === currentUserId);
+    const iAmOwner = myMember && myMember.role.toLowerCase() === 'owner';
+
+    // 役割ごとに分類
+    const roles = {
+      owner: [],
+      editor: [],
+      viewer: []
+    };
+
+    members.forEach(m => {
+      const r = m.role.toLowerCase();
+      if (roles[r]) roles[r].push(m);
+      else roles.viewer.push(m); // default fallback
+    });
+
+    // カウント更新とリスト描画
+    ['owner', 'editor', 'viewer'].forEach(role => {
+      const countEl = document.getElementById(`count-${role}`);
+      const listEl = document.getElementById(`member-list-${role}`);
+      
+      if (countEl) countEl.textContent = roles[role].length;
+      if (listEl) {
+        if (roles[role].length === 0) {
+          listEl.innerHTML = `<div style="padding: 10px; color: var(--text-muted); font-size: 0.8rem;">メンバーがいません</div>`;
+          return;
+        }
+
+        listEl.innerHTML = roles[role].map(m => {
+          const u = m.users || {};
+          const name = u.name || 'Unknown User';
+          const icon = u.icon || '';
+          const date = m.joined_at ? new Date(m.joined_at).toLocaleDateString('ja-JP') : '-';
+          
+          const isMe = m.user_id === currentUserId;
+          const initial = name.charAt(0).toUpperCase();
+
+          // 権限変更プルダウン（自分がオーナーであり、かつ相手が自分以外の場合に変更可能）
+          // ※ オーナーが自分自身を降格できる仕様にするかどうかはシステムによるが、今回は自分以外とする
+          const canChangeRole = iAmOwner && !isMe;
+          
+          // 削除ボタン（自分がオーナーであり相手が自分以外、または自分自身の退出）
+          const canRemove = (iAmOwner && !isMe) || isMe;
+          const removeIcon = isMe ? 'log-out' : 'user-minus';
+          const removeTitle = isMe ? '退出する' : '追放する';
+
+          return `
+            <div class="member-item">
+              <div class="member-info">
+                <div class="member-avatar">
+                  ${icon ? `<img src="${this.escapeHTML(icon)}" alt="icon">` : initial}
+                </div>
+                <div class="member-details">
+                  <div class="member-name">${this.escapeHTML(name)} ${isMe ? '<span style="color:var(--accent);font-size:0.7rem;margin-left:4px;">(あなた)</span>' : ''}</div>
+                  <div class="member-date">参加日: ${date}</div>
+                </div>
+              </div>
+              <div class="member-actions">
+                <select class="role-select" 
+                        onchange="window.app.project.updateMemberRole('${projectId}', '${m.user_id}', this.value)"
+                        ${canChangeRole ? '' : 'disabled'}>
+                  <option value="owner" ${role === 'owner' ? 'selected' : ''}>Owner</option>
+                  <option value="editor" ${role === 'editor' ? 'selected' : ''}>Editor</option>
+                  <option value="viewer" ${role === 'viewer' ? 'selected' : ''}>Viewer</option>
+                </select>
+                ${canRemove ? `
+                  <button class="btn-remove-member" onclick="window.app.project.removeMember('${projectId}', '${m.user_id}', ${isMe})" title="${removeTitle}">
+                    <i data-lucide="${removeIcon}"></i>
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    });
+
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+  }
+
+  async updateMemberRole(projectId, targetUserId, newRole) {
+    try {
+      const res = await fetch('/api/db/project-members', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId, targetUserId, role: newRole })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update role');
+
+      showToast('権限を更新しました');
+      this.loadProjectMembers(projectId); // リストを再描画
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || '権限の更新に失敗しました');
+      this.loadProjectMembers(projectId); // 元に戻すため再描画
+    }
+  }
+
+  async removeMember(projectId, targetUserId, isMe) {
+    const msg = isMe ? '本当にこのプロジェクトから退出しますか？' : '本当にこのメンバーをプロジェクトから追放しますか？';
+    if (!confirm(msg)) return;
+
+    try {
+      const res = await fetch('/api/db/project-members', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId, targetUserId })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to remove member');
+
+      showToast(isMe ? '退出しました' : 'メンバーを追放しました');
+      
+      if (isMe) {
+        this.closeSettingsDrawer();
+        this.loadMyProjects(); // プロジェクト一覧を更新
+      } else {
+        this.loadProjectMembers(projectId); // リストを再描画
+      }
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || '操作に失敗しました');
     }
   }
 

@@ -13,6 +13,7 @@ class ERDiagramTool {
     this.zoomLevel = 1.0;
     this.isGridVisible = true;
     this.clipboard = null;
+    this.isDirty = false;
     this.canvas = document.getElementById('er-canvas');
     this.svg = document.getElementById('er-svg');
     if (this.canvas) this.canvas.classList.add('grid-active');
@@ -874,12 +875,24 @@ class ERDiagramTool {
       };
       const onMouseUp = () => {
         if (dragging && moved) {
-          this.pushUndoAction({
-            type: 'moveEntity',
-            entityId: entity.id,
-            x: dragStart.x,
-            y: dragStart.y,
-          });
+          const maxX = this.canvas.clientWidth - el.offsetWidth;
+          const maxY = this.canvas.clientHeight - el.offsetHeight;
+          if (entity.x < -10 || entity.y < -10 || entity.x > maxX + 10 || entity.y > maxY + 10) {
+            // スナップバック
+            entity.x = dragStart.x;
+            entity.y = dragStart.y;
+            el.style.left = entity.x + 'px';
+            el.style.top = entity.y + 'px';
+            this.drawRelations();
+            if (typeof showToast === 'function') showToast('キャンバスの領域外には配置できません');
+          } else {
+            this.pushUndoAction({
+              type: 'moveEntity',
+              entityId: entity.id,
+              x: dragStart.x,
+              y: dragStart.y,
+            });
+          }
         }
         dragging = false;
         document.removeEventListener('mousemove', onMouseMove);
@@ -960,6 +973,7 @@ class ERDiagramTool {
     if (this.isApplyingUndo || !action) return;
     this.undoHistory.push(action);
     this.redoStack = [];
+    this.isDirty = true;
   }
   getEntityById(entityId) {
     return this.entities.find(entity => entity.id === entityId) || null;
@@ -1114,20 +1128,52 @@ class ERDiagramTool {
     });
   }
   clearAll() {
-    if (!confirm('E-R図をクリアします。よろしいですか？')) {
-      return;
-    }
-    const snapshot = {
-      entities: this.entities.map(entity => ({ ...entity, attrs: entity.attrs.map(attr => ({ ...attr })) })),
-      relations: this.relations.map(rel => ({ ...rel })),
-      entityIdCounter: this.entityIdCounter,
+    const performClear = () => {
+      const snapshot = {
+        entities: this.entities.map(entity => ({ ...entity, attrs: entity.attrs.map(attr => ({ ...attr })) })),
+        relations: this.relations.map(rel => ({ ...rel })),
+        entityIdCounter: this.entityIdCounter,
+      };
+      this.entities = []; this.relations = []; this.entityIdCounter = 0;
+      this.canvas.querySelectorAll('.er-entity').forEach(e => e.remove());
+      this.svg.innerHTML = '';
+      if (window.DBIO) window.DBIO.resetCurrentDiagram();
+      this.pushUndoAction({ type: 'clearAll', snapshot });
+      this.isDirty = false;
+      showToast('E-R図をクリアしました');
     };
-    this.entities = []; this.relations = []; this.entityIdCounter = 0;
-    this.canvas.querySelectorAll('.er-entity').forEach(e => e.remove());
-    this.svg.innerHTML = '';
-    if (window.DBIO) window.DBIO.resetCurrentDiagram();
-    this.pushUndoAction({ type: 'clearAll', snapshot });
-    showToast('E-R図をクリアしました');
+
+    if (this.isDirty) {
+      if (typeof showConfirm !== 'undefined') {
+        showConfirm(
+          '未保存の変更',
+          '未保存の変更があります。<br>変更を保存し、新規作成しますか？',
+          () => {
+            if (typeof this.saveDiagram === 'function') {
+              this.saveDiagram().then(() => performClear());
+            } else {
+              performClear();
+            }
+          },
+          'はい',
+          'いいえ',
+          () => performClear()
+        );
+      } else {
+        if (confirm('未保存の変更があります。\n変更を保存し、新規作成しますか？\n(OKで保存後にクリア、キャンセルで保存せずクリア)')) {
+          if (typeof this.saveDiagram === 'function') this.saveDiagram().then(() => performClear());
+          else performClear();
+        } else {
+          performClear();
+        }
+      }
+    } else {
+      if (typeof showConfirm !== 'undefined') {
+        showConfirm('E-R図のクリア', 'E-R図をクリアします。よろしいですか？', performClear, 'はい', 'いいえ');
+      } else {
+        if (confirm('E-R図をクリアします。よろしいですか？')) performClear();
+      }
+    }
   }
   exportSVG() {
     FileIO.exportSVG(this);

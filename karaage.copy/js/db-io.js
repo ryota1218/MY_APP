@@ -256,6 +256,13 @@ const DBIO = {
           this.currentDiagramId = savedId;
           this.currentDiagramName = finalName;
           this.currentDiagramStatus = finalStatus;
+
+          if (window.app && window.app.currentTool) {
+            const mapping = { 'screen-transition': 'screenTransition', 'erdiagram': 'erdiagram', 'architecture': 'architecture', 'uml': 'uml', 'gantt': 'gantt', 'layout': 'layout' };
+            const instance = window.app[mapping[window.app.currentTool] || window.app.currentTool];
+            if (instance) instance.isDirty = false;
+          }
+
           resolve(true);
 
         } catch (err) {
