@@ -803,13 +803,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     lucide.createIcons();
   }
 
-  const ham = document.getElementById('hamburger');
+  const hamButtons = [
+    document.getElementById('hamburger'),
+    document.getElementById('hamburger-mobile')
+  ].filter(Boolean);
   const overlay = document.getElementById('menu-overlay');
 
   function closeMenu() { document.body.classList.remove('menu-open'); }
-  function toggleMenu() { document.body.classList.toggle('menu-open'); }
+  function toggleDesktopSidebar() {
+    const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
+    document.body.dataset.sidebarCollapsedByUser = isCollapsed ? 'true' : 'false';
+  }
+  function toggleMenu() {
+    if (window.matchMedia('(max-width: 1024px)').matches) {
+      document.body.classList.toggle('menu-open');
+      return;
+    }
+    toggleDesktopSidebar();
+  }
 
-  if (ham) ham.addEventListener('click', toggleMenu);
+  hamButtons.forEach((button) => button.addEventListener('click', toggleMenu));
   if (overlay) overlay.addEventListener('click', closeMenu);
 
   // Floating Sidebar toggle handle click event
