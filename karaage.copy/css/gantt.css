@@ -162,16 +162,27 @@
 }
 
 /* ===== バー ===== */
-.gantt-bars {
+/* 右側のタイムラインコンテナを、中の絶対配置要素の高さに追従させる */
+.gantt-bars-container {
+  display: grid; /* 子要素の配置を正しく追従させるため */
   position: relative;
-  flex: 1 1 auto;
-  overflow: auto;
-  background-image: linear-gradient(
-    to right,
-    rgba(var(--text-rgb),0.06) 1px,
-    transparent 1px
-  );
-  background-size: 36px 100%;
+}
+
+#gantt-bars {
+  position: relative;
+  /* タスクが1件あたり約40px（または設定された行高）で配置されているため、
+    最下部のタスクまで親要素を強制的に広げるための設定 
+  */
+  min-height: 100%;
+  height: max-content;
+}
+
+/* もし上記だけで解決しない場合、JavaScript側で動的に計算された高さを
+  担保するため、明示的にコンテントを包括させます
+*/
+.gantt-body {
+  display: flex;
+  align-items: stretch; /* 左のリストと右のタイムラインの高さを揃える */
 }
 
 .gantt-bar-row {
