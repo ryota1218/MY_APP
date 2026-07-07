@@ -23,7 +23,56 @@
 
 /* Layout側は白キャンバス上に重なるため、プロパティパネルを不透明化して配色を統一 */
 #layout-property-panel {
-  background: linear-gradient(180deg, #101b36 0%, #0c1530 100%);
+  background: var(--bg-card, linear-gradient(180deg, #101b36 0%, #0c1530 100%));
+  color: var(--text);
+  border-left: 1px solid var(--border);
+}
+
+/* Property panel inputs/buttons themed */
+#layout-property-panel .property-input,
+#layout-property-panel input.property-input,
+#layout-property-panel .property-group input,
+#layout-property-panel input[type="number"],
+#layout-property-panel input[type="text"],
+#layout-property-panel select,
+#layout-property-panel textarea {
+  background: var(--bg-secondary);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+#layout-property-panel input[type="color"],
+#layout-property-panel .color-input {
+  padding: 4px; height: 34px; width: 100%;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+#layout-property-panel button.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+}
+
+#layout-property-panel button.btn-secondary {
+  background: var(--bg-glass);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+}
+
+.color-preview {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  box-sizing: border-box;
+  vertical-align: middle;
+  margin-left: 8px;
 }
 .layout-element {
   position: absolute; border: 2px dashed #cbd5e1;

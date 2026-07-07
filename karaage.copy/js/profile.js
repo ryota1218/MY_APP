@@ -147,6 +147,17 @@ class ProfileManager {
     const passwordInput = document.getElementById('reauth-password');
     const errorDiv = document.getElementById('reauth-error');
 
+    // Enterキーで認証ボタンが発火するようにする
+    passwordInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (!verifyBtn.disabled) verifyBtn.click();
+      }
+    });
+
+    // モーダル表示時に入力欄へフォーカス
+    passwordInput.focus();
+
     verifyBtn.onclick = async () => {
       const password = passwordInput.value;
       if (!password) {
