@@ -684,21 +684,8 @@ class GanttTool {
   const todayDayNumber = Math.floor(todayUTC.getTime() / 86400000);
   const todayOffset = (todayDayNumber - startDayNumber) * dayWidth;
 
-  const todayLine = `
-    <div style="
-      position:absolute;
-      left:${todayOffset}px;
-      top:0;
-      bottom:0;
-      width:2px;
-      background:#ef4444;
-      z-index:10;
-      box-shadow: 0 0 3px rgba(239,68,68,0.5);
-    "></div>
-  `;
-
     // バー
-    let barsHtml = todayLine;
+    let barsHtml = '';
     const startDayNum = Math.floor(start.getTime() / 86400000);
 
     for (const task of this.tasks) {
@@ -850,6 +837,40 @@ class GanttTool {
     }
 
     bars.innerHTML = barsHtml;
+    this.renderTodayLine(todayOffset);
+}
+
+renderTodayLine(todayOffset) {
+  const bars = document.getElementById('gantt-bars');
+  if (!bars) return;
+
+  let layer = document.getElementById('gantt-today-line-layer');
+  if (!layer) {
+    layer = document.createElement('div');
+    layer.id = 'gantt-today-line-layer';
+    layer.style.position = 'absolute';
+    layer.style.top = '0';
+    layer.style.left = '0';
+    layer.style.right = '0';
+    layer.style.bottom = '0';
+    layer.style.pointerEvents = 'none';
+    layer.style.zIndex = '4';
+    bars.appendChild(layer);
+  }
+
+  const lineHeight = Math.max(bars.scrollHeight, bars.clientHeight);
+  layer.style.height = lineHeight + 'px';
+  layer.innerHTML = `
+    <div style="
+      position: absolute;
+      left: ${todayOffset}px;
+      top: 0;
+      width: 2px;
+      height: ${lineHeight}px;
+      background: #ef4444;
+      box-shadow: 0 0 3px rgba(239,68,68,0.5);
+    "></div>
+  `;
 }
 
 enableDrag() {
