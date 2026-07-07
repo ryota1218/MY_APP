@@ -641,6 +641,7 @@ class DiagramTool {
     this.zoomLevel = 1.0;
     this.isGridVisible = true;
     this.clipboard = null;
+    this.isDirty = false; // 未保存の変更フラグ
 
     this.isDropdownPalette = this.options.paletteMode === 'dropdown';
     this.umlType = this.options.umlType || null;
@@ -1115,7 +1116,17 @@ class DiagramTool {
       const rect = this.canvas.getBoundingClientRect();
       const x = (e.clientX - rect.left) / this.zoomLevel - 60;
       const y = (e.clientY - rect.top) / this.zoomLevel - 20;
-      this.addNode(this.components[idx], x, y);
+
+      const comp = this.components[idx];
+      const approxW = comp.width || comp.size?.w || (comp.nodeType === 'group-boundary' ? 320 : 120);
+      const approxH = comp.height || comp.size?.h || (comp.nodeType === 'group-boundary' ? 200 : 80);
+      const maxX = this.canvas.clientWidth - approxW;
+      const maxY = this.canvas.clientHeight - approxH;
+      if (x < -10 || y < -10 || x > maxX + 10 || y > maxY + 10) {
+        if (typeof showToast === 'function') showToast('キャンバスの領域外には配置できません');
+        return;
+      }
+      this.addNode(comp, x, y);
     });
     this.canvas.addEventListener('click', e => {
       if (e.target === this.canvas || e.target === this.svg) {
@@ -2840,12 +2851,36 @@ renderNode(node) {
     };
     const onMouseUp = () => {
       if (dragging && moved) {
-        this.pushUndoAction({
-          type: 'moveNode',
-          nodeId: node.id,
-          x: dragStart.x,
-          y: dragStart.y,
-        });
+        const maxX = this.canvas.clientWidth - el.offsetWidth;
+        const maxY = this.canvas.clientHeight - el.offsetHeight;
+        if (node.x < -10 || node.y < -10 || node.x > maxX + 10 || node.y > maxY + 10) {
+          // 範囲外ならスナップバック（元の位置に戻す）
+          node.x = dragStart.x;
+          node.y = dragStart.y;
+          el.style.left = node.x + 'px';
+          el.style.top = node.y + 'px';
+          if (isContainer || isLifeline) {
+            childSnapshots.forEach(({ node: child, offsetX, offsetY }) => {
+              child.x = node.x + offsetX;
+              child.y = isLifeline ? child.y : node.y + offsetY;
+              const childEl = document.getElementById(child.id);
+              if (childEl) {
+                childEl.style.left = child.x + 'px';
+                childEl.style.top = child.y + 'px';
+              }
+            });
+          }
+          this.drawConnections();
+          if (typeof showToast === 'function') showToast('キャンバスの領域外には配置できません');
+        } else {
+          // 範囲内なら確定してUndoに記録
+          this.pushUndoAction({
+            type: 'moveNode',
+            nodeId: node.id,
+            x: dragStart.x,
+            y: dragStart.y,
+          });
+        }
       }
       dragging = false;
       document.removeEventListener('mousemove', onMouseMove);
@@ -3007,6 +3042,7 @@ pushUndoAction(action) {
   if (this.isApplyingUndo || !action) return;
   this.undoHistory.push(action);
   this.redoHistory = [];
+  this.isDirty = true;
 }
 pushRedoAction(action) {
   if (!action) return;
@@ -4275,17 +4311,53 @@ drawConnections() {
   });
 }
 clearAll() {
-  if (!confirm('キャンバスをクリアします。よろしいですか？')) {
-    return;
+  const performClear = () => {
+    const snapshot = this.captureSnapshot();
+    this.nodes = []; this.connections = []; this.nodeIdCounter = 0;
+    this.quickAddCounter = 0;
+    this.canvas.querySelectorAll('.diagram-node').forEach(n => n.remove());
+    this.svg.innerHTML = '';
+    if (window.DBIO) window.DBIO.resetCurrentDiagram();
+    this.pushUndoAction({ type: 'clearAll', snapshot });
+    this.isDirty = false;
+    showToast('キャンバスをクリアしました');
+  };
+
+  if (this.isDirty) {
+    if (typeof showConfirm !== 'undefined') {
+      showConfirm(
+        '未保存の変更',
+        '未保存の変更があります。<br>変更を保存し、新規作成しますか？',
+        () => {
+          // はい：保存してからクリア
+          if (typeof this.saveDiagram === 'function') {
+            this.saveDiagram().then(() => performClear());
+          } else {
+            performClear();
+          }
+        },
+        'はい',
+        'いいえ',
+        () => {
+          // いいえ：保存せずにクリア
+          performClear();
+        }
+      );
+    } else {
+      if (confirm('未保存の変更があります。\n変更を保存し、新規作成しますか？\n(OKで保存後にクリア、キャンセルで保存せずクリア)')) {
+        if (typeof this.saveDiagram === 'function') this.saveDiagram().then(() => performClear());
+        else performClear();
+      } else {
+        performClear();
+      }
+    }
+  } else {
+    if (typeof showConfirm !== 'undefined') {
+      showConfirm('キャンバスのクリア', 'キャンバスをクリアします。よろしいですか？', performClear, 'はい', 'いいえ');
+    } else {
+      if (confirm('キャンバスをクリアします。よろしいですか？')) performClear();
+    }
   }
-  const snapshot = this.captureSnapshot();
-  this.nodes = []; this.connections = []; this.nodeIdCounter = 0;
-  this.quickAddCounter = 0;
-  this.canvas.querySelectorAll('.diagram-node').forEach(n => n.remove());
-  this.svg.innerHTML = '';
-  if (window.DBIO) window.DBIO.resetCurrentDiagram();
-  this.pushUndoAction({ type: 'clearAll', snapshot });
-  showToast('キャンバスをクリアしました');
 }
 openPaletteMenu() {
   const menuId = this.prefix + '-shape-menu';

@@ -229,5 +229,6 @@ const FileIO = {
         });
       }
     }
+    diagramInstance.isDirty = false;
   }
 };
