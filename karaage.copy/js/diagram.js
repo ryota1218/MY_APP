@@ -1187,6 +1187,26 @@ class DiagramTool {
     bindInput('x', 'x', Number);
     bindInput('y', 'y', Number);
     bindInput('fontsize', 'textSize', Number);
+    // fontsize専用：プロパティパネル → ツールバーへの同期
+    const fontsizeEl = document.getElementById(this.prefix + '-prop-fontsize');
+    if (fontsizeEl) {
+      fontsizeEl.addEventListener('input', () => {
+        if (this.fontSizeControl) {
+          const val = fontsizeEl.value;
+          if (val) {
+            let exists = Array.from(this.fontSizeControl.options).some(o => o.value === val);
+            if (!exists) {
+              const opt = document.createElement('option');
+              opt.value = val;
+              opt.text = val;
+              this.fontSizeControl.appendChild(opt);
+            }
+          }
+          this.fontSizeControl.value = val;
+        }
+      });
+    }
+
     bindInput('routing', 'routing');
     bindInput('linestyle', 'lineStyle');
     bindInput('fragtype', 'fragmentType');
@@ -1264,6 +1284,11 @@ class DiagramTool {
       this.propertyPanelNode[nodeProp] = selectedColor;
       this.updateNodeDOM(this.propertyPanelNode);
       this.refreshPropertyPanelColorButton(suffix, nodeProp);
+      // textcolorの場合、ツールバー側も更新
+      if (suffix === 'textcolor') {
+        this.setTextColor(selectedColor);
+        this.refreshTextColorButton(selectedColor || this.defaultTextStyle.color);
+      }
       pickerEl.open = false;
     });
 
@@ -1294,6 +1319,11 @@ class DiagramTool {
       this.propertyPanelNode[nodeProp] = selectedColor;
       this.updateNodeDOM(this.propertyPanelNode);
       this.refreshPropertyPanelColorButton(suffix, nodeProp);
+      // textcolorの場合、ツールバー側も更新
+      if (suffix === 'textcolor') {
+        this.setTextColor(selectedColor);
+        this.refreshTextColorButton(selectedColor || this.defaultTextStyle.color);
+      }
       pickerEl.open = false;
     });
   }
@@ -2923,6 +2953,7 @@ deselectAll() {
   this.canvas.querySelectorAll('.diagram-node').forEach(n => n.classList.remove('selected'));
   this.canvas.querySelectorAll('.diagram-conn-label').forEach(n => n.classList.remove('selected'));
   this.drawConnections();
+  this.syncTextStyleControls(null);
 }
 bringToFront() {
   if (!this.selectedNode) return;
@@ -3289,6 +3320,10 @@ initTextStyleControls() {
     const labelEl = document.getElementById(node.id)?.querySelector('.node-label');
     if (labelEl) this.applyNodeTextStyle(node, labelEl);
     this.refreshTextColorButton(node.textColor);
+    // プロパティパネル側の文字色ビューも同期
+    if (this.propertyPanelNode && this.propertyPanelNode.id === node.id) {
+      this.refreshPropertyPanelColorButton('textcolor', 'textColor');
+    }
   };
 
   this.fontSizeControl.addEventListener('change', applyCurrent);
@@ -3483,7 +3518,7 @@ initTextStyleControls() {
       this.textColorPicker.open = false;
     }
   });
-  this.refreshTextColorButton(this.defaultTextStyle.color);
+  this.syncTextStyleControls(null);
 }
 setTextColor(color) {
   this.selectedTextColor = color || '';
@@ -3494,6 +3529,12 @@ getSelectedTextColor() {
 }
 refreshTextColorButton(color) {
   if (!this.textColorButton || !this.textColorSample || !this.textColorText) return;
+  if (color === 'empty') {
+    this.textColorSample.style.background = 'transparent';
+    this.textColorText.textContent = '-';
+    this.setTextColor('');
+    return;
+  }
   const isAuto = !color || color === this.defaultTextStyle.color;
   const activeColor = isAuto ? this.defaultTextStyle.color : color;
   const activeOption = isAuto ? this.textColorMenu?.querySelector('.diagram-color-auto-row') : this.textColorMenu?.querySelector(`.diagram-color-option[data-color="${activeColor}"]`);
@@ -3606,8 +3647,25 @@ applyNodeTextStyle(node, labelEl) {
   labelEl.style.color = node.textColor || this.defaultTextStyle.color;
 }
 syncTextStyleControls(node) {
-  if (!node || !this.fontSizeControl || !this.textColorButton) return;
-  this.fontSizeControl.value = String(node.textSize || this.defaultTextStyle.fontSize);
+  if (!this.fontSizeControl || !this.textColorButton) return;
+  if (!node) {
+    this.fontSizeControl.value = "";
+    this.refreshTextColorButton('empty');
+    return;
+  }
+  const sizeStr = String(node.textSize || this.defaultTextStyle.fontSize);
+  if (sizeStr) {
+    let exists = Array.from(this.fontSizeControl.options).some(o => o.value === sizeStr);
+    if (!exists) {
+      const opt = document.createElement('option');
+      opt.value = sizeStr;
+      opt.text = sizeStr;
+      this.fontSizeControl.appendChild(opt);
+    }
+  }
+  this.fontSizeControl.value = sizeStr;
+  const propFontsize = document.getElementById(this.prefix + '-prop-fontsize');
+  if (propFontsize) propFontsize.value = String(node.textSize || this.defaultTextStyle.fontSize);
   this.refreshTextColorButton(node.textColor || this.defaultTextStyle.color);
 }
 normalizeColor(color) {
@@ -3719,10 +3777,10 @@ drawConnections() {
     const cr = this.canvas.getBoundingClientRect();
     const fr = fromEl.getBoundingClientRect();
     const tr = toEl.getBoundingClientRect();
-    const cx1 = fr.left + fr.width / 2 - cr.left;
-    const cy1 = fr.top + fr.height / 2 - cr.top;
-    const cx2 = tr.left + tr.width / 2 - cr.left;
-    const cy2 = tr.top + tr.height / 2 - cr.top;
+    const cx1 = fr.left + fr.width / 2 - (cr.left + this.canvas.clientLeft);
+    const cy1 = fr.top + fr.height / 2 - (cr.top + this.canvas.clientTop);
+    const cx2 = tr.left + tr.width / 2 - (cr.left + this.canvas.clientLeft);
+    const cy2 = tr.top + tr.height / 2 - (cr.top + this.canvas.clientTop);
 
     let x1 = cx1, y1 = cy1, x2 = cx2, y2 = cy2;
     const isHorizontal = Math.abs(cx2 - cx1) > Math.abs(cy2 - cy1);
@@ -4012,7 +4070,7 @@ drawConnections() {
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute('d', dStr);
     path.setAttribute('stroke', isSelected ? 'var(--warn, #f59e0b)' : 'var(--accent, #7c3aed)');
-    path.setAttribute('stroke-width', isSelected ? '4' : '2');
+    path.setAttribute('stroke-width', isSelected ? '5' : '3');
     path.setAttribute('fill', 'none');
     path.setAttribute('pointer-events', 'visibleStroke');
     path.setAttribute('opacity', '0.8');
