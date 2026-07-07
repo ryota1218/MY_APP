@@ -272,28 +272,28 @@ class ThemeManager {
     if (!container) return;
 
     const sectionHTML = `
-      <div style="background: var(--bg-glass); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 15px;">
+      <div style="background: rgba(255,255,255,0.04); padding: 16px; border-radius: 14px; border: 1px solid var(--border); box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);">
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px;">
           <div>
-            <label style="display: block; margin-bottom: 6px; font-size: 0.8rem; color: var(--text-dim);">メイン背景色</label>
-            <input type="color" id="theme-main-bg" style="width: 100%; height: 32px; cursor: pointer; border: none; padding: 0; border-radius: 6px;">
+            <label style="display: block; margin-bottom: 6px; font-size: 0.8rem; color: var(--text-dim); font-weight: 500;">メイン背景色</label>
+            <input type="color" id="theme-main-bg" style="width: 100%; height: 34px; cursor: pointer; border: 1px solid var(--border); padding: 0; border-radius: 6px; background: var(--bg-secondary);">
           </div>
           <div>
-            <label style="display: block; margin-bottom: 6px; font-size: 0.8rem; color: var(--text-dim);">サブ背景色</label>
-            <input type="color" id="theme-sub-bg" style="width: 100%; height: 32px; cursor: pointer; border: none; padding: 0; border-radius: 6px;">
+            <label style="display: block; margin-bottom: 6px; font-size: 0.8rem; color: var(--text-dim); font-weight: 500;">サブ背景色</label>
+            <input type="color" id="theme-sub-bg" style="width: 100%; height: 34px; cursor: pointer; border: 1px solid var(--border); padding: 0; border-radius: 6px; background: var(--bg-secondary);">
           </div>
-          <div>
-            <label style="display: block; margin-bottom: 6px; font-size: 0.8rem; color: var(--text-dim);">アクセント色</label>
-            <input type="color" id="theme-accent-color" style="width: 100%; height: 32px; cursor: pointer; border: none; padding: 0; border-radius: 6px;">
+          <div style="grid-column: 1 / -1;">
+            <label style="display: block; margin-bottom: 6px; font-size: 0.8rem; color: var(--text-dim); font-weight: 500;">アクセント色</label>
+            <input type="color" id="theme-accent-color" style="width: 100%; height: 34px; cursor: pointer; border: 1px solid var(--border); padding: 0; border-radius: 6px; background: var(--bg-secondary);">
           </div>
         </div>
 
         <div style="padding-top: 12px; border-top: 1px solid var(--border);">
-          <label style="display: block; margin-bottom: 8px; font-size: 0.8rem; color: var(--text-dim);">プリセットから選ぶ</label>
-          <div style="display: flex; gap: 8px;">
-            <button class="btn btn-secondary btn-sm" id="preset-dark" style="flex: 1; padding: 6px;">黒系</button>
-            <button class="btn btn-secondary btn-sm" id="preset-karaage" style="flex: 1; padding: 6px; color: #b45309; border-color: #fde68a; background: #fef3c7;">唐揚げ</button>
-            <button class="btn btn-secondary btn-sm" id="preset-light" style="flex: 1; padding: 6px; background: white; color: black;">白系</button>
+          <label style="display: block; margin-bottom: 8px; font-size: 0.8rem; color: var(--text-dim); font-weight: 500;">プリセットから選ぶ</label>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn btn-secondary btn-sm" id="preset-dark" style="flex: 1; min-width: 0; padding: 8px 10px; border-radius: 10px;">黒系</button>
+            <button class="btn btn-secondary btn-sm" id="preset-karaage" style="flex: 1; min-width: 0; padding: 8px 10px; border-radius: 10px; color: #b45309; border-color: #fde68a; background: #fef3c7;">唐揚げ</button>
+            <button class="btn btn-secondary btn-sm" id="preset-light" style="flex: 1; min-width: 0; padding: 8px 10px; border-radius: 10px; background: white; color: black;">白系</button>
           </div>
         </div>
       </div>

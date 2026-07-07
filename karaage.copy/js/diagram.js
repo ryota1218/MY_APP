@@ -892,7 +892,6 @@ class DiagramTool {
             ${this.components.map((c, i) => `<button type="button" class="shape-option" draggable="true" data-idx="${i}" data-label="${c.label}" aria-label="${c.label}" style="border: 1px solid color-mix(in srgb, ${c.color}, transparent 80%); border-left: 3px solid ${c.color}; color: ${c.color}; background-color: color-mix(in srgb, ${c.color}, transparent 92%); box-shadow: 0 2px 4px color-mix(in srgb, ${c.color}, transparent 96%)">${c.icon}</button>`).join('')}
           </div>
         </div>
-        <button type="button" class="palette-action-btn sidebar-toggle-btn" id="${this.prefix}-sidebar-toggle" title="サイドバー表示切替">☰</button>
         <button type="button" class="palette-action-btn" id="${this.prefix}-connect-mode">🔗 接続モード</button>`;
 
       const toggleButton = document.getElementById(this.prefix + '-shape-toggle');
@@ -1053,19 +1052,6 @@ class DiagramTool {
       listBtn.addEventListener('click', () => this.openTimingAxesListModal());
       if (parentEl) parentEl.insertBefore(listBtn, axisBtn.nextSibling);
     }
-    // Sidebar toggle button
-    const sidebarToggle = document.getElementById(this.prefix + '-sidebar-toggle');
-    if (sidebarToggle) {
-      sidebarToggle.addEventListener('click', () => {
-        const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
-        if (isCollapsed) {
-          document.body.dataset.sidebarCollapsedByUser = 'true';
-        } else {
-          document.body.dataset.sidebarCollapsedByUser = 'false';
-        }
-      });
-    }
-
     // Inline shape strip — show component icons directly in toolbar when space allows
     const inlineStrip = document.getElementById(this.prefix + '-inline-shapes');
     if (inlineStrip) {

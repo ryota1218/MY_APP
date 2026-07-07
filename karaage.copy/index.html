@@ -16,12 +16,13 @@
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
-  <button id="hamburger" class="hamburger" aria-label="メニュー"><i data-lucide="menu"></i></button>
+  <button id="hamburger-mobile" class="hamburger hamburger-mobile" aria-label="メニュー"><i data-lucide="menu"></i></button>
   <!-- Sidebar -->
   <aside class="sidebar">
-    <div class="logo">
+    <div class="logo" style="display:flex; align-items:center; gap:10px;">
       <span class="logo-icon"><img src="asset/logo.png" alt="ロゴ" class="user-photo"></span>
       <span>KFC</span>
+      <button id="hamburger" class="hamburger hamburger-desktop" aria-label="メニュー"><i data-lucide="menu"></i></button>
     </div>
     <nav>
       <a data-tool="dashboard" class="active"><span class="nav-icon"><i data-lucide="bar-chart-3"></i></span><span>ダッシュボード</span></a>
@@ -60,20 +61,20 @@
           </div>
           <span id="display-user-name" style="font-size: 0.85rem; font-weight: 600; display: block;">ゲスト</span>
         </div>
-        <div style="display:flex; flex-direction:column; gap:8px; align-items:center;">
-          <button id="account-settings-btn" class="btn btn-secondary btn-sm" data-label="アカウント設定" aria-label="アカウント設定" style="display:flex; align-items:center; gap:6px; padding: 6px 10px;">
-            <i data-lucide="settings" style="width:16px; height:16px;"></i>
-            アカウント設定
-          </button>
-          <button id="theme-settings-btn" class="btn btn-secondary btn-sm" data-action="showSettings" data-label="テーマ変更" aria-label="テーマ変更" style="display:flex; align-items:center; gap:6px; padding: 6px 10px;">
-            <i data-lucide="palette" style="width:16px; height:16px;"></i>
-            テーマ変更
-          </button>
+        <div style="position:relative; display:flex; flex-direction:column; gap:8px; align-items:center; width:100%;">
+          <div style="position:relative; display:inline-flex; align-items:center; justify-content:center; width:100%;">
+            <button id="account-settings-btn" class="btn btn-secondary btn-sm" data-label="アカウント設定" aria-label="アカウント設定" style="display:flex; align-items:center; gap:6px; padding: 6px 10px;">
+              <i data-lucide="settings" style="width:16px; height:16px;"></i>
+              アカウント設定
+            </button>
+            <div id="account-settings-flyout" style="display:none; position:absolute; left:calc(100% + 12px); bottom:0; width:340px; max-height:60vh; overflow:auto; z-index:1200;"></div>
+          </div>
           <button id="auth-action-btn" class="btn-auth-link" data-tool="login" style="display:none; font-size: 0.75rem; opacity: 0.8;">ログイン</button>
         </div>
       </div>
     </div>
   </aside>
+  <button id="sidebar-toggle-handle" class="sidebar-toggle-handle" aria-label="サイドバーを切り替え"><span class="handle-arrow">❮</span></button>
 
 
   <!-- Main Content — セクションは html/ フォルダから動的に読み込まれます -->
