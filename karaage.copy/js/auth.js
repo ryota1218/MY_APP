@@ -412,8 +412,8 @@ const Auth = {
       if (nameDisplay) nameDisplay.textContent = this.currentUser.name;
       if (dashNameDisplay) dashNameDisplay.textContent = this.currentUser.name;
       if (authBtn) {
-        authBtn.textContent = 'ログアウト';
-        authBtn.removeAttribute('data-tool'); 
+        authBtn.style.display = 'none';
+        authBtn.removeAttribute('data-tool');
       }
       const avatarEl = document.getElementById('user-avatar-display');
       if (avatarEl && this.currentUser.avatar) {
@@ -423,6 +423,7 @@ const Auth = {
       if (nameDisplay) nameDisplay.textContent = 'ゲスト';
       if (dashNameDisplay) dashNameDisplay.textContent = 'ゲスト';
       if (authBtn) {
+        authBtn.style.display = '';
         authBtn.textContent = 'ログイン';
         authBtn.setAttribute('data-tool', 'login');
       }
