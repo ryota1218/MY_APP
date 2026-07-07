@@ -46,9 +46,12 @@ class ProfileManager {
             <label>表示名</label>
             <input type="text" id="profile-name-input" class="form-input" value="${this.escapeHTML(user.name)}" style="width:100%">
           </div>
-          <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
-            <button class="btn btn-secondary" onclick="document.getElementById('modal-container').style.display='none'">キャンセル</button>
-            <button id="save-profile-btn" class="btn btn-primary">保存する</button>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:20px; margin-bottom:14px; flex-wrap:wrap;">
+            <button id="profile-logout-btn" class="btn btn-secondary" style="padding: 8px 14px; width:auto;">ログアウト</button>
+            <div style="display:flex; gap:10px; margin-left:auto; flex-wrap:wrap;">
+              <button class="btn btn-secondary" onclick="document.getElementById('modal-container').style.display='none'">キャンセル</button>
+              <button id="save-profile-btn" class="btn btn-primary">保存する</button>
+            </div>
           </div>
         </div>
       </div>
@@ -112,6 +115,13 @@ class ProfileManager {
         saveBtn.textContent = '保存する';
       }
     };
+
+    const profileLogoutBtn = document.getElementById('profile-logout-btn');
+    if (profileLogoutBtn) {
+      profileLogoutBtn.onclick = async () => {
+        await Auth.logout();
+      };
+    }
   }
 
   // ★ 修正箇所: 本人確認モーダルのボタン処理を追加
@@ -238,16 +248,15 @@ class ProfileManager {
               <div id="account-login-history" style="max-height: 180px; overflow:auto; background: var(--bg-glass); border: 1px solid var(--border); border-radius: 8px; padding: 12px; color: var(--text-dim); font-size: 0.9rem;"></div>
             </div>
           </div>
-          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px;">
-            <button id="logout-all-sessions-btn" class="btn btn-secondary btn-sm" style="padding: 8px 12px;">全セッションログアウト</button>
-            <button id="account-delete-btn" class="btn btn-danger btn-sm" style="padding: 8px 12px;">アカウントを削除</button>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:18px; margin-bottom:12px; flex-wrap:wrap;">
+            <button id="account-delete-btn" class="btn btn-danger btn-sm" style="padding: 8px 14px; width:auto;">アカウントを削除</button>
+            <div style="display:flex; gap:10px; margin-left:auto; flex-wrap:wrap;">
+              <button class="btn btn-secondary" onclick="document.getElementById('modal-container').style.display='none'">閉じる</button>
+              <button id="save-account-settings-btn" class="btn btn-primary">変更を保存</button>
+            </div>
           </div>
           <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px;">
             <span id="account-settings-feedback" style="color:var(--text-muted); font-size:0.9rem;"></span>
-          </div>
-          <div style="display:flex; justify-content:flex-end; gap:10px;">
-            <button class="btn btn-secondary" onclick="document.getElementById('modal-container').style.display='none'">閉じる</button>
-            <button id="save-account-settings-btn" class="btn btn-primary">変更を保存</button>
           </div>
         </div>
       </div>
@@ -342,6 +351,7 @@ class ProfileManager {
         feedback.textContent = '変更がありませんでした。';
       }
     };
+
   }
 
   async saveProfile(name, avatar) {
