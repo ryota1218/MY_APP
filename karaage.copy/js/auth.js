@@ -447,4 +447,6 @@ const Auth = {
   }
 };
 
-document.addEventListener('DOMContentLoaded', () => Auth.init());
+document.addEventListener('DOMContentLoaded', () => {
+  Auth.ready = Auth.init();
+});
