@@ -1088,6 +1088,7 @@ class DiagramTool {
     const canvasHeight = this.canvas.clientHeight;
     const col = this.quickAddCounter % 4;
     const row = Math.floor(this.quickAddCounter / 4);
+  
     const x = Math.min(80 + col * 140, Math.max(20, canvasWidth - 180));
     const y = Math.min(90 + row * 90, Math.max(20, canvasHeight - 80));
     this.quickAddCounter++;
@@ -1732,18 +1733,30 @@ copySelected() {
 }
 
 cutSelected() {
-  if (this.selectedNode) {
-    this.clipboard = { type: 'node', data: { ...this.selectedNode } };
-    showToast('切り取りました');
-    // 削除メッセージを表示しないように直接削除する
-    this.nodes = this.nodes.filter(node => node.id !== this.selectedNode.id);
-    this.selectedNode = null;
-    this.closePropertyPanel();
-    this.renderDiagram();
-  } else if (this.selectedConnection) {
-    showToast('接続線の切り取りには対応していません');
+    if (this.selectedNode) {
+      this.clipboard = { type: 'node', data: { ...this.selectedNode } };
+      showToast('切り取りました');
+      
+      // 1. 画面上（DOM）から要素を直接削除する処理を追加
+      const el = document.getElementById(this.selectedNode.id);
+      if (el) el.remove();
+      
+      // 削除メッセージを表示しないように直接削除する
+      this.nodes = this.nodes.filter(node => node.id !== this.selectedNode.id);
+      
+      // 2. 削除したノードに繋がっていた接続線も整理するため、必要に応じてフィルター
+      this.connections = this.connections.filter(conn => conn.from !== this.selectedNode.id && conn.to !== this.selectedNode.id);
+      
+      this.selectedNode = null;
+      this.closePropertyPanel();
+      
+      // 3. 接続線を再描画し、全体を更新
+      this.drawConnections();
+      if (typeof this.renderDiagram === 'function') this.renderDiagram();
+    } else if (this.selectedConnection) {
+      showToast('接続線の切り取りには対応していません');
+    }
   }
-}
 
 pasteSelected() {
   if (!this.clipboard) return;
