@@ -326,20 +326,40 @@ class ProjectTool {
 
       if (!res.ok) throw new Error(data.error || 'Failed to load members');
 
-      this.renderMembersList(projectId, data.members || []);
+      this.renderMembersList(projectId, data.members || [], data.pendingOwnerId);
     } catch (err) {
       console.error('Failed to load project members:', err);
       showToast('メンバーの読み込みに失敗しました');
     }
   }
 
-  renderMembersList(projectId, members) {
+  renderMembersList(projectId, members, pendingOwnerId) {
     const currentUser = window.Auth?.currentUser;
     const currentUserId = currentUser ? currentUser.id : null;
 
     // 自分がオーナーかどうか判定
     const myMember = members.find(m => m.user_id === currentUserId);
     const iAmOwner = myMember && myMember.role.toLowerCase() === 'owner';
+    
+    // 譲渡リクエスト通知領域の制御
+    const transferZone = document.getElementById('drawer-transfer-request-zone');
+    const approveBtn = document.getElementById('btn-approve-transfer');
+    const rejectBtn = document.getElementById('btn-reject-transfer');
+    if (transferZone) {
+      if (pendingOwnerId === currentUserId) {
+        transferZone.style.display = 'block';
+        if (approveBtn) approveBtn.onclick = () => this.handleOwnerTransfer(projectId, 'approve');
+        if (rejectBtn) rejectBtn.onclick = () => this.handleOwnerTransfer(projectId, 'reject');
+      } else {
+        transferZone.style.display = 'none';
+        if (iAmOwner && pendingOwnerId) {
+           // 自分が出したリクエストが待ち状態の場合
+           transferZone.style.display = 'block';
+           transferZone.innerHTML = `<h3 style="color: #166534; font-size: 0.9rem; margin-bottom: 8px;"><i data-lucide="info" style="width: 14px; height: 14px; margin-right: 4px;"></i>譲渡リクエスト送信中</h3>
+                                     <p style="font-size: 0.8rem; margin-bottom: 0;">現在、オーナー権限の譲渡承認待ちです。</p>`;
+        }
+      }
+    }
 
     // 役割ごとに分類
     const roles = {
@@ -379,8 +399,8 @@ class ProjectTool {
           // ※ オーナーが自分自身を降格できる仕様にするかどうかはシステムによるが、今回は自分以外とする
           const canChangeRole = iAmOwner && !isMe;
           
-          // 削除ボタン（自分がオーナーであり相手が自分以外、または自分自身の退出）
-          const canRemove = (iAmOwner && !isMe) || isMe;
+          // 削除ボタン（自分がオーナーであり相手が自分以外、または自分がオーナーではないときの自身の退出）
+          const canRemove = (iAmOwner && !isMe) || (isMe && !iAmOwner);
           const removeIcon = isMe ? 'log-out' : 'user-minus';
           const removeTitle = isMe ? '退出する' : '追放する';
 
@@ -441,7 +461,58 @@ class ProjectTool {
       }
     });
 
+    const dangerZone = document.getElementById('drawer-danger-zone');
+    const deleteBtn = document.getElementById('drawer-delete-project-btn');
+    if (dangerZone && deleteBtn) {
+      if (iAmOwner) {
+        dangerZone.style.display = 'block';
+        deleteBtn.onclick = () => this.confirmDeleteProject(projectId);
+      } else {
+        dangerZone.style.display = 'none';
+        deleteBtn.onclick = null;
+      }
+    }
+
     if (typeof lucide !== 'undefined') lucide.createIcons();
+  }
+
+  confirmDeleteProject(projectId) {
+    const bodyHtml = `
+      <p style="color: var(--danger); font-weight: bold; margin-bottom: 10px;">本当に削除しますか？この操作は取り消せません。</p>
+      <p style="font-size: 0.9rem; margin-bottom: 8px;">確認のため <strong>delete project</strong> と入力してください。</p>
+      <input type="text" id="delete-project-input" class="form-control" placeholder="delete project" autocomplete="off" />
+    `;
+    
+    showModal('プロジェクトの削除', bodyHtml, () => {
+      const inputEl = document.getElementById('delete-project-input');
+      if (inputEl && inputEl.value === 'delete project') {
+        this.deleteProject(projectId);
+      } else {
+        showToast('入力が一致しませんでした。削除をキャンセルしました。');
+      }
+    });
+  }
+
+  async deleteProject(projectId) {
+    try {
+      const res = await fetch(`/api/db/projects?projectId=${projectId}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to delete project');
+      
+      showToast('プロジェクトを削除しました。');
+      this.closeSettingsDrawer();
+      
+      if (localStorage.getItem('current_project_id') === projectId) {
+        localStorage.removeItem('current_project_id');
+        localStorage.removeItem('current_project_name');
+      }
+      this.refreshProjects();
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || 'プロジェクトの削除に失敗しました');
+    }
   }
 
   // 追加：カスタムドロップダウンの開閉処理
@@ -462,6 +533,17 @@ class ProjectTool {
   }
 
   async updateMemberRole(projectId, targetUserId, newRole) {
+    if (newRole === 'owner') {
+      const bodyHtml = `
+        <p style="margin-bottom: 10px;">オーナー権限を譲渡すると、あなたはオーナーではなくなります（Editorに降格します）。</p>
+        <p style="color: var(--danger); font-weight: bold;">本当にリクエストを送信しますか？</p>
+      `;
+      showConfirm('オーナー権限の譲渡リクエスト', bodyHtml, () => {
+        this.requestOwnerTransfer(projectId, targetUserId);
+      });
+      return;
+    }
+
     try {
       const res = await fetch('/api/db/project-members', {
         method: 'PUT',
@@ -477,6 +559,45 @@ class ProjectTool {
       console.error(err);
       showToast(err.message || '権限の更新に失敗しました');
       this.loadProjectMembers(projectId); // 元に戻すため再描画
+    }
+  }
+
+  async requestOwnerTransfer(projectId, targetUserId) {
+    try {
+      const res = await fetch('/api/db/owner-transfer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId, targetUserId })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to request transfer');
+
+      showToast('譲渡リクエストを送信しました');
+      this.loadProjectMembers(projectId);
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || 'リクエスト送信に失敗しました');
+    }
+  }
+
+  async handleOwnerTransfer(projectId, action) {
+    try {
+      const res = await fetch('/api/db/owner-transfer', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId, action })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to process transfer');
+
+      showToast(action === 'approve' ? 'オーナー権限を引き継ぎました！' : '譲渡リクエストを拒否しました。');
+      
+      // 権限が変わったので、UIをリフレッシュする
+      this.refreshProjects();
+      this.loadProjectMembers(projectId);
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || 'エラーが発生しました');
     }
   }
 

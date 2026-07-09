@@ -8,6 +8,7 @@ class LayoutTool {
     this.redoHistory = [];
     this.isApplyingUndo = false;
     this.canvasMode = 'free'; // 'free' or preset name
+    this.currentMode = 'select'; // 'select' or 'erase' (layout tool has no connect)
     this.canvasW = 960;
     this.canvasH = 600;
     this.aspectRatio = null; // null = free
@@ -35,29 +36,11 @@ class LayoutTool {
   }
 
   initActionButtons() {
-    // data-action属性によるイベントバインディング
+    // data-actionによるクリックイベントはcore.jsのグローバルハンドラに委譲するため、
+    // ここではストッププロパゲーション等の処理は行わず、Lucideアイコンの描画のみ行う
     const section = this.canvas.closest('.tool-section');
-    console.log('[LayoutTool] initActionButtons section:', section);
-    if (section) {
-      const buttons = section.querySelectorAll('[data-action]');
-      console.log('[LayoutTool] found buttons with data-action:', buttons.length);
-      buttons.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const action = btn.dataset.action;
-          console.log('[LayoutTool] button clicked, action:', action);
-          if (typeof this[action] === 'function') {
-            console.log('[LayoutTool] calling method:', action);
-            e.stopPropagation();
-            this[action]();
-          } else {
-            console.error('[LayoutTool] method not found:', action);
-          }
-        });
-      });
-      // Lucideアイコンの描画
-      if (window.lucide) {
-        lucide.createIcons({ root: section });
-      }
+    if (section && window.lucide) {
+      lucide.createIcons({ root: section });
     }
   }
 
@@ -70,19 +53,34 @@ class LayoutTool {
 
   saveSnapshot() { this.pushUndoAction({ type: 'clearAll', snapshot: this.captureSnapshot() }); }
 
-  toggleEraseMode() {
-    this.eraseMode = !this.eraseMode;
-    const btn = document.getElementById('layout-erase-toggle');
-    if (btn) {
-      btn.classList.toggle('active', this.eraseMode);
-      btn.textContent = `🗑 削除 ${this.eraseMode ? 'ON' : 'OFF'}`;
+  setMode(mode) {
+    if (mode === 'connect') return; // LayoutTool doesn't use connect mode
+    this.currentMode = mode;
+    
+    // ツールバーボタンのアクティブ状態を更新（常に実行）
+    const container = document.getElementById('layout-mode-segmented');
+    if (container) {
+      container.querySelectorAll('.tbtn').forEach(btn => {
+        const isMatch = btn.dataset.mode === mode;
+        const icon = btn.querySelector('i') || btn.querySelector('svg');
+        
+        btn.style.background = isMatch ? 'var(--bg-accent, #e0f2fe)' : 'transparent';
+        if (icon) {
+          icon.style.color = isMatch ? 'var(--text-accent, #0369a1)' : 'var(--text-secondary, #64748b)';
+        }
+      });
     }
-    this.canvas.style.cursor = this.eraseMode ? 'no-drop' : 'default';
-    if (!this.eraseMode) {
+
+    // Cursor and state cleanup
+    if (this.currentMode === 'erase') {
+      this.canvas.style.cursor = 'not-allowed';
+      showToast('削除モード: 図形をクリックして削除');
+    } else {
+      this.canvas.style.cursor = 'default';
+      showToast('選択モード');
       this.canvas.querySelectorAll('.layout-element').forEach(e => e.classList.remove('selected'));
       this.selectedEl = null;
     }
-    showToast(this.eraseMode ? '削除モード: ON (図形をクリックして削除)' : '削除モード: OFF');
   }
 
   initPalette() {
@@ -143,6 +141,15 @@ class LayoutTool {
   }
 
   initCanvasEvents() {
+    if (window.RadialMenu) {
+      this.radialMenu = new RadialMenu(this.canvas, [
+        { label: '選択', icon: 'mouse-pointer-2', mode: 'select' },
+        { label: '削除', icon: 'trash-2',         mode: 'erase'  },
+      ], (item) => {
+        if (item.mode) this.setMode(item.mode);
+      });
+    }
+
     this.canvas.addEventListener('dragover', e => e.preventDefault());
     this.canvas.addEventListener('drop', e => {
       e.preventDefault();
@@ -488,7 +495,7 @@ class LayoutTool {
     el.dataset.id = div.id;
 
     div.addEventListener('mousedown', e => {
-      if (this.eraseMode) {
+      if (this.currentMode === 'erase') {
         this.selectedEl = el;
         this.deleteSelected();
         e.preventDefault();

@@ -141,6 +141,16 @@ class App {
         const typeDef = umlDiagramTypes[umlType];
         if (!typeDef) return;
 
+        // すでに同じUMLタイプの場合は、キャンバスをクリアせずに単に遷移するだけ
+        if (this.currentUmlType === umlType) {
+          this.navigateTo('uml');
+          umlTrigger?.classList.add('active');
+          document.querySelectorAll('#uml-submenu a').forEach(x => x.classList.remove('active'));
+          item.classList.add('active');
+          umlSubmenuContainer.classList.remove('open');
+          return;
+        }
+
         const proceedWithSwitch = () => {
           // Navigate to UML section
           this.navigateTo('uml');
@@ -173,7 +183,8 @@ class App {
           showToast(`${typeDef.label}モードに切り替えました`);
         };
 
-        if (this.uml && this.uml.nodes && this.uml.nodes.length > 0 && this.currentUmlType !== umlType) {
+        // 別の図からUML図に遷移した時は確認ダイアログを出さない（現在UMLツールを開いている時のみ）
+        if (this.currentTool === 'uml' && this.uml && this.uml.nodes && this.uml.nodes.length > 0) {
           showConfirm(
             '保存の確認',
             '図の種類を変更すると現在の作業領域がクリアされます。<br>現在の内容を保存（JSONとしてダウンロード）して移動しますか？<br><small style="color:var(--text-muted);">(背景をクリックするとキャンセルします)</small>',
@@ -706,7 +717,33 @@ document.addEventListener('click', (e) => {
   const instance = window.app[mapping[toolId] || toolId];
 
   if (instance && typeof instance[action] === 'function') {
-    instance[action]();
+    if (action === 'setMode') {
+      instance[action](btn.dataset.mode);
+    } else {
+      instance[action]();
+    }
+  }
+});
+
+// グローバルなキーボードショートカット (キャンバス操作モード切替)
+document.addEventListener('keydown', (e) => {
+  // 入力フィールドでのタイピング時は無視
+  if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) || e.target.isContentEditable) return;
+  // 修飾キー(Ctrl/Cmd/Alt)が押されている場合は無視 (他のショートカットと競合させないため)
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+  const key = e.key.toLowerCase();
+  if (['v', 'c', 'd'].includes(key)) {
+    const toolId = window.app?.currentTool;
+    if (!toolId) return;
+    const mapping = { 'screen-transition': 'screenTransition', 'erdiagram': 'erdiagram', 'architecture': 'architecture', 'uml': 'uml', 'gantt': 'gantt', 'layout': 'layout' };
+    const instance = window.app[mapping[toolId] || toolId];
+
+    if (instance && typeof instance.setMode === 'function') {
+      if (key === 'v') instance.setMode('select');
+      if (key === 'c') instance.setMode('connect');
+      if (key === 'd') instance.setMode('erase');
+    }
   }
 });
 

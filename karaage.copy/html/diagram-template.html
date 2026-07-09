@@ -40,7 +40,18 @@
 <div class="toolbar architecture-toolbar">
   <div class="toolbar-left-group">
     <div class="diagram-overlay-palette" id="{{prefix}}-palette"></div>
-    <button class="btn btn-sm btn-secondary" id="{{prefix}}-erase-toggle" data-action="toggleEraseMode">🗑 削除 OFF</button>
+    <!-- ツールバー左端にセグメントツールバーを配置 -->
+    <div id="{{prefix}}-mode-segmented" style="display:inline-flex; gap:4px; background:var(--surface-2); border:0.5px solid var(--border); border-radius:12px; padding:6px; margin-right:12px;">
+      <button data-action="setMode" data-mode="select" class="tbtn" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:none;border-radius:8px;background:var(--bg-accent, #e0f2fe);cursor:pointer;" aria-label="選択" title="選択 (V)">
+        <i data-lucide="mouse-pointer-2" style="width:22px;height:22px;color:var(--text-accent, #0369a1)" aria-hidden="true"></i>
+      </button>
+      <button data-action="setMode" data-mode="connect" class="tbtn" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:none;border-radius:8px;background:transparent;cursor:pointer;" aria-label="接続" title="接続 (C)">
+        <i data-lucide="git-branch" style="width:22px;height:22px;color:var(--text-secondary, #64748b)" aria-hidden="true"></i>
+      </button>
+      <button data-action="setMode" data-mode="erase" class="tbtn" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:none;border-radius:8px;background:transparent;cursor:pointer;" aria-label="削除" title="削除 (D)">
+        <i data-lucide="trash-2" style="width:22px;height:22px;color:var(--text-secondary, #64748b)" aria-hidden="true"></i>
+      </button>
+    </div>
     <div class="toolbar-sep"></div>
     <div class="diagram-style-controls" id="{{prefix}}-style-controls">
       <label class="diagram-style-field">
