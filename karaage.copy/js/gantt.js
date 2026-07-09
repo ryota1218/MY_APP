@@ -592,6 +592,38 @@ class GanttTool {
     });
   }
 
+  deleteTasksByIds(taskIds) {
+    if (!Array.isArray(taskIds) || taskIds.length === 0) return 0;
+
+    const idSet = new Set(taskIds
+      .map(id => Number(id))
+      .filter(id => Number.isInteger(id))
+    );
+    if (idSet.size === 0) return 0;
+
+    const beforeCount = this.tasks.length;
+    this.tasks = this.tasks.filter(task => !idSet.has(task.id));
+    idSet.forEach(id => this.selected.delete(id));
+    return beforeCount - this.tasks.length;
+  }
+
+  deleteTasksOutsidePhase(phaseTask, newStart, newEnd) {
+    const oldPhaseStart = this.getDayNumber(phaseTask.start);
+    const oldPhaseEnd = this.getDayNumber(phaseTask.end);
+    const newPhaseStart = this.getDayNumber(newStart);
+    const newPhaseEnd = this.getDayNumber(newEnd);
+
+    const removed = this.tasks.filter(t =>
+      !t.phase &&
+      this.getDayNumber(t.start) >= oldPhaseStart &&
+      this.getDayNumber(t.end) <= oldPhaseEnd &&
+      (this.getDayNumber(t.start) < newPhaseStart || this.getDayNumber(t.end) > newPhaseEnd)
+    );
+
+    if (removed.length === 0) return 0;
+    return this.deleteTasksByIds(removed.map(t => t.id));
+  }
+
   editTask(task) {
     showModal('タスク編集', `
       <div class="form-group"><label>タスク名</label><input class="form-input" id="edit-task-name" value="${this.escapeHTML(task.name)}"></div>
@@ -633,6 +665,11 @@ class GanttTool {
         return;
       }
 
+      let removedCount = 0;
+      if (task.phase && (task.start !== start || task.end !== end)) {
+        removedCount = this.deleteTasksOutsidePhase(task, start, end);
+      }
+
       task.name = name;
       task.start = start;
       task.end = end;
@@ -641,7 +678,11 @@ class GanttTool {
 
       this.saveTasks();
       this.render();
-      showToast('タスクを更新しました');
+      if (removedCount > 0) {
+        showToast(`フェーズ期間外のタスク ${removedCount} 件を削除しました`);
+      } else {
+        showToast('タスクを更新しました');
+      }
     });
   }
 
@@ -1497,11 +1538,13 @@ enableDrag() {
     }
 
     showModal('削除の確認', `選択された ${this.selected.size} 件の項目を削除しますか？`, () => {
-      this.tasks = this.tasks.filter(t => !this.selected.has(t.id));
+      const removedCount = this.deleteTasksByIds([...this.selected]);
       this.selected.clear();
-      this.saveTasks();
-      this.render();
-      showToast('削除しました');
+      if (removedCount > 0) {
+        this.saveTasks();
+        this.render();
+        showToast('削除しました');
+      }
     });
   }
 
