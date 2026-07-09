@@ -431,43 +431,47 @@ class App {
   }
 
   async deleteDiagram(id, title) {
-    if (!confirm(`図面「${title}」を本当に削除しますか？`)) return;
-    
-    try {
-      if (window.DBIO) {
-        await window.DBIO.deleteDiagram(id);
-        if (window.showToast) showToast('図面を削除しました');
-        
-        // 再取得して再描画
-        const projectId = window.DBIO.getCurrentProjectId();
-        if (projectId) {
-          const rawData = await window.DBIO.fetchDiagrams(projectId, null);
-          const formatted = rawData.map(item => {
-            let label = item.chart_type;
-            let typeKey = 'system-flow';
-            if (label === 'システム構成図') typeKey = 'system-flow';
-            else if (label === '画面遷移図') typeKey = 'screen-transition';
-            else if (label === 'ステートマシン図') typeKey = 'state-machine';
-            else if (label === 'E-R図') typeKey = 'er-diagram';
-            else if (label === 'クラス図') typeKey = 'class-diagram';
-            return {
-              id: item.id,
-              toolType: typeKey,
-              toolLabel: label,
-              title: item.name || '無題の図面',
-              updated_at: new Date(item.update_att || item.create_at).toLocaleString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' }).replace(/\//g, '-'),
-              status: item.stats || 'creating',
-            };
-          });
-          this.allDiagrams = formatted;
-          this.updateStats();
-          this.renderDashboardCards();
+    showConfirm(
+      '図面の削除',
+      `図面「${title}」を削除しますか？`,
+      async () => {
+        try {
+          if (window.DBIO) {
+            await window.DBIO.deleteDiagram(id);
+            if (window.showToast) showToast('図面を削除しました');
+            
+            // 再取得して再描画
+            const projectId = window.DBIO.getCurrentProjectId();
+            if (projectId) {
+              const rawData = await window.DBIO.fetchDiagrams(projectId, null);
+              const formatted = rawData.map(item => {
+                let label = item.chart_type;
+                let typeKey = 'system-flow';
+                if (label === 'システム構成図') typeKey = 'system-flow';
+                else if (label === '画面遷移図') typeKey = 'screen-transition';
+                else if (label === 'ステートマシン図') typeKey = 'state-machine';
+                else if (label === 'E-R図') typeKey = 'er-diagram';
+                else if (label === 'クラス図') typeKey = 'class-diagram';
+                return {
+                  id: item.id,
+                  toolType: typeKey,
+                  toolLabel: label,
+                  title: item.name || '無題の図面',
+                  updated_at: new Date(item.update_att || item.create_at).toLocaleString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' }).replace(/\//g, '-'),
+                  status: item.stats || 'creating',
+                };
+              });
+              this.allDiagrams = formatted;
+              this.updateStats();
+              this.renderDashboardCards();
+            }
+          }
+        } catch (e) {
+          console.error(e);
+          if (window.showToast) showToast('削除に失敗しました', 'danger');
         }
       }
-    } catch (e) {
-      console.error(e);
-      if (window.showToast) showToast('削除に失敗しました', 'danger');
-    }
+    );
   }
 
   /**
@@ -712,10 +716,31 @@ document.addEventListener('click', (e) => {
 });
 
 function showToast(msg) {
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    document.body.appendChild(container);
+  }
+
   const t = document.createElement('div');
-  t.className = 'toast'; t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2500);
+  t.className = 'toast';
+  t.innerHTML = `<span class="toast-message">${msg}</span><button type="button" class="toast-close" aria-label="閉じる">×</button>`;
+  const closeBtn = t.querySelector('.toast-close');
+  closeBtn.addEventListener('click', () => {
+    t.style.opacity = '0';
+    setTimeout(() => t.remove(), 200);
+  });
+
+  container.appendChild(t);
+
+  if (container.children.length > 5) {
+    const oldest = container.firstElementChild;
+    if (oldest && oldest !== t) {
+      oldest.style.opacity = '0';
+      setTimeout(() => oldest.remove(), 200);
+    }
+  }
 }
 
 function showModal(title, bodyHtml, onConfirm) {

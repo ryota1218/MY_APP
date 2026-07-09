@@ -1784,20 +1784,10 @@ async saveDiagram() {
   const typeKey = `${this.prefix}_${this.umlType || 'main'}`;
 
   if (window.DBIO) {
-    await window.DBIO.saveDiagramToDB(typeKey, data);
-  } else {
-    showToast('データベース連携モジュールが見つかりません', 'danger');
-  }
-}
-
-async openDiagramModal() {
-  const typeKey = `${this.prefix}_${this.umlType || 'main'}`;
-  if (window.DBIO) {
-    await window.DBIO.showOpenModal(typeKey, (data, id, name, status) => {
-      this.restoreSnapshot(data);
-      showToast(`${name} を読み込みました`);
-    });
-  } else {
+      return await window.DBIO.saveDiagramToDB(typeKey, data);
+    } else {
+      showToast('データベース連携モジュールが見つかりません', 'danger');
+      return false;
     showToast('データベース連携モジュールが見つかりません', 'danger');
   }
 }
@@ -4326,25 +4316,21 @@ clearAll() {
     if (typeof showConfirm !== 'undefined') {
       showConfirm(
         '未保存の変更',
-        '未保存の変更があります。<br>変更を保存し、新規作成しますか？',
+        '未保存の変更があります。<br>変更を保存して新規作成しますか？',
         () => {
           // はい：保存してからクリア
           if (typeof this.saveDiagram === 'function') {
-            this.saveDiagram().then(() => performClear());
+            this.saveDiagram().then((saved) => { if (saved) performClear(); });
           } else {
             performClear();
           }
         },
         'はい',
-        'いいえ',
-        () => {
-          // いいえ：保存せずにクリア
-          performClear();
-        }
+        'いいえ'
       );
     } else {
       if (confirm('未保存の変更があります。\n変更を保存し、新規作成しますか？\n(OKで保存後にクリア、キャンセルで保存せずクリア)')) {
-        if (typeof this.saveDiagram === 'function') this.saveDiagram().then(() => performClear());
+        if (typeof this.saveDiagram === 'function') this.saveDiagram().then((saved) => { if (saved) performClear(); });
         else performClear();
       } else {
         performClear();
