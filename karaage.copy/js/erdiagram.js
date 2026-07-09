@@ -155,19 +155,16 @@ class ERDiagramTool {
   zoomIn() {
     this.zoomLevel = Math.min(this.zoomLevel + 0.1, 2.0);
     this.applyZoom();
-    showToast(`ズーム: ${Math.round(this.zoomLevel * 100)}%`);
   }
 
   zoomOut() {
     this.zoomLevel = Math.max(this.zoomLevel - 0.1, 0.5);
     this.applyZoom();
-    showToast(`ズーム: ${Math.round(this.zoomLevel * 100)}%`);
   }
 
   resetZoom() {
     this.zoomLevel = 1.0;
     this.applyZoom();
-    showToast('ズームをリセットしました');
   }
 
   applyZoom() {

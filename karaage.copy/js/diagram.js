@@ -1714,13 +1714,9 @@ resetZoom() {
 applyZoom() {
   this.canvas.style.transform = `scale(${this.zoomLevel})`;
   this.canvas.style.transformOrigin = '0 0';
-  showToast(`ズーム: ${Math.round(this.zoomLevel * 100)}%`);
-}
 
-toggleGrid() {
   this.isGridVisible = !this.isGridVisible;
   this.canvas.classList.toggle('grid-active', this.isGridVisible);
-  showToast(this.isGridVisible ? 'グリッドを表示しました' : 'グリッドを非表示にしました');
 }
 
 copySelected() {
