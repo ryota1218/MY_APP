@@ -147,6 +147,52 @@ class ProfileManager {
       return;
     }
 
+    const modalContainer = document.getElementById('modal-container');
+    modalContainer.style.display = 'block';
+    modalContainer.innerHTML = `
+      <div class="modal-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; z-index:10000;">
+        <div class="modal-content" style="background:var(--bg-card); padding:30px; border-radius:12px; width:100%; max-width:400px; border:1px solid var(--border); color:var(--text);">
+          <h2 style="margin-bottom:18px; color:var(--accent);">本人確認</h2>
+          <p style="margin-bottom:20px; color:var(--text-muted); font-size:0.9rem;">設定を変更するには現在のパスワードを入力してください。</p>
+          <div class="form-group">
+            <label>現在のパスワード</label>
+            <input type="password" id="reauth-password" class="form-input" style="width:100%" placeholder="パスワードを入力">
+          </div>
+          <div id="reauth-error" style="color:var(--danger); font-size:0.8rem; margin-top:8px; min-height:1.2rem;"></div>
+          <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+            <button class="btn btn-secondary" onclick="document.getElementById('modal-container').style.display='none'">キャンセル</button>
+            <button id="verify-reauth-btn" class="btn btn-primary">認証する</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // 認証ボタンに対するロジックを追加
+    const verifyBtn = document.getElementById('verify-reauth-btn');
+    const passwordInput = document.getElementById('reauth-password');
+    const errorDiv = document.getElementById('reauth-error');
+
+    // Enterキーで認証ボタンが発火するようにする
+    passwordInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (!verifyBtn.disabled) verifyBtn.click();
+      }
+    });
+
+    // モーダル表示時に入力欄へフォーカス
+    passwordInput.focus();
+
+    verifyBtn.onclick = async () => {
+      const password = passwordInput.value;
+      if (!password) {
+        errorDiv.textContent = 'パスワードを入力してください。';
+        return;
+      }
+
+      verifyBtn.disabled = true;
+      verifyBtn.textContent = '認証中...';
+      errorDiv.textContent = '';
     this.renderFullAccountSettings(user);
   }
 

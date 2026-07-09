@@ -256,6 +256,60 @@ class ThemeManager {
 
     // 他のモジュール（DiagramToolなど）がテーマ変更を検知できるようにカスタムイベントを発火
     document.dispatchEvent(new CustomEvent('theme-changed', { detail: { mode: this.currentTheme.mode, theme: this.currentTheme } }));
+
+    // 動的に生成された要素（モーダル内やツールバー等）のインラインスタイルを更新して
+    // CSS変数の反映漏れを防ぐ
+    const updateDynamicElements = () => {
+      try {
+        const accentGradient = `linear-gradient(135deg, var(--accent), var(--accent-light))`;
+        // Primary buttons (including modal save button)
+        document.querySelectorAll('.btn-primary, .btn.btn-primary, button.btn-primary, #btn-save-new').forEach(el => {
+          try { el.style.background = accentGradient; el.style.color = 'var(--text)'; el.style.border = 'none'; } catch(e){}
+        });
+        // Secondary buttons
+        document.querySelectorAll('.btn-secondary, button.btn-secondary').forEach(el => {
+          try { el.style.background = 'var(--bg-glass)'; el.style.color = 'var(--text)'; el.style.border = '1px solid var(--border)'; } catch(e){}
+        });
+        // Header icon buttons
+        document.querySelectorAll('.editor-header-btn').forEach(el => {
+          try { el.style.color = 'var(--text-dim)'; el.style.background = 'transparent'; } catch(e){}
+        });
+        // Status presets
+        document.querySelectorAll('.statusbar-preset').forEach(el => {
+          try { el.style.background = 'var(--bg-glass)'; el.style.border = '1px solid var(--border)'; el.style.color = 'var(--text-dim)'; } catch(e){}
+        });
+      } catch (err) {
+        console.error('[ThemeManager] Failed to update dynamic elements styles:', err);
+      }
+    };
+
+    // Initial update
+    updateDynamicElements();
+
+    // Observe DOM additions and reapply styles to newly added dynamic elements
+    try {
+      if (!window.__themeMutationObserver) {
+        const obs = new MutationObserver((mutations) => {
+          let needUpdate = false;
+          for (const m of mutations) {
+            if (m.addedNodes && m.addedNodes.length) {
+              for (const n of m.addedNodes) {
+                if (!(n instanceof HTMLElement)) continue;
+                if (n.matches && (n.matches('.btn-primary') || n.matches('#btn-save-new') || n.querySelector && (n.querySelector('.btn-primary') || n.querySelector('#btn-save-new') || n.querySelector('.editor-header-btn')))) {
+                  needUpdate = true; break;
+                }
+              }
+            }
+            if (needUpdate) break;
+          }
+          if (needUpdate) updateDynamicElements();
+        });
+        obs.observe(document.body, { childList: true, subtree: true });
+        window.__themeMutationObserver = obs;
+      }
+    } catch (err) {
+      console.error('[ThemeManager] Failed to install MutationObserver for theme updates:', err);
+    }
   }
 
   isDark(hex) {
