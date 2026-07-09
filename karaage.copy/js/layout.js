@@ -14,6 +14,7 @@ class LayoutTool {
     this.zoomLevel = 1.0; // ズーム初期値を追加
     this.isGridVisible = true; // グリッド初期値を追加
     this.clipboard = null; // コピペ用バッファを追加
+    this.eraseMode = false;
     this.isDirty = false;
 
     this.canvas = document.getElementById('layout-canvas');
@@ -68,6 +69,21 @@ class LayoutTool {
   }
 
   saveSnapshot() { this.pushUndoAction({ type: 'clearAll', snapshot: this.captureSnapshot() }); }
+
+  toggleEraseMode() {
+    this.eraseMode = !this.eraseMode;
+    const btn = document.getElementById('layout-erase-toggle');
+    if (btn) {
+      btn.classList.toggle('active', this.eraseMode);
+      btn.textContent = `🗑 削除 ${this.eraseMode ? 'ON' : 'OFF'}`;
+    }
+    this.canvas.style.cursor = this.eraseMode ? 'no-drop' : 'default';
+    if (!this.eraseMode) {
+      this.canvas.querySelectorAll('.layout-element').forEach(e => e.classList.remove('selected'));
+      this.selectedEl = null;
+    }
+    showToast(this.eraseMode ? '削除モード: ON (図形をクリックして削除)' : '削除モード: OFF');
+  }
 
   initPalette() {
     const items = [
@@ -469,7 +485,17 @@ class LayoutTool {
     div.appendChild(handle);
 
     let dragging = false, resizing = false, ox, oy, ow, oh;
+    el.dataset.id = div.id;
+
     div.addEventListener('mousedown', e => {
+      if (this.eraseMode) {
+        this.selectedEl = el;
+        this.deleteSelected();
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+
       this.selectElement(el, div);
       
       if (e.target.classList.contains('resize-handle')) {

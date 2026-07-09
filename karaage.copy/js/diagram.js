@@ -646,6 +646,7 @@ class DiagramTool {
     this.isDropdownPalette = this.options.paletteMode === 'dropdown';
     this.umlType = this.options.umlType || null;
     this.connectMode = false;
+    this.eraseMode = false;
     this.activeConnType = 'association'; // デフォルト接続タイプ
     this.nodes = [];
     this.connections = [];
@@ -892,7 +893,6 @@ class DiagramTool {
             ${this.components.map((c, i) => `<button type="button" class="shape-option" draggable="true" data-idx="${i}" data-label="${c.label}" aria-label="${c.label}" style="border: 1px solid color-mix(in srgb, ${c.color}, transparent 80%); border-left: 3px solid ${c.color}; color: ${c.color}; background-color: color-mix(in srgb, ${c.color}, transparent 92%); box-shadow: 0 2px 4px color-mix(in srgb, ${c.color}, transparent 96%)">${c.icon}</button>`).join('')}
           </div>
         </div>
-        <button type="button" class="palette-action-btn sidebar-toggle-btn" id="${this.prefix}-sidebar-toggle" title="サイドバー表示切替">☰</button>
         <button type="button" class="palette-action-btn" id="${this.prefix}-connect-mode">🔗 接続モード</button>`;
 
       const toggleButton = document.getElementById(this.prefix + '-shape-toggle');
@@ -1017,6 +1017,7 @@ class DiagramTool {
       };
       this.updateConnectButton();
       connectButton.addEventListener('click', () => {
+        if (this.eraseMode) this.toggleEraseMode();
         this.connectMode = !this.connectMode;
         this.updateConnectButton();
         this.canvas.style.cursor = this.connectMode ? 'crosshair' : 'default';
@@ -2715,6 +2716,13 @@ renderNode(node) {
   // Drag
   let dragging = false, ox, oy;
   el.addEventListener('mousedown', e => {
+    if (this.eraseMode) {
+      this.selectedNode = node;
+      this.deleteSelectedNode();
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
     if (this.editingNodeId === node.id) return;
     if (e.target.classList.contains('node-port')) return;
     if (e.target.classList.contains('node-resize-handle')) {
@@ -3331,6 +3339,51 @@ deleteSelectedNode() {
   this.deselectAll();
   this.drawConnections();
   showToast('選択した図形を削除しました');
+}
+
+toggleEraseMode() {
+  this.eraseMode = !this.eraseMode;
+  if (this.eraseMode && this.connectMode) {
+    this.connectMode = false;
+    const btn = document.getElementById(this.prefix + '-connect-toggle') || document.getElementById(this.prefix + '-connect-mode');
+    if (btn) {
+      btn.classList.remove('active');
+      btn.textContent = btn.textContent.replace('ON', 'OFF');
+    }
+  }
+  const eraseBtns = document.querySelectorAll(`[data-action="toggleEraseMode"]`);
+  eraseBtns.forEach(btn => {
+    btn.classList.toggle('active', this.eraseMode);
+    btn.textContent = `🗑 削除 ${this.eraseMode ? 'ON' : 'OFF'}`;
+  });
+  this.canvas.style.cursor = this.eraseMode ? 'no-drop' : 'default';
+  if (!this.eraseMode) {
+    this.deselectAll();
+  }
+  showToast(this.eraseMode ? '削除モード: ON (図形や線をクリックして削除)' : '削除モード: OFF');
+}
+
+clearAll() {
+  if (this.nodes) {
+    this.nodes.forEach(n => {
+      const el = document.getElementById(n.id);
+      if (el) el.remove();
+    });
+  }
+  if (this.svg) this.svg.innerHTML = '';
+  this.nodes = [];
+  this.connections = [];
+  this.undoHistory = [];
+  this.redoHistory = [];
+  this.nodeIdCounter = 0;
+  this.connIdCounter = 0;
+  this.quickAddCounter = 0;
+  this.selectedNode = null;
+  this.selectedConnection = null;
+  this.connectingFrom = null;
+  this.closePropertyPanel();
+  this.isDirty = false;
+  this.drawConnections();
 }
 initTextStyleControls() {
   this.fontSizeControl = document.getElementById(this.prefix + '-font-size');
@@ -4113,6 +4166,11 @@ drawConnections() {
     path.style.cursor = 'pointer';
     path.addEventListener('mousedown', e => {
       e.stopPropagation();
+      if (this.eraseMode) {
+        this.selectedConnection = conn;
+        this.deleteSelected();
+        return;
+      }
       this.selectConnection(conn);
     });
 

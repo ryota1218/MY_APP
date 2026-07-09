@@ -39,12 +39,9 @@
 </div>
 <div class="toolbar er-toolbar">
   <div class="toolbar-left-group">
-    <div class="diagram-overlay-palette" id="er-palette" style="position: static; width: auto; padding: 0; background: none; border: none; display: flex; align-items: center; gap: 8px;">
-      <button type="button" class="palette-action-btn sidebar-toggle-btn" data-action="toggleSidebar" title="サイドバー表示切替" style="width: 38px; margin-top: 0;">☰</button>
-    </div>
     <button class="btn btn-sm btn-secondary" data-action="addEntity">＋ エンティティ追加</button>
     <button class="btn btn-sm btn-secondary" data-action="addRelation">🔗 リレーション追加</button>
-    <button class="btn btn-sm btn-secondary" data-action="clearAll">🗑 クリア</button>
+    <button class="btn btn-sm btn-secondary" id="er-erase-toggle" data-action="toggleEraseMode">🗑 削除 OFF</button>
   </div>
 </div>
 <div class="diagram-workspace er-workspace" style="position: relative; overflow: hidden; display: flex;">

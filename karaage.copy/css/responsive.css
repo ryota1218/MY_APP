@@ -10,13 +10,24 @@
 
 /* Hamburger menu & overlay for small screens */
 .hamburger {
-  position: fixed; top: 12px; left: 12px;
+  position: fixed; top: 22px; 
+  left: calc(var(--sidebar-w) - 52px); /* Default for desktop */
   width: 44px; height: 44px; border-radius: 10px; border: none;
   background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
-  color: var(--text); font-size: 1.2rem; display: none;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  color: var(--text); font-size: 1.2rem; display: flex;
   align-items: center; justify-content: center; z-index: 1200;
-  cursor: pointer; box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  cursor: pointer;
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s ease;
 }
+
+@media (min-width: 1025px) {
+  body.sidebar-collapsed .hamburger {
+    left: 12px;
+  }
+}
+
 
 #menu-overlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.45);
@@ -24,7 +35,7 @@
 }
 
 @media (max-width: 1024px) {
-  .hamburger { display: flex; }
+  .hamburger { display: flex; left: 12px; }
   /* Move sidebar to overlay panel */
   .sidebar {
     position: fixed; left: 0; top: 0; height: 100vh;
@@ -33,6 +44,12 @@
   }
   body.menu-open .sidebar { transform: translateX(0); }
   body.menu-open #menu-overlay { display: block; }
+  body.menu-open .hamburger {
+    left: calc(var(--sidebar-w) - 52px);
+    background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
 
   /* Make main content scrollable behind overlay */
   .main-content { height: 100vh; }

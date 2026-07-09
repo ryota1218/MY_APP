@@ -23,7 +23,8 @@
 
 /* Layout側は白キャンバス上に重なるため、プロパティパネルを不透明化して配色を統一 */
 #layout-property-panel {
-  background: linear-gradient(180deg, #101b36 0%, #0c1530 100%);
+  background: var(--bg-card);
+  border-left: 1px solid var(--border);
 }
 .layout-element {
   position: absolute; border: 2px dashed #cbd5e1;

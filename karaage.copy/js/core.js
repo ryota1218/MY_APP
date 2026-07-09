@@ -141,33 +141,57 @@ class App {
         const typeDef = umlDiagramTypes[umlType];
         if (!typeDef) return;
 
-        // Navigate to UML section
-        this.navigateTo('uml');
-        // Also mark trigger as active
-        umlTrigger?.classList.add('active');
+        const proceedWithSwitch = () => {
+          // Navigate to UML section
+          this.navigateTo('uml');
+          // Also mark trigger as active
+          umlTrigger?.classList.add('active');
 
-        // Lazy init then swap components
-        if (!this.uml) {
-          this.uml = new DiagramTool('uml', typeDef.components, { paletteMode: 'dropdown', umlType: umlType });
+          if (this.uml) this.uml.clearAll();
+
+          // Lazy init then swap components
+          if (!this.uml) {
+            this.uml = new DiagramTool('uml', typeDef.components, { paletteMode: 'dropdown', umlType: umlType });
+          } else {
+            this.uml.swapComponents(typeDef.components, umlType);
+          }
+          this.currentUmlType = umlType;
+
+          // Update section title
+          const umlSection = document.getElementById('uml');
+          const h1 = umlSection?.querySelector('.section-header h1');
+          const desc = umlSection?.querySelector('.section-header p');
+          if (h1) h1.textContent = `UML図 - ${typeDef.label}`;
+          if (desc) desc.textContent = `${typeDef.label}を作成・編集します`;
+
+          // Mark active submenu item
+          document.querySelectorAll('#uml-submenu a').forEach(x => x.classList.remove('active'));
+          item.classList.add('active');
+
+          // Close submenu
+          umlSubmenuContainer.classList.remove('open');
+          showToast(`${typeDef.label}モードに切り替えました`);
+        };
+
+        if (this.uml && this.uml.nodes && this.uml.nodes.length > 0 && this.currentUmlType !== umlType) {
+          showConfirm(
+            '保存の確認',
+            '図の種類を変更すると現在の作業領域がクリアされます。<br>現在の内容を保存（JSONとしてダウンロード）して移動しますか？<br><small style="color:var(--text-muted);">(背景をクリックするとキャンセルします)</small>',
+            () => {
+              if (window.FileIO && window.FileIO.exportJSON) {
+                window.FileIO.exportJSON(this.uml);
+              }
+              proceedWithSwitch();
+            },
+            '保存して移動',
+            '保存せず移動',
+            () => {
+              proceedWithSwitch();
+            }
+          );
         } else {
-          this.uml.swapComponents(typeDef.components, umlType);
+          proceedWithSwitch();
         }
-        this.currentUmlType = umlType;
-
-        // Update section title
-        const umlSection = document.getElementById('uml');
-        const h1 = umlSection?.querySelector('.section-header h1');
-        const desc = umlSection?.querySelector('.section-header p');
-        if (h1) h1.textContent = `UML図 - ${typeDef.label}`;
-        if (desc) desc.textContent = `${typeDef.label}を作成・編集します`;
-
-        // Mark active submenu item
-        document.querySelectorAll('#uml-submenu a').forEach(x => x.classList.remove('active'));
-        item.classList.add('active');
-
-        // Close submenu
-        umlSubmenuContainer.classList.remove('open');
-        showToast(`${typeDef.label}モードに切り替えました`);
       });
     });
   }
@@ -738,7 +762,7 @@ function installInstantTooltips() {
 
   const tooltip = document.createElement('div');
   tooltip.id = 'instant-label-tooltip';
-  tooltip.className = 'instant-label-tooltip';
+  tooltip.className = 'instant-label-tooltip is-hidden';
   tooltip.setAttribute('role', 'tooltip');
   document.body.appendChild(tooltip);
 
@@ -826,8 +850,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   const ham = document.getElementById('hamburger');
   const overlay = document.getElementById('menu-overlay');
 
-  function closeMenu() { document.body.classList.remove('menu-open'); }
-  function toggleMenu() { document.body.classList.toggle('menu-open'); }
+  function closeMenu() {
+    if (window.innerWidth <= 1024) {
+      document.body.classList.remove('menu-open');
+    }
+  }
+  function toggleMenu() {
+    if (window.innerWidth <= 1024) {
+      document.body.classList.toggle('menu-open');
+    } else {
+      const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
+      document.body.dataset.sidebarCollapsedByUser = isCollapsed ? 'true' : 'false';
+    }
+  }
 
   if (ham) ham.addEventListener('click', toggleMenu);
   if (overlay) overlay.addEventListener('click', closeMenu);

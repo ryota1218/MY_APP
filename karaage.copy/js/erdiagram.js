@@ -18,6 +18,7 @@ class ERDiagramTool {
     this.svg = document.getElementById('er-svg');
     if (this.canvas) this.canvas.classList.add('grid-active');
     this.connectingFrom = null;
+    this.eraseMode = false;
     
     // AI Chat state
     this.prefix = 'er';
@@ -59,6 +60,21 @@ class ERDiagramTool {
         this.selectedEntity = null;
       }
     });
+  }
+
+  toggleEraseMode() {
+    this.eraseMode = !this.eraseMode;
+    const btn = document.getElementById('er-erase-toggle');
+    if (btn) {
+      btn.classList.toggle('active', this.eraseMode);
+      btn.textContent = `🗑 削除 ${this.eraseMode ? 'ON' : 'OFF'}`;
+    }
+    this.canvas.style.cursor = this.eraseMode ? 'no-drop' : 'default';
+    if (!this.eraseMode) {
+      this.canvas.querySelectorAll('.er-entity').forEach(el => el.classList.remove('selected'));
+      this.selectedEntity = null;
+    }
+    showToast(this.eraseMode ? '削除モード: ON (図形をクリックして削除)' : '削除モード: OFF');
   }
 
   async saveDiagram() {
@@ -807,6 +823,14 @@ class ERDiagramTool {
 
     let dragging = false, ox, oy;
     el.addEventListener('mousedown', e => {
+      if (this.eraseMode) {
+        this.selectedEntity = entity;
+        this.deleteSelected();
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      
       if (this.connectingFrom) {
         if (this.connectingFrom.id !== entity.id) {
           const label = prompt('リレーション (例: 1:N, N:M) [空でキャンセル]:', '1:N');
@@ -1109,6 +1133,12 @@ class ERDiagramTool {
 
       g.addEventListener('click', (e) => {
         e.stopPropagation();
+        if (this.eraseMode) {
+          this.pushUndoAction({ type: 'restoreRelation', relation: { ...rel } });
+          this.relations = this.relations.filter(r => r !== rel);
+          this.drawRelations();
+          return;
+        }
         const newLabel = prompt('リレーション (例: 1:N, N:M) [空で削除]:', rel.label);
         if (newLabel !== null) {
           if (newLabel.trim() === '') {

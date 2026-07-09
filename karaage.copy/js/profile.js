@@ -157,6 +157,14 @@ class ProfileManager {
     const passwordInput = document.getElementById('reauth-password');
     const errorDiv = document.getElementById('reauth-error');
 
+    // Enterキー押下で認証ボタンをクリックする処理
+    passwordInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        verifyBtn.click();
+      }
+    });
+
     verifyBtn.onclick = async () => {
       const password = passwordInput.value;
       if (!password) {
@@ -295,7 +303,20 @@ class ProfileManager {
 
     renderHistory();
 
-    document.getElementById('save-account-settings-btn').onclick = async () => {
+    const saveBtn = document.getElementById('save-account-settings-btn');
+
+    // Enterキー押下で変更を保存ボタンをクリックする処理
+    const handleEnterToSave = (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        saveBtn.click();
+      }
+    };
+    document.getElementById('account-email').addEventListener('keydown', handleEnterToSave);
+    document.getElementById('account-password').addEventListener('keydown', handleEnterToSave);
+    document.getElementById('account-password-confirm').addEventListener('keydown', handleEnterToSave);
+
+    saveBtn.onclick = async () => {
       const newEmail = document.getElementById('account-email').value.trim();
       const password = document.getElementById('account-password').value;
       const passwordConfirm = document.getElementById('account-password-confirm').value;
