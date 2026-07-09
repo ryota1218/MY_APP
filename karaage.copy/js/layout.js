@@ -1000,11 +1000,89 @@ class LayoutTool {
   }
 
   initThemeListener() {
-    document.addEventListener('theme-changed', () => {
+    const handler = () => {
       this.initPalette();
       // キャンバス上の要素の色をリセット（テーマ変更時に反映）
       this.elements.forEach(el => this.updateElementDOM(el));
-    });
+
+      // プロパティパネル（開閉に関わらず存在すれば）にテーマを反映
+      const panel = document.getElementById('layout-property-panel');
+      if (panel) {
+        // 入力要素の見た目をテーマ変数に合わせる
+        const bgSecondary = (getComputedStyle(document.documentElement).getPropertyValue('--bg-secondary') || '').trim();
+        const textColor = (getComputedStyle(document.documentElement).getPropertyValue('--text') || '').trim();
+        const borderColor = (getComputedStyle(document.documentElement).getPropertyValue('--border') || '').trim() || 'rgba(0,0,0,0.12)';
+
+        const inputs = panel.querySelectorAll('input, select, textarea');
+        inputs.forEach(inp => {
+          try {
+            inp.style.background = bgSecondary || '';
+            inp.style.color = textColor || '';
+            inp.style.border = `1px solid ${borderColor}`;
+          } catch (e) {}
+        });
+
+        // ボタン類もテーマに合わせる
+        const btns = panel.querySelectorAll('button');
+        const accent = (getComputedStyle(document.documentElement).getPropertyValue('--accent') || '').trim();
+        btns.forEach(b => {
+          try {
+            b.style.borderColor = borderColor || '';
+            // Primary buttons (btn-primary) use accent
+            if (b.classList.contains('btn-primary') || b.classList.contains('btn')) {
+              if (accent) {
+                b.style.background = accent;
+                b.style.color = '#fff';
+                b.style.border = 'none';
+              }
+            }
+          } catch (e) {}
+        });
+
+        // color input: ensure a visible preview swatch exists and update it
+        const colorInputs = panel.querySelectorAll('input[type="color"], .color-input');
+        colorInputs.forEach(inp => {
+          try {
+            let inputEl = inp.tagName === 'INPUT' ? inp : inp;
+            // find or create preview element
+            let preview = inputEl.nextElementSibling;
+            if (!preview || !preview.classList || !preview.classList.contains('color-preview')) {
+              preview = document.createElement('span');
+              preview.className = 'color-preview';
+              inputEl.parentNode.insertBefore(preview, inputEl.nextSibling);
+            }
+
+            const setPreview = (val) => {
+              try { preview.style.background = val || 'transparent'; } catch (e) {}
+            };
+
+            // initial value
+            setPreview(inputEl.value || inputEl.getAttribute('value') || 'transparent');
+
+            // update on input change
+            inputEl.addEventListener('input', (e) => setPreview(e.target.value));
+          } catch (e) {}
+        });
+
+        // 値の再同期（プロパティパネルが開かれている場合は入力値を最新にする）
+        if (this.propertyPanelEl && panel.classList.contains('open')) {
+          this.syncPropertyPanel(this.propertyPanelEl);
+          // sync color previews after values updated
+          const colorInputs2 = panel.querySelectorAll('input[type="color"], .color-input');
+          colorInputs2.forEach(inp => {
+            const inputEl = inp.tagName === 'INPUT' ? inp : inp;
+            const preview = inputEl.nextElementSibling;
+            if (preview && preview.classList && preview.classList.contains('color-preview')) {
+              try { preview.style.background = inputEl.value || inputEl.getAttribute('value') || 'transparent'; } catch (e) {}
+            }
+          });
+        }
+      }
+    };
+
+    document.addEventListener('theme-changed', handler);
+    // 初期化時に現在のテーマを反映
+    try { handler(); } catch (e) { console.error('[LayoutTool] theme handler failed', e); }
   }
 
   initCanvasConfig() {

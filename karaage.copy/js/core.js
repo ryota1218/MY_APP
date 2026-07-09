@@ -292,6 +292,15 @@ class App {
 
     await this.refreshDashboardData();
     this.renderDashboardGantt();
+
+    // リサイズ時にガントを再描画（デバウンス）
+    if (!this._ganttResizeHandlerAdded) {
+      this._ganttResizeHandlerAdded = true;
+      window.addEventListener('resize', () => {
+        clearTimeout(this._ganttResizeTimer);
+        this._ganttResizeTimer = setTimeout(() => this.renderDashboardGantt(), 150);
+      });
+    }
   }
 
   showFilterModal() {
@@ -610,23 +619,39 @@ class App {
     const allTasks = saved ? JSON.parse(saved) : [];
     const tasks = allTasks; // フェーズも含めて取得
 
-    const miniDayWidth = 40; // 1日あたりの幅を広げて、日付と曜日が折り返さないように調整
-    const numDaysToShow = 7; // Always show 7 days
-
+    // Start timeline from today and extend forward until it fills the visible area
     const now = new Date();
     const miniStartDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())); // 今日から開始
+
+    // Calculate available width and determine how many days fit
+    const containerWidth = container.clientWidth || container.offsetWidth || window.innerWidth;
+    const labelColumnWidth = 220; // estimate for task label column
+    const minDayWidth = 36; // per-day minimum width for readability — increased so dates fit
+    const availableTimelineWidth = Math.max(containerWidth - labelColumnWidth, minDayWidth);
+    let numDaysToShow = Math.max(1, Math.floor(availableTimelineWidth / minDayWidth));
+    // Recompute exact per-day width so the timeline fills the area without leftover gap
+    const miniDayWidth = Math.max(minDayWidth, Math.floor(availableTimelineWidth / numDaysToShow));
+
     const miniEndDate = new Date(miniStartDate);
     miniEndDate.setUTCDate(miniEndDate.getUTCDate() + numDaysToShow - 1);
 
     const miniStartDayNum = getDayNumber(formatDate(miniStartDate));
 
-    // Header (days) generation
+    // Header (days) generation: dynamically adjust font-size and spacing so labels fit
     let daysHtml = '';
+    // Compute font size based on per-day width (clamped between 10 and 16px)
+    const fontSize = Math.max(10, Math.min(16, Math.floor(miniDayWidth * 0.28)));
+    // If cells are narrow, show labels every `showEvery` days to avoid unreadable overlap
+    const showEvery = miniDayWidth < 28 ? Math.ceil(28 / miniDayWidth) : 1;
     for (let i = 0; i < numDaysToShow; i++) {
       const d = new Date(miniStartDate);
       d.setUTCDate(d.getUTCDate() + i);
       const isWeekend = d.getUTCDay() === 0 || d.getUTCDay() === 6;
-      daysHtml += `<div class="mini-day-cell ${isWeekend ? 'weekend' : ''}" style="width: ${miniDayWidth}px;">${d.getUTCDate()}&nbsp;<span>${['日', '月', '火', '水', '木', '金', '土'][d.getUTCDay()]}</span></div>`;
+      const showLabel = (i % showEvery) === 0;
+      const dayNum = showLabel ? d.getUTCDate() : '';
+      const weekLbl = showLabel ? `<span style="margin-left:2px;">${['日', '月', '火', '水', '木', '金', '土'][d.getUTCDay()]}</span>` : '';
+      const cellStyle = `width: ${miniDayWidth}px; font-size:${fontSize}px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; box-sizing:border-box; padding:2px; display:flex; align-items:center; justify-content:center;`;
+      daysHtml += `<div class="mini-day-cell ${isWeekend ? 'weekend' : ''}" style="${cellStyle}">${dayNum}${weekLbl}</div>`;
     }
 
     // 表示期間に含まれるフェーズと、未完了のタスクを抽出
