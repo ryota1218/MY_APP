@@ -18,31 +18,31 @@ const DBIO = {
     if (document.getElementById('db-io-overlay')) return;
     
     const modalsHTML = `
-      <div id="db-io-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 9998; backdrop-filter: blur(2px);"></div>
+      <div id="db-io-overlay" style="display: none; position: fixed; inset: 0; background: var(--modal-overlay, rgba(0,0,0,0.3)); z-index: 9998; backdrop-filter: blur(2px);"></div>
       
       <!-- Save Modal (Glassmorphism design) -->
-      <div id="save-diagram-modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); align-items: center; gap: 12px; padding: 15px 25px; z-index: 9999; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3); background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 40px; color: #fff; min-width: 550px; box-sizing: border-box;">
+      <div id="save-diagram-modal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); align-items: center; gap: 12px; padding: 15px 25px; z-index: 9999; box-shadow: var(--shadow); background: linear-gradient(180deg, var(--bg-card), var(--bg-secondary)); backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: 40px; color: var(--text); min-width: 550px; box-sizing: border-box;">
         
-        <div style="display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: linear-gradient(135deg, var(--accent, #7c3aed), var(--accent-light, #a855f7)); border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 10px rgba(124, 58, 237, 0.5);">
+        <div style="display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: linear-gradient(135deg, var(--accent, #7c3aed), var(--accent-light, #a855f7)); border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.35);">
           <i data-lucide="save" style="width: 18px; height: 18px; color: #fff;"></i>
         </div>
         
         <div style="flex: 1; min-width: 150px;">
-          <input type="text" id="save-diagram-name" style="background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 20px; padding: 8px 14px; color: #fff; font-size: 0.9rem; width: 100%; box-sizing: border-box; outline: none; transition: border-color 0.2s;" placeholder="図のタイトルを入力...">
+          <input type="text" id="save-diagram-name" style="background: var(--bg-glass); border: 1px solid var(--border); border-radius: 20px; padding: 8px 14px; color: var(--text); font-size: 0.9rem; width: 100%; box-sizing: border-box; outline: none; transition: border-color 0.2s;" placeholder="図のタイトルを入力...">
         </div>
         
-        <div style="display: flex; align-items: center; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 20px; padding: 4px 10px; flex-shrink: 0;">
-          <select id="save-diagram-status" style="background: transparent; border: none; color: #fff; font-size: 0.85rem; outline: none; cursor: pointer; padding: 4px;">
-            <option value="作成中" style="background: #0f172a;">作成中</option>
-            <option value="完了" style="background: #0f172a;">完了</option>
-            <option value="保留" style="background: #0f172a;">保留</option>
+        <div style="display: flex; align-items: center; background: var(--bg-glass); border: 1px solid var(--border); border-radius: 20px; padding: 4px 10px; flex-shrink: 0;">
+          <select id="save-diagram-status" style="background: transparent; border: none; color: var(--text); font-size: 0.85rem; outline: none; cursor: pointer; padding: 4px;">
+            <option value="作成中" style="background: var(--bg-card); color: var(--text);">作成中</option>
+            <option value="完了" style="background: var(--bg-card); color: var(--text);">完了</option>
+            <option value="保留" style="background: var(--bg-card); color: var(--text);">保留</option>
           </select>
         </div>
         
         <div style="display: flex; gap: 8px; align-items: center; flex-shrink: 0;">
-          <button id="btn-save-overwrite" class="btn btn-sm btn-secondary" style="display: none; border-radius: 20px; padding: 6px 14px; font-size: 0.85rem; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.15); color: #fff; cursor: pointer;">上書き保存</button>
-          <button id="btn-save-new" class="btn btn-sm btn-primary" style="border-radius: 20px; padding: 6px 14px; font-size: 0.85rem; background: var(--accent, #7c3aed); border: none; color: #fff; font-weight: bold; cursor: pointer;">新規保存</button>
-          <button style="background: transparent; border: none; color: rgba(255, 255, 255, 0.5); font-size: 1.4rem; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0; line-height: 1;" onclick="window.DBIO.closeModals()">&times;</button>
+          <button id="btn-save-overwrite" class="btn btn-sm btn-secondary" style="display: none; border-radius: 20px; padding: 6px 14px; font-size: 0.85rem; background: var(--bg-glass); border: 1px solid var(--border); color: var(--text); cursor: pointer;">上書き保存</button>
+          <button id="btn-save-new" class="btn btn-sm btn-primary" style="border-radius: 20px; padding: 6px 14px; font-size: 0.85rem; background: linear-gradient(135deg, var(--accent, #7c3aed), var(--accent-light, #a855f7)); border: none; color: #fff; font-weight: bold; cursor: pointer;">新規保存</button>
+          <button style="background: transparent; border: none; color: var(--text-muted); font-size: 1.4rem; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; padding: 0; line-height: 1;" onclick="window.DBIO.closeModals()">&times;</button>
         </div>
       </div>
 

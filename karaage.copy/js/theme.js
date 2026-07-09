@@ -175,6 +175,8 @@ class ThemeManager {
       root.style.setProperty('--border', 'rgba(255,255,255,0.15)');
       root.style.setProperty('--bg-glass', 'rgba(255,255,255,0.05)');
       root.style.setProperty('--grid-dot-color', 'rgba(255,255,255,0.15)');
+      root.style.setProperty('--modal-overlay', 'rgba(0, 0, 0, 0.3)');
+      root.style.setProperty('--shadow', '0 8px 32px rgba(0,0,0,0.35)');
     } else {
       root.style.setProperty('--text', '#0f172a');
       root.style.setProperty('--text-dim', '#334155');
@@ -182,6 +184,8 @@ class ThemeManager {
       root.style.setProperty('--border', 'rgba(0,0,0,0.15)');
       root.style.setProperty('--bg-glass', 'rgba(0,0,0,0.03)');
       root.style.setProperty('--grid-dot-color', 'rgba(0,0,0,0.1)');
+      root.style.setProperty('--modal-overlay', 'rgba(15, 23, 42, 0.18)');
+      root.style.setProperty('--shadow', '0 8px 32px rgba(15,23,42,0.12)');
     }
 
     // アクセントカラーの適用
