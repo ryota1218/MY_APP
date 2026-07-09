@@ -23,6 +23,13 @@ class ProjectTool {
       if (e.target.closest('#refresh-projects-btn')) {
         this.refreshProjects();
       }
+      
+      // カスタムドロップダウンの外側をクリックした時に閉じる
+      if (!e.target.closest('.custom-role-dropdown')) {
+        document.querySelectorAll('.custom-role-menu.open').forEach(menu => {
+          menu.classList.remove('open');
+        });
+      }
     });
 
     // 初回読み込み
@@ -389,13 +396,39 @@ class ProjectTool {
                 </div>
               </div>
               <div class="member-actions">
-                <select class="role-select" 
-                        onchange="window.app.project.updateMemberRole('${projectId}', '${m.user_id}', this.value)"
-                        ${canChangeRole ? '' : 'disabled'}>
-                  <option value="owner" ${role === 'owner' ? 'selected' : ''}>Owner</option>
-                  <option value="editor" ${role === 'editor' ? 'selected' : ''}>Editor</option>
-                  <option value="viewer" ${role === 'viewer' ? 'selected' : ''}>Viewer</option>
-                </select>
+                <div class="custom-role-dropdown" id="dropdown-container-${m.user_id}">
+                  <button class="custom-role-btn" 
+                          onclick="window.app.project.toggleRoleMenu(event, '${m.user_id}')"
+                          ${canChangeRole ? '' : 'disabled'}>
+                    <span class="role-label">${role.charAt(0).toUpperCase() + role.slice(1)}</span>
+                    ${canChangeRole ? '<i data-lucide="chevron-down" class="dropdown-icon"></i>' : ''}
+                  </button>
+                  ${canChangeRole ? `
+                  <div class="custom-role-menu" id="role-menu-${m.user_id}">
+                    <div class="role-menu-item ${role === 'owner' ? 'active' : ''}" onclick="window.app.project.updateMemberRole('${projectId}', '${m.user_id}', 'owner')">
+                      <i data-lucide="crown"></i>
+                      <div class="role-menu-text">
+                        <strong>Owner</strong>
+                        <span>管理権限（設定変更・削除）</span>
+                      </div>
+                    </div>
+                    <div class="role-menu-item ${role === 'editor' ? 'active' : ''}" onclick="window.app.project.updateMemberRole('${projectId}', '${m.user_id}', 'editor')">
+                      <i data-lucide="edit-2"></i>
+                      <div class="role-menu-text">
+                        <strong>Editor</strong>
+                        <span>図の編集・保存が可能</span>
+                      </div>
+                    </div>
+                    <div class="role-menu-item ${role === 'viewer' ? 'active' : ''}" onclick="window.app.project.updateMemberRole('${projectId}', '${m.user_id}', 'viewer')">
+                      <i data-lucide="eye"></i>
+                      <div class="role-menu-text">
+                        <strong>Viewer</strong>
+                        <span>閲覧のみ（編集不可）</span>
+                      </div>
+                    </div>
+                  </div>
+                  ` : ''}
+                </div>
                 ${canRemove ? `
                   <button class="btn-remove-member" onclick="window.app.project.removeMember('${projectId}', '${m.user_id}', ${isMe})" title="${removeTitle}">
                     <i data-lucide="${removeIcon}"></i>
@@ -409,6 +442,23 @@ class ProjectTool {
     });
 
     if (typeof lucide !== 'undefined') lucide.createIcons();
+  }
+
+  // 追加：カスタムドロップダウンの開閉処理
+  toggleRoleMenu(event, userId) {
+    event.stopPropagation();
+    
+    // 他の開いているメニューをすべて閉じる
+    document.querySelectorAll('.custom-role-menu.open').forEach(menu => {
+      if (menu.id !== `role-menu-${userId}`) {
+        menu.classList.remove('open');
+      }
+    });
+
+    const menu = document.getElementById(`role-menu-${userId}`);
+    if (menu) {
+      menu.classList.toggle('open');
+    }
   }
 
   async updateMemberRole(projectId, targetUserId, newRole) {
