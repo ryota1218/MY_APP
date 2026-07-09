@@ -716,10 +716,31 @@ document.addEventListener('click', (e) => {
 });
 
 function showToast(msg) {
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    document.body.appendChild(container);
+  }
+
   const t = document.createElement('div');
-  t.className = 'toast'; t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2500);
+  t.className = 'toast';
+  t.innerHTML = `<span class="toast-message">${msg}</span><button type="button" class="toast-close" aria-label="閉じる">×</button>`;
+  const closeBtn = t.querySelector('.toast-close');
+  closeBtn.addEventListener('click', () => {
+    t.style.opacity = '0';
+    setTimeout(() => t.remove(), 200);
+  });
+
+  container.appendChild(t);
+
+  if (container.children.length > 5) {
+    const oldest = container.firstElementChild;
+    if (oldest && oldest !== t) {
+      oldest.style.opacity = '0';
+      setTimeout(() => oldest.remove(), 200);
+    }
+  }
 }
 
 function showModal(title, bodyHtml, onConfirm) {
