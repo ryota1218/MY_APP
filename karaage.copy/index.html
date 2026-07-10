@@ -16,13 +16,12 @@
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 </head>
 <body>
-  <button id="hamburger-mobile" class="hamburger hamburger-mobile" aria-label="メニュー"><i data-lucide="menu"></i></button>
+  <button id="hamburger" class="hamburger" aria-label="メニュー"><i data-lucide="menu"></i></button>
   <!-- Sidebar -->
   <aside class="sidebar">
-    <div class="logo" style="display:flex; align-items:center; gap:10px;">
+    <div class="logo">
       <span class="logo-icon"><img src="asset/logo.png" alt="ロゴ" class="user-photo"></span>
       <span>KFC</span>
-      <button id="hamburger" class="hamburger hamburger-desktop" aria-label="メニュー"><i data-lucide="menu"></i></button>
     </div>
     <nav>
       <a data-tool="dashboard" class="active"><span class="nav-icon"><i data-lucide="bar-chart-3"></i></span><span>ダッシュボード</span></a>
@@ -74,7 +73,6 @@
       </div>
     </div>
   </aside>
-  <button id="sidebar-toggle-handle" class="sidebar-toggle-handle" aria-label="サイドバーを切り替え"><span class="handle-arrow">❮</span></button>
 
 
   <!-- Main Content — セクションは html/ フォルダから動的に読み込まれます -->
@@ -101,6 +99,7 @@
   <script src="js/sequence-diagram.js"></script>
   <script src="js/timing-diagram.js"></script>
   <script src="js/file-io.js"></script>
+  <script src="js/radial-menu.js"></script>
   <script src="js/diagram.js"></script>
   <script src="js/layout.js"></script>
   <script src="js/erdiagram.js"></script>

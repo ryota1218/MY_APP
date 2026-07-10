@@ -142,33 +142,67 @@ class App {
         const typeDef = umlDiagramTypes[umlType];
         if (!typeDef) return;
 
-        // Navigate to UML section
-        this.navigateTo('uml');
-        // Also mark trigger as active
-        umlTrigger?.classList.add('active');
-
-        // Lazy init then swap components
-        if (!this.uml) {
-          this.uml = new DiagramTool('uml', typeDef.components, { paletteMode: 'dropdown', umlType: umlType });
-        } else {
-          this.uml.swapComponents(typeDef.components, umlType);
+        // すでに同じUMLタイプの場合は、キャンバスをクリアせずに単に遷移するだけ
+        if (this.currentUmlType === umlType) {
+          this.navigateTo('uml');
+          umlTrigger?.classList.add('active');
+          document.querySelectorAll('#uml-submenu a').forEach(x => x.classList.remove('active'));
+          item.classList.add('active');
+          umlSubmenuContainer.classList.remove('open');
+          return;
         }
-        this.currentUmlType = umlType;
 
-        // Update section title
-        const umlSection = document.getElementById('uml');
-        const h1 = umlSection?.querySelector('.section-header h1');
-        const desc = umlSection?.querySelector('.section-header p');
-        if (h1) h1.textContent = `UML図 - ${typeDef.label}`;
-        if (desc) desc.textContent = `${typeDef.label}を作成・編集します`;
+        const proceedWithSwitch = () => {
+          // Navigate to UML section
+          this.navigateTo('uml');
+          // Also mark trigger as active
+          umlTrigger?.classList.add('active');
 
-        // Mark active submenu item
-        document.querySelectorAll('#uml-submenu a').forEach(x => x.classList.remove('active'));
-        item.classList.add('active');
+          if (this.uml) this.uml.clearAll();
 
-        // Close submenu
-        umlSubmenuContainer.classList.remove('open');
-        showToast(`${typeDef.label}モードに切り替えました`);
+          // Lazy init then swap components
+          if (!this.uml) {
+            this.uml = new DiagramTool('uml', typeDef.components, { paletteMode: 'dropdown', umlType: umlType });
+          } else {
+            this.uml.swapComponents(typeDef.components, umlType);
+          }
+          this.currentUmlType = umlType;
+
+          // Update section title
+          const umlSection = document.getElementById('uml');
+          const h1 = umlSection?.querySelector('.section-header h1');
+          const desc = umlSection?.querySelector('.section-header p');
+          if (h1) h1.textContent = `UML図 - ${typeDef.label}`;
+          if (desc) desc.textContent = `${typeDef.label}を作成・編集します`;
+
+          // Mark active submenu item
+          document.querySelectorAll('#uml-submenu a').forEach(x => x.classList.remove('active'));
+          item.classList.add('active');
+
+          // Close submenu
+          umlSubmenuContainer.classList.remove('open');
+        };
+
+        // 別の図からUML図に遷移した時は確認ダイアログを出さない（現在UMLツールを開いている時のみ）
+        if (this.currentTool === 'uml' && this.uml && this.uml.nodes && this.uml.nodes.length > 0) {
+          showConfirm(
+            '保存の確認',
+            '図の種類を変更すると現在の作業領域がクリアされます。<br>現在の内容を保存（JSONとしてダウンロード）して移動しますか？<br><small style="color:var(--text-muted);">(背景をクリックするとキャンセルします)</small>',
+            () => {
+              if (window.FileIO && window.FileIO.exportJSON) {
+                window.FileIO.exportJSON(this.uml);
+              }
+              proceedWithSwitch();
+            },
+            '保存して移動',
+            '保存せず移動',
+            () => {
+              proceedWithSwitch();
+            }
+          );
+        } else {
+          proceedWithSwitch();
+        }
       });
     });
   }
@@ -395,7 +429,6 @@ getActiveToolInstance() {
         status: document.getElementById('filter-status').value
       };
       this.renderDashboardCards(); // フィルタ適用時は保持しているデータから再描画
-      showToast('フィルタを適用しました');
     });
   }
 
@@ -798,11 +831,37 @@ document.addEventListener('click', (e) => {
   const instance = window.app[mapping[toolId] || toolId];
 
   if (instance && typeof instance[action] === 'function') {
-    instance[action]();
+    if (action === 'setMode') {
+      instance[action](btn.dataset.mode);
+    } else {
+      instance[action]();
+    }
   }
 });
 
-function showToast(msg) {
+// グローバルなキーボードショートカット (キャンバス操作モード切替)
+document.addEventListener('keydown', (e) => {
+  // 入力フィールドでのタイピング時は無視
+  if (['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName) || e.target.isContentEditable) return;
+  // 修飾キー(Ctrl/Cmd/Alt)が押されている場合は無視 (他のショートカットと競合させないため)
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+  const key = e.key.toLowerCase();
+  if (['v', 'c', 'd'].includes(key)) {
+    const toolId = window.app?.currentTool;
+    if (!toolId) return;
+    const mapping = { 'screen-transition': 'screenTransition', 'erdiagram': 'erdiagram', 'architecture': 'architecture', 'uml': 'uml', 'gantt': 'gantt', 'layout': 'layout' };
+    const instance = window.app[mapping[toolId] || toolId];
+
+    if (instance && typeof instance.setMode === 'function') {
+      if (key === 'v') instance.setMode('select');
+      if (key === 'c') instance.setMode('connect');
+      if (key === 'd') instance.setMode('erase');
+    }
+  }
+});
+
+function showToast(msg, duration = 8000) {
   let container = document.getElementById('toast-container');
   if (!container) {
     container = document.createElement('div');
@@ -814,9 +873,21 @@ function showToast(msg) {
   t.className = 'toast';
   t.innerHTML = `<span class="toast-message">${msg}</span><button type="button" class="toast-close" aria-label="閉じる">×</button>`;
   const closeBtn = t.querySelector('.toast-close');
-  closeBtn.addEventListener('click', () => {
+
+  const removeToast = () => {
+    if (!t.parentNode) return;
     t.style.opacity = '0';
-    setTimeout(() => t.remove(), 200);
+    setTimeout(() => {
+      if (t.parentNode) t.remove();
+    }, 250);
+  };
+
+  const autoRemoveTimer = setTimeout(removeToast, duration);
+  t.dataset.toastTimer = String(autoRemoveTimer);
+
+  closeBtn.addEventListener('click', () => {
+    clearTimeout(autoRemoveTimer);
+    removeToast();
   });
 
   container.appendChild(t);
@@ -824,8 +895,12 @@ function showToast(msg) {
   if (container.children.length > 5) {
     const oldest = container.firstElementChild;
     if (oldest && oldest !== t) {
+      const oldestTimerId = Number(oldest.dataset.toastTimer);
+      if (!Number.isNaN(oldestTimerId)) clearTimeout(oldestTimerId);
       oldest.style.opacity = '0';
-      setTimeout(() => oldest.remove(), 200);
+      setTimeout(() => {
+        if (oldest.parentNode) oldest.remove();
+      }, 250);
     }
   }
 }
@@ -875,7 +950,7 @@ function installInstantTooltips() {
 
   const tooltip = document.createElement('div');
   tooltip.id = 'instant-label-tooltip';
-  tooltip.className = 'instant-label-tooltip';
+  tooltip.className = 'instant-label-tooltip is-hidden';
   tooltip.setAttribute('role', 'tooltip');
   document.body.appendChild(tooltip);
 
@@ -960,26 +1035,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     lucide.createIcons();
   }
 
-  const hamButtons = [
-    document.getElementById('hamburger'),
-    document.getElementById('hamburger-mobile')
-  ].filter(Boolean);
+  const ham = document.getElementById('hamburger');
   const overlay = document.getElementById('menu-overlay');
 
-  function closeMenu() { document.body.classList.remove('menu-open'); }
-  function toggleDesktopSidebar() {
-    const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
-    document.body.dataset.sidebarCollapsedByUser = isCollapsed ? 'true' : 'false';
+  function closeMenu() {
+    if (window.innerWidth <= 1024) {
+      document.body.classList.remove('menu-open');
+    }
   }
   function toggleMenu() {
-    if (window.matchMedia('(max-width: 1024px)').matches) {
+    if (window.innerWidth <= 1024) {
       document.body.classList.toggle('menu-open');
-      return;
+    } else {
+      const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
+      document.body.dataset.sidebarCollapsedByUser = isCollapsed ? 'true' : 'false';
     }
-    toggleDesktopSidebar();
   }
 
-  hamButtons.forEach((button) => button.addEventListener('click', toggleMenu));
+  if (ham) ham.addEventListener('click', toggleMenu);
   if (overlay) overlay.addEventListener('click', closeMenu);
 
   // Floating Sidebar toggle handle click event

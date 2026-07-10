@@ -34,8 +34,17 @@ module.exports = async (req, res) => {
         `)
         .eq('project_id', projectId);
 
+      const { data: projectData, error: projError } = await supabaseClient
+        .from('projects')
+        .select('pending_owner_id')
+        .eq('id', projectId)
+        .single();
+
       if (error) return res.status(500).json({ error: error.message });
-      return res.status(200).json({ members });
+      return res.status(200).json({ 
+        members, 
+        pendingOwnerId: projectData ? projectData.pending_owner_id : null 
+      });
     } else {
       // 自分が所属するプロジェクト一覧を取得
       const { data: memberships, error } = await supabaseClient
