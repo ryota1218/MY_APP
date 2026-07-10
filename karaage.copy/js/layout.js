@@ -856,7 +856,6 @@ class LayoutTool {
   applyZoom() {
     this.canvas.style.transform = `scale(${this.zoomLevel})`;
     this.canvas.style.transformOrigin = '0 0';
-    showToast(`ズーム: ${Math.round(this.zoomLevel * 100)}%`);
   }
 
   /* ===== グリッド切り替え ===== */
