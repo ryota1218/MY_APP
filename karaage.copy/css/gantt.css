@@ -45,10 +45,11 @@
   border-right: 1px solid var(--border);
   height: 100%;
   min-height: 0;
-  overflow-y: auto;
+  overflow-y: hidden;
   overflow-x: hidden;
   box-sizing: border-box;
   background: var(--bg-secondary);
+  scrollbar-gutter: auto;
 }
 
 .gantt-task-list {
@@ -61,6 +62,7 @@
   min-height: 0;
   overflow: auto;
   position: relative;
+  scrollbar-gutter: stable;
 }
 
 /* ヘッダー */
@@ -76,7 +78,7 @@
   top: 0;
   z-index: 3;
   background: var(--bg-card);
-  height: 48px;
+  height: 74px;
   box-sizing: border-box;
   align-items: center;
 }
@@ -134,13 +136,39 @@
 /* 日付ヘッダー */
 .gantt-timeline-header {
   display: flex;
+  flex-direction: column;
   position: sticky;
   top: 0;
   z-index: 5;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
   flex: 0 0 auto;
-  height: 48px;
+  height: auto;
+}
+
+.gantt-month-row {
+  display: flex;
+  height: 27px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-card);
+}
+
+.gantt-month {
+  flex: none;
+  box-sizing: border-box;
+  padding: 4px 8px;
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text);
+  border-right: 1px solid var(--border);
+  background: var(--bg-card);
+  white-space: nowrap;
+}
+
+.gantt-day-row {
+  display: flex;
+  height: 46px;
 }
 
 /* 日付セル */
@@ -149,7 +177,7 @@
   flex: none;
   box-sizing: border-box;
   text-align: center;
-  padding: 8px 0;
+  padding: 7px 0 5px;
   font-size: 0.65rem;
   border-right: 1px solid var(--border);
   color: var(--text-dim);
@@ -175,6 +203,7 @@
   */
   min-height: 100%;
   height: max-content;
+  overflow: visible;
 }
 
 /* もし上記だけで解決しない場合、JavaScript側で動的に計算された高さを
@@ -187,8 +216,10 @@
 
 .gantt-bar-row {
   height: 32px;
+  box-sizing: border-box;
   border-bottom: 1px solid var(--border);
   position: relative;
+  z-index: 1;
 }
 
 .gantt-bar {
@@ -271,12 +302,6 @@
 .gantt-bars {
   position: relative;
   background: var(--bg-secondary);
-  background-image: linear-gradient(
-    to right,
-    rgba(var(--text-rgb),0.06) 1px,
-    transparent 1px
-  );
-  background-size: 36px 100%;
 }
 
 /* 横グリッド */

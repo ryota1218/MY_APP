@@ -122,9 +122,10 @@ class ERDiagramTool {
       sqlDialect: this.sqlDialect
     };
     if (window.DBIO) {
-      await window.DBIO.saveDiagramToDB('er', data);
+      return await window.DBIO.saveDiagramToDB('er', data);
     } else {
       if(window.showToast) window.showToast('データベース連携モジュールが見つかりません', 'danger');
+      return false;
     }
   }
 
@@ -206,19 +207,16 @@ class ERDiagramTool {
   zoomIn() {
     this.zoomLevel = Math.min(this.zoomLevel + 0.1, 2.0);
     this.applyZoom();
-    showToast(`ズーム: ${Math.round(this.zoomLevel * 100)}%`);
   }
 
   zoomOut() {
     this.zoomLevel = Math.max(this.zoomLevel - 0.1, 0.5);
     this.applyZoom();
-    showToast(`ズーム: ${Math.round(this.zoomLevel * 100)}%`);
   }
 
   resetZoom() {
     this.zoomLevel = 1.0;
     this.applyZoom();
-    showToast('ズームをリセットしました');
   }
 
   applyZoom() {
@@ -1262,18 +1260,17 @@ class ERDiagramTool {
           '未保存の変更があります。<br>変更を保存し、新規作成しますか？',
           () => {
             if (typeof this.saveDiagram === 'function') {
-              this.saveDiagram().then(() => performClear());
+              this.saveDiagram().then((saved) => { if (saved) performClear(); });
             } else {
               performClear();
             }
           },
           'はい',
-          'いいえ',
-          () => performClear()
+          'いいえ'
         );
       } else {
         if (confirm('未保存の変更があります。\n変更を保存し、新規作成しますか？\n(OKで保存後にクリア、キャンセルで保存せずクリア)')) {
-          if (typeof this.saveDiagram === 'function') this.saveDiagram().then(() => performClear());
+          if (typeof this.saveDiagram === 'function') this.saveDiagram().then((saved) => { if (saved) performClear(); });
           else performClear();
         } else {
           performClear();

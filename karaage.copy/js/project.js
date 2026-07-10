@@ -602,30 +602,32 @@ class ProjectTool {
   }
 
   async removeMember(projectId, targetUserId, isMe) {
-    const msg = isMe ? '本当にこのプロジェクトから退出しますか？' : '本当にこのメンバーをプロジェクトから追放しますか？';
-    if (!confirm(msg)) return;
+    const title = isMe ? 'プロジェクトから退出' : 'メンバーの追放';
+    const message = isMe ? '本当にこのプロジェクトから退出しますか？' : '本当にこのメンバーをプロジェクトから追放しますか？';
 
-    try {
-      const res = await fetch('/api/db/project-members', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId, targetUserId })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to remove member');
+    showConfirm(title, message, async () => {
+      try {
+        const res = await fetch('/api/db/project-members', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId, targetUserId })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to remove member');
 
-      showToast(isMe ? '退出しました' : 'メンバーを追放しました');
-      
-      if (isMe) {
-        this.closeSettingsDrawer();
-        this.loadMyProjects(); // プロジェクト一覧を更新
-      } else {
-        this.loadProjectMembers(projectId); // リストを再描画
+        showToast(isMe ? '退出しました' : 'メンバーを追放しました');
+        
+        if (isMe) {
+          this.closeSettingsDrawer();
+          this.loadMyProjects(); // プロジェクト一覧を更新
+        } else {
+          this.loadProjectMembers(projectId); // リストを再描画
+        }
+      } catch (err) {
+        console.error(err);
+        showToast(err.message || '操作に失敗しました');
       }
-    } catch (err) {
-      console.error(err);
-      showToast(err.message || '操作に失敗しました');
-    }
+    });
   }
 
   /**

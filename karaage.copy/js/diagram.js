@@ -1065,6 +1065,7 @@ class DiagramTool {
     const canvasHeight = this.canvas.clientHeight;
     const col = this.quickAddCounter % 4;
     const row = Math.floor(this.quickAddCounter / 4);
+  
     const x = Math.min(80 + col * 140, Math.max(20, canvasWidth - 180));
     const y = Math.min(90 + row * 90, Math.max(20, canvasHeight - 80));
     this.quickAddCounter++;
@@ -1688,13 +1689,9 @@ resetZoom() {
 applyZoom() {
   this.canvas.style.transform = `scale(${this.zoomLevel})`;
   this.canvas.style.transformOrigin = '0 0';
-  showToast(`ズーム: ${Math.round(this.zoomLevel * 100)}%`);
-}
 
-toggleGrid() {
   this.isGridVisible = !this.isGridVisible;
   this.canvas.classList.toggle('grid-active', this.isGridVisible);
-  showToast(this.isGridVisible ? 'グリッドを表示しました' : 'グリッドを非表示にしました');
 }
 
 copySelected() {
@@ -1707,18 +1704,30 @@ copySelected() {
 }
 
 cutSelected() {
-  if (this.selectedNode) {
-    this.clipboard = { type: 'node', data: { ...this.selectedNode } };
-    showToast('切り取りました');
-    // 削除メッセージを表示しないように直接削除する
-    this.nodes = this.nodes.filter(node => node.id !== this.selectedNode.id);
-    this.selectedNode = null;
-    this.closePropertyPanel();
-    this.renderDiagram();
-  } else if (this.selectedConnection) {
-    showToast('接続線の切り取りには対応していません');
+    if (this.selectedNode) {
+      this.clipboard = { type: 'node', data: { ...this.selectedNode } };
+      showToast('切り取りました');
+      
+      // 1. 画面上（DOM）から要素を直接削除する処理を追加
+      const el = document.getElementById(this.selectedNode.id);
+      if (el) el.remove();
+      
+      // 削除メッセージを表示しないように直接削除する
+      this.nodes = this.nodes.filter(node => node.id !== this.selectedNode.id);
+      
+      // 2. 削除したノードに繋がっていた接続線も整理するため、必要に応じてフィルター
+      this.connections = this.connections.filter(conn => conn.from !== this.selectedNode.id && conn.to !== this.selectedNode.id);
+      
+      this.selectedNode = null;
+      this.closePropertyPanel();
+      
+      // 3. 接続線を再描画し、全体を更新
+      this.drawConnections();
+      if (typeof this.renderDiagram === 'function') this.renderDiagram();
+    } else if (this.selectedConnection) {
+      showToast('接続線の切り取りには対応していません');
+    }
   }
-}
 
 pasteSelected() {
   if (!this.clipboard) return;
@@ -1746,20 +1755,10 @@ async saveDiagram() {
   const typeKey = `${this.prefix}_${this.umlType || 'main'}`;
 
   if (window.DBIO) {
-    await window.DBIO.saveDiagramToDB(typeKey, data);
-  } else {
-    showToast('データベース連携モジュールが見つかりません', 'danger');
-  }
-}
-
-async openDiagramModal() {
-  const typeKey = `${this.prefix}_${this.umlType || 'main'}`;
-  if (window.DBIO) {
-    await window.DBIO.showOpenModal(typeKey, (data, id, name, status) => {
-      this.restoreSnapshot(data);
-      showToast(`${name} を読み込みました`);
-    });
-  } else {
+      return await window.DBIO.saveDiagramToDB(typeKey, data);
+    } else {
+      showToast('データベース連携モジュールが見つかりません', 'danger');
+      return false;
     showToast('データベース連携モジュールが見つかりません', 'danger');
   }
 }
@@ -4350,25 +4349,21 @@ clearAll() {
     if (typeof showConfirm !== 'undefined') {
       showConfirm(
         '未保存の変更',
-        '未保存の変更があります。<br>変更を保存し、新規作成しますか？',
+        '未保存の変更があります。<br>変更を保存して新規作成しますか？',
         () => {
           // はい：保存してからクリア
           if (typeof this.saveDiagram === 'function') {
-            this.saveDiagram().then(() => performClear());
+            this.saveDiagram().then((saved) => { if (saved) performClear(); });
           } else {
             performClear();
           }
         },
         'はい',
-        'いいえ',
-        () => {
-          // いいえ：保存せずにクリア
-          performClear();
-        }
+        'いいえ'
       );
     } else {
       if (confirm('未保存の変更があります。\n変更を保存し、新規作成しますか？\n(OKで保存後にクリア、キャンセルで保存せずクリア)')) {
-        if (typeof this.saveDiagram === 'function') this.saveDiagram().then(() => performClear());
+        if (typeof this.saveDiagram === 'function') this.saveDiagram().then((saved) => { if (saved) performClear(); });
         else performClear();
       } else {
         performClear();

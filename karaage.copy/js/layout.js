@@ -792,21 +792,20 @@ class LayoutTool {
       if (typeof showConfirm !== 'undefined') {
         showConfirm(
           '未保存の変更',
-          '未保存の変更があります。<br>変更を保存し、新規作成しますか？',
+          '未保存の変更があります。<br>変更を保存して新規作成しますか？',
           () => {
             if (typeof this.saveDiagram === 'function') {
-              this.saveDiagram().then(() => performClear());
+              this.saveDiagram().then((saved) => { if (saved) performClear(); });
             } else {
               performClear();
             }
           },
           'はい',
-          'いいえ',
-          () => performClear()
+          'いいえ'
         );
       } else {
         if (confirm('未保存の変更があります。\n変更を保存し、新規作成しますか？\n(OKで保存後にクリア、キャンセルで保存せずクリア)')) {
-          if (typeof this.saveDiagram === 'function') this.saveDiagram().then(() => performClear());
+          if (typeof this.saveDiagram === 'function') this.saveDiagram().then((saved) => { if (saved) performClear(); });
           else performClear();
         } else {
           performClear();
@@ -890,7 +889,6 @@ class LayoutTool {
   applyZoom() {
     this.canvas.style.transform = `scale(${this.zoomLevel})`;
     this.canvas.style.transformOrigin = '0 0';
-    showToast(`ズーム: ${Math.round(this.zoomLevel * 100)}%`);
   }
 
   /* ===== グリッド切り替え ===== */
@@ -938,9 +936,10 @@ class LayoutTool {
       elemIdCounter: this.elemIdCounter
     };
     if (window.DBIO) {
-      await window.DBIO.saveDiagramToDB('layout', data);
+      return await window.DBIO.saveDiagramToDB('layout', data);
     } else {
       showToast('データベース連携モジュールが見つかりません', 'danger');
+      return false;
     }
   }
 
@@ -1092,7 +1091,6 @@ class LayoutTool {
     const presets = {
       free:    { ratio: null },
       desktop: { ratio: '16:9' },
-      laptop:  { ratio: '16:9' },
       tablet:  { ratio: '3:4' },
       mobile:  { ratio: '9:16' },
     };

@@ -592,6 +592,38 @@ class GanttTool {
     });
   }
 
+  deleteTasksByIds(taskIds) {
+    if (!Array.isArray(taskIds) || taskIds.length === 0) return 0;
+
+    const idSet = new Set(taskIds
+      .map(id => Number(id))
+      .filter(id => Number.isInteger(id))
+    );
+    if (idSet.size === 0) return 0;
+
+    const beforeCount = this.tasks.length;
+    this.tasks = this.tasks.filter(task => !idSet.has(task.id));
+    idSet.forEach(id => this.selected.delete(id));
+    return beforeCount - this.tasks.length;
+  }
+
+  deleteTasksOutsidePhase(phaseTask, newStart, newEnd) {
+    const oldPhaseStart = this.getDayNumber(phaseTask.start);
+    const oldPhaseEnd = this.getDayNumber(phaseTask.end);
+    const newPhaseStart = this.getDayNumber(newStart);
+    const newPhaseEnd = this.getDayNumber(newEnd);
+
+    const removed = this.tasks.filter(t =>
+      !t.phase &&
+      this.getDayNumber(t.start) >= oldPhaseStart &&
+      this.getDayNumber(t.end) <= oldPhaseEnd &&
+      (this.getDayNumber(t.start) < newPhaseStart || this.getDayNumber(t.end) > newPhaseEnd)
+    );
+
+    if (removed.length === 0) return 0;
+    return this.deleteTasksByIds(removed.map(t => t.id));
+  }
+
   editTask(task) {
     showModal('タスク編集', `
       <div class="form-group"><label>タスク名</label><input class="form-input" id="edit-task-name" value="${this.escapeHTML(task.name)}"></div>
@@ -633,6 +665,11 @@ class GanttTool {
         return;
       }
 
+      let removedCount = 0;
+      if (task.phase && (task.start !== start || task.end !== end)) {
+        removedCount = this.deleteTasksOutsidePhase(task, start, end);
+      }
+
       task.name = name;
       task.start = start;
       task.end = end;
@@ -641,7 +678,11 @@ class GanttTool {
 
       this.saveTasks();
       this.render();
-      showToast('タスクを更新しました');
+      if (removedCount > 0) {
+        showToast(`フェーズ期間外のタスク ${removedCount} 件を削除しました`);
+      } else {
+        showToast('タスクを更新しました');
+      }
     });
   }
 
@@ -661,18 +702,46 @@ class GanttTool {
 
   const dayWidth = 36;
 
+  const monthGroups = [];
+  let currentMonthGroup = null;
+  for (const day of days) {
+    const year = day.getUTCFullYear();
+    const month = day.getUTCMonth();
+    const key = `${year}-${month}`;
+    if (!currentMonthGroup || currentMonthGroup.key !== key) {
+      currentMonthGroup = { key, year, month, count: 0 };
+      monthGroups.push(currentMonthGroup);
+    }
+    currentMonthGroup.count += 1;
+  }
+
   // ヘッダー
-  header.innerHTML = days.map(day => {
+  const monthRowHtml = monthGroups.map(group => `
+    <div class="gantt-month" style="width: ${group.count * dayWidth}px;">
+      ${group.year}年${group.month + 1}月
+    </div>
+  `).join('');
+
+  const dayRowHtml = days.map(day => {
     const isWeekend = day.getUTCDay() === 0 || day.getUTCDay() === 6;
     return `
-      <div class="gantt-day ${isWeekend?'weekend':''}" style="background: ${isWeekend ? '#f3f4f6' : '#ffffff'}; border-right: 1px solid #e5e7eb;">
+      <div class="gantt-day ${isWeekend ? 'weekend' : ''}" style="background: ${isWeekend ? 'rgba(var(--accent-rgb),0.08)' : 'var(--bg-secondary)'}; border-right: 1px solid var(--border);">
         <span style="font-weight: 600;">${day.getUTCDate()}</span><br>
-        <span style="font-size:0.6rem; color: #6b7280;">
+        <span style="font-size:0.6rem; color: var(--text-muted);">
           ${['日','月','火','水','木','金','土'][day.getUTCDay()]}
         </span>
       </div>
     `;
   }).join('');
+
+  header.innerHTML = `
+    <div class="gantt-month-row">
+      ${monthRowHtml}
+    </div>
+    <div class="gantt-day-row">
+      ${dayRowHtml}
+    </div>
+  `;
 
   header.style.width = days.length * dayWidth + 'px'; // ヘッダーの幅も設定
   bars.style.width = days.length * dayWidth + 'px';
@@ -686,6 +755,7 @@ class GanttTool {
 
     // バー
     let barsHtml = '';
+    let renderedRowCount = 0;
     const startDayNum = Math.floor(start.getTime() / 86400000);
 
     for (const task of this.tasks) {
@@ -732,7 +802,7 @@ class GanttTool {
         }
 
         barsHtml += `
-          <div class="gantt-bar-row" style="height:32px; position: relative; background: rgba(0,0,0,0.02);">
+          <div class="gantt-bar-row" style="height:32px; box-sizing:border-box; position: relative; background: rgba(0,0,0,0.02);">
             ${phaseActualBar}
             <div class="gantt-bar"
                  data-id="${task.id}"
@@ -831,13 +901,49 @@ class GanttTool {
                 </div>
               </div>
             `;
+            renderedRowCount += 1;
           }
         }
+        renderedRowCount += 1;
       }
     }
 
     bars.innerHTML = barsHtml;
+    bars.style.height = (renderedRowCount * 32) + 'px';
+    bars.style.minHeight = '0';
+    this.renderGridLayer(days.length, renderedRowCount, dayWidth);
     this.renderTodayLine(todayOffset);
+}
+
+renderGridLayer(dayCount, rowCount, dayWidth) {
+  const bars = document.getElementById('gantt-bars');
+  if (!bars) return;
+
+  let layer = document.getElementById('gantt-grid-layer');
+  if (!layer) {
+    layer = document.createElement('div');
+    layer.id = 'gantt-grid-layer';
+    layer.style.position = 'absolute';
+    layer.style.inset = '0';
+    layer.style.pointerEvents = 'none';
+    layer.style.zIndex = '0';
+    bars.insertBefore(layer, bars.firstChild);
+  }
+
+  const width = Math.max(dayCount * dayWidth, bars.scrollWidth || 0);
+  const height = Math.max(rowCount * 32, bars.scrollHeight || 0, bars.clientHeight || 0);
+
+  layer.style.width = width + 'px';
+  layer.style.height = height + 'px';
+  layer.style.backgroundColor = 'transparent';
+  layer.style.backgroundRepeat = 'repeat';
+  layer.style.boxShadow = `inset 0 1px 0 var(--border), inset 1px 0 0 rgba(var(--text-rgb), 0.08)`;
+  layer.style.backgroundImage = `
+    linear-gradient(to right, rgba(var(--text-rgb), 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border) 1px, transparent 1px)
+  `;
+  layer.style.backgroundSize = `${dayWidth}px 100%, 100% 32px`;
+  layer.style.backgroundPosition = '0 0, 0 0';
 }
 
 renderTodayLine(todayOffset) {
@@ -979,29 +1085,27 @@ enableDrag() {
   /* ===== スクロール同期 ===== */
   setupScrollSync() {
     const tasksEl = document.getElementById('gantt-tasks'); // タスクリストのスクロールコンテナ
-    const timelineEl = document.getElementById('gantt-bars'); // タイムラインのバー部分のスクロールコンテナ
+    const timelineEl = document.getElementById('gantt-timeline'); // タイムライン全体のスクロールコンテナ
 
     if (!tasksEl || !timelineEl) return;
 
     // 多重防止
-    tasksEl.onscroll = null;
     timelineEl.onscroll = null;
+    tasksEl.onwheel = null;
 
-    tasksEl.addEventListener('scroll', () => {
-      if (!this.isSyncingScroll) {
-        this.isSyncingScroll = true;
-        timelineEl.scrollTop = tasksEl.scrollTop;
-        this.isSyncingScroll = false;
-      }
-    });
+    tasksEl.onwheel = (e) => {
+      timelineEl.scrollTop += e.deltaY;
+      timelineEl.scrollLeft += e.deltaX;
+      e.preventDefault();
+    };
 
-    timelineEl.addEventListener('scroll', () => {
+    timelineEl.onscroll = () => {
       if (!this.isSyncingScroll) {
         this.isSyncingScroll = true;
         tasksEl.scrollTop = timelineEl.scrollTop;
         this.isSyncingScroll = false;
       }
-    });
+    };
   }
 
   /* ===== タスクリストのリサイズ機能 ===== */
@@ -1038,10 +1142,10 @@ enableDrag() {
           width: 4px;
           left: 2px;
         }
-        #gantt-tasks { flex-shrink: 0; min-width: 150px; max-width: 540px; overflow-x: hidden; overflow-y: auto; }
-        #gantt-timeline { flex: 1; display: flex; flex-direction: column; overflow-x: auto; } /* タイムライン全体は横スクロール */
+        #gantt-tasks { flex-shrink: 0; min-width: 150px; max-width: 540px; overflow-x: hidden; overflow-y: hidden; }
+        #gantt-timeline { flex: 1; display: flex; flex-direction: column; overflow: auto; } /* タイムライン全体が縦横スクロール */
         #gantt-header { position: sticky; top: 0; z-index: 50; background: var(--bg-primary); } /* ヘッダーは固定 */
-        #gantt-bars { flex: 1; overflow-x: hidden; overflow-y: auto; } /* バー部分が縦スクロール */
+        #gantt-bars { flex: 1; overflow: visible; } /* バー部分は外側のタイムラインでスクロール */
       `;
       document.head.appendChild(style);
     }
@@ -1497,11 +1601,13 @@ enableDrag() {
     }
 
     showModal('削除の確認', `選択された ${this.selected.size} 件の項目を削除しますか？`, () => {
-      this.tasks = this.tasks.filter(t => !this.selected.has(t.id));
+      const removedCount = this.deleteTasksByIds([...this.selected]);
       this.selected.clear();
-      this.saveTasks();
-      this.render();
-      showToast('削除しました');
+      if (removedCount > 0) {
+        this.saveTasks();
+        this.render();
+        showToast('削除しました');
+      }
     });
   }
 
