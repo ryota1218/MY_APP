@@ -180,7 +180,6 @@ class App {
 
           // Close submenu
           umlSubmenuContainer.classList.remove('open');
-          showToast(`${typeDef.label}モードに切り替えました`);
         };
 
         // 別の図からUML図に遷移した時は確認ダイアログを出さない（現在UMLツールを開いている時のみ）
@@ -343,7 +342,6 @@ class App {
         status: document.getElementById('filter-status').value
       };
       this.renderDashboardCards(); // フィルタ適用時は保持しているデータから再描画
-      showToast('フィルタを適用しました');
     });
   }
 
@@ -776,7 +774,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-function showToast(msg) {
+function showToast(msg, duration = 8000) {
   let container = document.getElementById('toast-container');
   if (!container) {
     container = document.createElement('div');
@@ -788,9 +786,21 @@ function showToast(msg) {
   t.className = 'toast';
   t.innerHTML = `<span class="toast-message">${msg}</span><button type="button" class="toast-close" aria-label="閉じる">×</button>`;
   const closeBtn = t.querySelector('.toast-close');
-  closeBtn.addEventListener('click', () => {
+
+  const removeToast = () => {
+    if (!t.parentNode) return;
     t.style.opacity = '0';
-    setTimeout(() => t.remove(), 200);
+    setTimeout(() => {
+      if (t.parentNode) t.remove();
+    }, 250);
+  };
+
+  const autoRemoveTimer = setTimeout(removeToast, duration);
+  t.dataset.toastTimer = String(autoRemoveTimer);
+
+  closeBtn.addEventListener('click', () => {
+    clearTimeout(autoRemoveTimer);
+    removeToast();
   });
 
   container.appendChild(t);
@@ -798,8 +808,12 @@ function showToast(msg) {
   if (container.children.length > 5) {
     const oldest = container.firstElementChild;
     if (oldest && oldest !== t) {
+      const oldestTimerId = Number(oldest.dataset.toastTimer);
+      if (!Number.isNaN(oldestTimerId)) clearTimeout(oldestTimerId);
       oldest.style.opacity = '0';
-      setTimeout(() => oldest.remove(), 200);
+      setTimeout(() => {
+        if (oldest.parentNode) oldest.remove();
+      }, 250);
     }
   }
 }

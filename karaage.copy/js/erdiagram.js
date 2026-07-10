@@ -109,7 +109,6 @@ class ERDiagramTool {
       showToast('接続モード: 接続元エンティティをクリックしてください');
     } else {
       this.canvas.style.cursor = 'default';
-      showToast('選択モード');
     }
   }
 
