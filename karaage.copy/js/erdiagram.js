@@ -152,7 +152,7 @@ class ERDiagramTool {
       this.clipboard = JSON.parse(JSON.stringify(this.selectedEntity));
       showToast('コピーしました');
     } else {
-      showToast('エンティティを選択してください');
+      
     }
   }
 
@@ -179,14 +179,14 @@ class ERDiagramTool {
       this.closePropertyPanel();
       showToast('切り取りました');
     } else {
-      showToast('切り取るエンティティを選択してください');
+    
     }
   }
 
   // --- 貼り付け機能 ---
   pasteSelected() {
     if (!this.clipboard) {
-      showToast('貼り付ける要素がありません');
+      
       return;
     }
     const offset = 40;
@@ -1115,7 +1115,7 @@ class ERDiagramTool {
         this.restoreSnapshot(action.snapshot);
       }
       this.drawRelations();
-      showToast('元に戻しました (Undo)');
+      showToast('一つ戻しました');
     } finally {
       this.isApplyingUndo = false;
     }
@@ -1125,7 +1125,7 @@ class ERDiagramTool {
   redoLastAction() {
     const action = this.redoStack.pop();
     if (!action) {
-      showToast('やり直せる操作がありません');
+      showToast('進められる操作がありません');
       return;
     }
     this.undoHistory.push(action);
@@ -1142,7 +1142,7 @@ class ERDiagramTool {
         this.svg.innerHTML = '';
       }
       this.drawRelations();
-      showToast('やり直しました (Redo)');
+      showToast('一つ先に戻しました');
     } finally {
       this.isApplyingUndo = false;
     }
