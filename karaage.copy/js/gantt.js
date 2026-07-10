@@ -1485,7 +1485,7 @@ enableDrag() {
       const actualStart = document.getElementById('gantt-task-actual-start').value;
       const actualEnd = document.getElementById('gantt-task-actual-end').value;
 
-      if (!name || !start || !end) {
+      if (!name & !start & !end) {
         showToast('タスク名と計画開始・終了日を入力してください');
         return;
       }
@@ -1527,7 +1527,7 @@ enableDrag() {
 
       this.saveTasks();
       this.render();
-      showToast('タスクを追加しました');
+      // showToast('タスクを追加しました');
     });
 
     // フェーズ選択時に日付を自動入力するイベントリスナー
@@ -1584,12 +1584,12 @@ enableDrag() {
         task.actualEnd = actualEnd;
         this.saveTasks();
         this.render();
-        showToast('実績を記録しました');
+        // showToast('実績を記録しました');
       } else {
         task.actualStart = actualStart;
         task.actualEnd = actualEnd;
         this.render();
-        showToast('実績を更新しました');
+        // showToast('実績を更新しました');
       }
     });
   }
@@ -1606,7 +1606,7 @@ enableDrag() {
       if (removedCount > 0) {
         this.saveTasks();
         this.render();
-        showToast('削除しました');
+        // showToast('削除しました');
       }
     });
   }
@@ -1635,7 +1635,7 @@ enableDrag() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(a.href);
-      showToast('JSONをエクスポートしました');
+      // showToast('JSONをエクスポートしました');
     } catch (e) {
       console.error('JSON Export Error:', e);
       showToast('JSONのエクスポートに失敗しました');
@@ -1656,8 +1656,6 @@ enableDrag() {
     a.href = URL.createObjectURL(blob);
     a.download = 'gantt_chart.csv';
     a.click();
-
-    showToast('CSVをエクスポートしました');
   }
 
   showUserProfile() {

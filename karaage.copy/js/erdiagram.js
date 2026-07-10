@@ -64,7 +64,7 @@ class ERDiagramTool {
       if (e.target === this.canvas || e.target === this.svg) {
         if (this.connectingFrom) {
           this.connectingFrom = null;
-          showToast('接続モードをキャンセルしました');
+          // showToast('接続モードをキャンセルしました');
         }
         this.canvas.querySelectorAll('.er-entity').forEach(el => el.classList.remove('selected'));
         this.selectedEntity = null;
@@ -108,10 +108,10 @@ class ERDiagramTool {
     // Apply new cursor and toast
     if (this.currentMode === 'erase') {
       this.canvas.style.cursor = 'not-allowed';
-      showToast('削除モード: エンティティまたは線をクリックして削除');
+      // showToast('削除モード: エンティティまたは線をクリックして削除');
     } else if (this.currentMode === 'connect') {
       this.canvas.style.cursor = 'crosshair';
-      showToast('接続モード: 接続元エンティティをクリックしてください');
+      // showToast('接続モード: 接続元エンティティをクリックしてください');
     } else {
       this.canvas.style.cursor = 'default';
     }
@@ -162,7 +162,7 @@ class ERDiagramTool {
     if (this.selectedEntity) {
       // 完全にディープコピーし、IDなどの競合を防ぐためクリップボードに保存
       this.clipboard = JSON.parse(JSON.stringify(this.selectedEntity));
-      showToast('コピーしました');
+      // showToast('コピーしました');
     } else {
       
     }
@@ -189,7 +189,7 @@ class ERDiagramTool {
       
       this.drawRelations();
       this.closePropertyPanel();
-      showToast('切り取りました');
+      // showToast('切り取りました');
     } else {
     
     }
@@ -210,7 +210,7 @@ class ERDiagramTool {
       this.clipboard.x + offset,
       this.clipboard.y + offset
     );
-    showToast('貼り付けました');
+    // showToast('貼り付けました');
   }
 
   zoomIn() {
@@ -231,14 +231,6 @@ class ERDiagramTool {
   applyZoom() {
     this.canvas.style.transform = `scale(${this.zoomLevel})`;
     this.canvas.style.transformOrigin = '0 0';
-  }
-
-  toggleGrid() {
-    this.isGridVisible = !this.isGridVisible;
-    if (this.canvas) {
-      this.canvas.classList.toggle('grid-active', this.isGridVisible);
-    }
-    showToast(this.isGridVisible ? 'グリッドを表示' : 'グリッドを非表示');
   }
 
   autoLayout() {
@@ -562,11 +554,6 @@ class ERDiagramTool {
       window.app.profile.show();
     }
   }
-  showHelp() { showToast('ヘルプを表示します'); }
-  showSettings() { 
-    showToast('エディタ設定を開きます');
-    if (window.themeManager) window.themeManager.toggleModal();
-  }
   closePropertyPanel() {
     const panel = document.getElementById('er-property-panel');
     if (panel) panel.classList.remove('visible');
@@ -612,7 +599,7 @@ class ERDiagramTool {
       }
       this.drawRelations();
       this.closePropertyPanel();
-      showToast('削除しました');
+      // showToast('削除しました');
     }
   }
 
@@ -933,28 +920,28 @@ class ERDiagramTool {
 
           // 外部キーの自動追加
           if (label.includes('N') || label.includes('M') || label.includes('1:1')) {
-             const parent = this.getEntityById(this.connectingFrom.id);
-             if (parent) {
-                const pk = parent.attrs.find(a => a.pk);
-                if (pk) {
-                   const fkLogicalName = parent.logicalName + 'ID';
-                   const fkPhysicalName = parent.physicalName.replace(/s$/, '') + '_id';
-                   if (!entity.attrs.find(a => a.physicalName === fkPhysicalName)) {
-                      entity.attrs.push({
-                         logicalName: fkLogicalName,
-                         physicalName: fkPhysicalName,
-                         type: pk.type,
-                         pk: false,
-                         fk: true
-                      });
-                      el.querySelector('.er-entity-attrs').innerHTML = entity.attrs.map(a => `<div class="er-attr">
-                        ${a.pk?'<span class="attr-key">PK</span>':''}${a.fk?'<span class="attr-key" style="color:#06b6d4">FK</span>':''}
-                        <span>${this.escapeHtml(this.viewMode === 'logical' ? a.logicalName : a.physicalName)}</span><span class="attr-type">${this.escapeHtml(a.type)}</span>
-                      </div>`).join('');
-                      showToast(`外部キー ${fkPhysicalName} を自動追加しました`);
-                   }
-                }
-             }
+            const parent = this.getEntityById(this.connectingFrom.id);
+            if (parent) {
+              const pk = parent.attrs.find(a => a.pk);
+              if (pk) {
+                  const fkLogicalName = parent.logicalName + 'ID';
+                  const fkPhysicalName = parent.physicalName.replace(/s$/, '') + '_id';
+                  if (!entity.attrs.find(a => a.physicalName === fkPhysicalName)) {
+                    entity.attrs.push({
+                        logicalName: fkLogicalName,
+                        physicalName: fkPhysicalName,
+                        type: pk.type,
+                        pk: false,
+                        fk: true
+                    });
+                    el.querySelector('.er-entity-attrs').innerHTML = entity.attrs.map(a => `<div class="er-attr">
+                      ${a.pk?'<span class="attr-key">PK</span>':''}${a.fk?'<span class="attr-key" style="color:#06b6d4">FK</span>':''}
+                      <span>${this.escapeHtml(this.viewMode === 'logical' ? a.logicalName : a.physicalName)}</span><span class="attr-type">${this.escapeHtml(a.type)}</span>
+                    </div>`).join('');
+                    showToast(`外部キー ${fkPhysicalName} を自動追加しました`);
+                  }
+              }
+            }
           }
 
           this.relations.push({from: this.connectingFrom.id, to: entity.id, label});
@@ -1054,7 +1041,7 @@ class ERDiagramTool {
       if (this.selectedEntity) {
         this.connectingFrom = this.selectedEntity;
         document.getElementById(this.selectedEntity.id)?.classList.add('selected');
-        showToast('接続先エンティティをクリックしてください (余白クリックでキャンセル)');
+        showToast('接続先エンティティをクリックしてください');
         this.canvas.removeEventListener('mousedown', handler);
 
         // 動的な線のプレビュー線
@@ -1178,7 +1165,7 @@ class ERDiagramTool {
         this.restoreSnapshot(action.snapshot);
       }
       this.drawRelations();
-      showToast('一つ戻しました');
+      // showToast('一つ戻しました');
     } finally {
       this.isApplyingUndo = false;
     }
@@ -1205,7 +1192,7 @@ class ERDiagramTool {
         this.svg.innerHTML = '';
       }
       this.drawRelations();
-      showToast('一つ先に戻しました');
+      // showToast('一つ先に戻しました');
     } finally {
       this.isApplyingUndo = false;
     }
@@ -1318,7 +1305,7 @@ class ERDiagramTool {
       if (window.DBIO) window.DBIO.resetCurrentDiagram();
       this.pushUndoAction({ type: 'clearAll', snapshot });
       this.isDirty = false;
-      showToast('E-R図をクリアしました');
+      // showToast('E-R図をクリアしました');
     };
 
     if (this.isDirty) {

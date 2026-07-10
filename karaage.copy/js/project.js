@@ -228,7 +228,7 @@ class ProjectTool {
       idEl.value = '';
       errorEl.textContent = '';
       
-      showToast('プロジェクト「' + targetProj.name + '」に参加しました！');
+      // showToast('プロジェクト「' + targetProj.name + '」に参加しました！');
       this.refreshProjects();
 
     } catch (err) {
@@ -248,7 +248,7 @@ class ProjectTool {
     this.updateCurrentProjectDisplay();
     this.refreshProjects();
     
-    showToast('プロジェクト「' + name + '」に切り替えました。');
+    // showToast('プロジェクト「' + name + '」に切り替えました。');
 
     // 選択されたプロジェクトに応じたテーマカラーをロード
     if (window.themeManager) {
@@ -553,7 +553,7 @@ class ProjectTool {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to update role');
 
-      showToast('権限を更新しました');
+      // showToast('権限を更新しました');
       this.loadProjectMembers(projectId); // リストを再描画
     } catch (err) {
       console.error(err);

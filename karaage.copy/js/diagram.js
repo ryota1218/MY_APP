@@ -1674,7 +1674,7 @@ applyZoom() {
 copySelected() {
   if (this.selectedNode) {
     this.clipboard = { type: 'node', data: { ...this.selectedNode } };
-    showToast('コピーしました');
+    // showToast('コピーしました');
   } else if (this.selectedConnection) {
     showToast('接続線のコピーには対応していません');
   }
@@ -1683,7 +1683,7 @@ copySelected() {
 cutSelected() {
     if (this.selectedNode) {
       this.clipboard = { type: 'node', data: { ...this.selectedNode } };
-      showToast('切り取りました');
+      // showToast('切り取りました');
       
       // 1. 画面上（DOM）から要素を直接削除する処理を追加
       const el = document.getElementById(this.selectedNode.id);
@@ -1717,7 +1717,7 @@ pasteSelected() {
     // 元のコンポーネント定義を探す（アイコンなどを引き継ぐため）
     const comp = this.components.find(c => c.label === source.label) || this.components[0];
     this._createNode(comp, x, y, {}, { ...source, id: undefined });
-    showToast('貼り付けました');
+    // showToast('貼り付けました');
   }
 }
 
@@ -1806,16 +1806,6 @@ addEntity() {
 addRelation() {
   this.activeConnType = 'association';
   this.setMode('connect');
-}
-
-toggleNameView() {
-  this.isPhysicalView = !this.isPhysicalView;
-  const btn = document.getElementById(this.prefix + '-toggle-name-btn');
-  if (btn) {
-    btn.textContent = this.isPhysicalView ? '🌐 物理名を表示中' : '🌐 論理名を表示中';
-  }
-  showToast(this.isPhysicalView ? '物理名（テーブル名）表示' : '論理名表示');
-  // 必要に応じてノードの再描画処理を追加
 }
 
 exportSQL() {
@@ -3051,7 +3041,7 @@ deleteSelected() {
     if (this.propertyPanelNode && this.propertyPanelNode.id === conn.id) {
       this.closePropertyPanel();
     }
-    showToast('選択した線を削除しました');
+    // showToast('選択した線を削除しました');
     return;
   }
   if (!this.selectedNode) return;
@@ -3233,7 +3223,7 @@ undoLastAction() {
   try {
     const redoAction = this.applyHistoryAction(action);
     if (redoAction) this.pushRedoAction(redoAction);
-    showToast('一つ戻しました');
+    // showToast('一つ戻しました');
   } finally {
     this.isApplyingUndo = false;
   }
@@ -3249,7 +3239,7 @@ redoLastAction() {
   try {
     const undoAction = this.applyHistoryAction(action);
     if (undoAction) this.undoHistory.push(undoAction);
-    showToast('一つ先に戻しました');
+    // showToast('一つ先に戻しました');
   } finally {
     this.isApplyingUndo = false;
   }
@@ -3258,7 +3248,7 @@ deleteSelectedNode() {
   const node = this.selectedNode;
   if (!node) {
     console.debug('[DiagramTool] deleteSelectedNode called but no selection');
-    showToast('削除する図形を選択してください');
+    // showToast('削除する図形を選択してください');
     return;
   }
 
@@ -3303,14 +3293,14 @@ setMode(mode) {
   
   if (this.currentMode === 'erase') {
     this.canvas.style.cursor = 'not-allowed';
-    showToast('削除モード: 図形や線をクリックして削除');
+    // showToast('削除モード: 図形や線をクリックして削除');
   } else if (this.currentMode === 'connect') {
     this.canvas.style.cursor = 'crosshair';
     this.canvas.classList.add('timing-connect-active');
-    showToast('接続モード: 接続元図形をクリックしてください');
+    // showToast('接続モード: 接続元図形をクリックしてください');
   } else {
     this.canvas.style.cursor = 'default';
-    showToast('選択モード');
+    // showToast('選択モード');
     this.deselectAll();
   }
 }
@@ -4330,7 +4320,7 @@ clearAll() {
     if (window.DBIO) window.DBIO.resetCurrentDiagram();
     this.pushUndoAction({ type: 'clearAll', snapshot });
     this.isDirty = false;
-    showToast('キャンバスをクリアしました');
+    // showToast('キャンバスをクリアしました');
   };
 
   if (this.isDirty) {

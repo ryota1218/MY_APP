@@ -75,10 +75,10 @@ class LayoutTool {
     // Cursor and state cleanup
     if (this.currentMode === 'erase') {
       this.canvas.style.cursor = 'not-allowed';
-      showToast('削除モード: 図形をクリックして削除');
+      // showToast('削除モード: 図形をクリックして削除');
     } else {
       this.canvas.style.cursor = 'default';
-      showToast('選択モード');
+      // showToast('選択モード');
       this.canvas.querySelectorAll('.layout-element').forEach(e => e.classList.remove('selected'));
       this.selectedEl = null;
     }
@@ -584,7 +584,7 @@ class LayoutTool {
     const currentZ = el.zIndex || 0;
     
     if (currentZ === 0) {
-      showToast('これ以上背面に移動できません');
+      // showToast('これ以上背面に移動できません');
       return;
     }
     
@@ -616,7 +616,7 @@ class LayoutTool {
     });
     this.removeElementById(el.id);
     this.closePropertyPanel();
-    showToast('削除しました');
+    // showToast('削除しました');
   }
 
   pushUndoAction(action) {
@@ -661,7 +661,7 @@ class LayoutTool {
     try {
       const redoAction = this.applyHistoryAction(action);
       if (redoAction) this.pushRedoAction(redoAction);
-      showToast('一つ戻しました');
+      // showToast('一つ戻しました');
     } finally {
       this.isApplyingUndo = false;
     }
@@ -677,7 +677,7 @@ class LayoutTool {
     try {
       const undoAction = this.applyHistoryAction(action);
       if (undoAction) this.undoHistory.push(undoAction);
-      showToast('一つ先に進めました');
+      // showToast('一つ先に進めました');
     } finally {
       this.isApplyingUndo = false;
     }
@@ -741,7 +741,7 @@ class LayoutTool {
       this.pushUndoAction({ type: 'clearAll', snapshot });
       this.isDirty = false;
       this.deselectAll();
-      showToast('キャンバスをクリアしました');
+      // showToast('キャンバスをクリアしました');
     };
 
     if (this.isDirty) {
@@ -811,7 +811,6 @@ class LayoutTool {
     const a = document.createElement('a');
     a.href = url; a.download = 'layout_export.svg';
     a.click(); URL.revokeObjectURL(url);
-    showToast('SVGをエクスポートしました');
   }
 
   exportJSON() {
@@ -847,26 +846,18 @@ class LayoutTool {
     this.canvas.style.transformOrigin = '0 0';
   }
 
-  /* ===== グリッド切り替え ===== */
-  toggleGrid() {
-    this.isGridVisible = !this.isGridVisible;
-    this.canvas.classList.toggle('grid-visible', this.isGridVisible);
-    this.canvas.classList.toggle('grid-active', this.isGridVisible);
-    showToast(this.isGridVisible ? 'グリッドを表示しました' : 'グリッドを非表示にしました');
-  }
-
   /* ===== コピー＆ペースト機能 ===== */
   copySelected() {
     if (this.selectedEl) {
       this.clipboard = { ...this.selectedEl };
-      showToast('コピーしました');
+      // showToast('コピーしました');
     }
   }
 
   cutSelected() {
     if (this.selectedEl) {
       this.clipboard = { ...this.selectedEl };
-      showToast('切り取りました');
+      // showToast('切り取りました');
       // 削除メッセージを表示しないように直接削除する
       const el = this.selectedEl;
       this.pushUndoAction({
@@ -882,7 +873,7 @@ class LayoutTool {
     if (!this.clipboard) return;
     const item = { ...this.clipboard };
     this.addElement(item, item.x + 20, item.y + 20);
-    showToast('貼り付けました');
+    // showToast('貼り付けました');
   }
 
   /* ===== ストレージ保存・読み込み ===== */
@@ -921,37 +912,8 @@ class LayoutTool {
     this.deselectAll();
   }
 
-  /* ===== ヘルプ・その他モック ===== */
-  showHelp() {
-    alert('【画面レイアウト ヘルプ】\n・左のUI要素をドラッグして配置\n・要素をダブルクリックでテキスト編集\n・プロパティパネルで色やサイズを調整');
-  }
-
-  showSettings() {
-    showToast('設定パネルを開きます');
-    if (window.themeManager) window.themeManager.toggleModal();
-  }
-
-  shareDiagram() {
-    showToast('共有機能は現在準備中です', 'info');
-  }
-
   showUserProfile() {
     if (window.app && window.app.profile) window.app.profile.showModal();
-  }
-
-  autoLayout() {
-    const cols = Math.ceil(Math.sqrt(this.elements.length));
-    this.elements.forEach((el, i) => {
-      el.x = 40 + (i % cols) * 240;
-      el.y = 40 + Math.floor(i / cols) * 160;
-      this.updateElementDOM(el);
-    });
-    showToast('グリッド状に自動配置しました');
-  }
-  
-
-  exportPNG() {
-    showToast('PNGエクスポートは現在モック実装です', 'info');
   }
 
   initThemeListener() {
