@@ -155,52 +155,7 @@ class LayoutTool {
     });
 
     // キーボードによるショートカット処理
-    document.addEventListener('keydown', e => {
-      const section = this.canvas.closest('.tool-section');
-      if (!section || !section.classList.contains('active')) return;
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
-      const key = e.key.toLowerCase();
-      const ctrl = e.ctrlKey || e.metaKey;
-
-      if (ctrl && key === 'c') {
-        e.preventDefault();
-        this.copySelected();
-      } else if (ctrl && key === 'x') {
-        e.preventDefault();
-        this.cutSelected();
-      } else if (ctrl && key === 'v') {
-        e.preventDefault();
-        this.pasteSelected();
-      } else if (key === 'delete' || key === 'backspace') {
-        if (this.selectedEl) {
-          this.deleteSelected();
-        }
-      } else if (ctrl && key === 'z') {
-        e.preventDefault();
-        if (e.shiftKey) this.redoLastAction();
-        else this.undoLastAction();
-      } else if (ctrl && key === 'y') {
-        e.preventDefault();
-        this.redoLastAction();
-      } else if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
-        if (this.selectedEl) {
-          e.preventDefault();
-          const step = e.shiftKey ? 10 : 1;
-          const el = this.selectedEl;
-          const div = document.getElementById(el.id);
-          if (key === 'arrowup') el.y -= step;
-          if (key === 'arrowdown') el.y += step;
-          if (key === 'arrowleft') el.x -= step;
-          if (key === 'arrowright') el.x += step;
-          el.x = Math.max(0, el.x);
-          el.y = Math.max(0, el.y);
-          div.style.left = el.x + 'px';
-          div.style.top = el.y + 'px';
-          if (this.propertyPanelEl && this.propertyPanelEl.id === el.id) this.syncPropertyPanel(el);
-        }
-      }
-    });
+  
 
     // クリップボードからの画像ペースト処理
     document.addEventListener('paste', e => {

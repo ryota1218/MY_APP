@@ -61,49 +61,11 @@ class ERDiagramTool {
     });
 
     // キーボードショートカットイベントの登録
-    this.initKeyboardShortcuts();
+    
   }
 
   // キーボードショートカットの初期化メソッド
-  initKeyboardShortcuts() {
-    document.addEventListener('keydown', (e) => {
-      // 入力フォーム内での操作時はショートカットを発火させない
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) {
-        return;
-      }
-
-      const isCmdOrCtrl = e.ctrlKey || e.metaKey;
-
-      if (isCmdOrCtrl) {
-        switch (e.key.toLowerCase()) {
-          case 'c': // コピー
-            e.preventDefault();
-            this.copySelected();
-            break;
-          case 'x': // 切り取り
-            e.preventDefault();
-            this.cutSelected();
-            break;
-          case 'v': // 貼り付け
-            e.preventDefault();
-            this.pasteSelected();
-            break;
-          case 'z': // 元に戻す
-            e.preventDefault();
-            if (e.shiftKey) {
-              this.redoLastAction(); // Ctrl+Shift+Z でRedo
-            } else {
-              this.undoLastAction();
-            }
-            break;
-          case 'y': // やり直し
-            e.preventDefault();
-            this.redoLastAction();
-            break;
-        }
-      }
-    });
-  }
+  
 
   async saveDiagram() {
     const data = {
