@@ -1022,41 +1022,44 @@ function installInstantTooltips() {
 document.addEventListener('DOMContentLoaded', async () => {
   installInstantTooltips();
 
-  // instantiate app & load HTML partials
-  if (!(window.app instanceof App)) {
-    const existingApp = window.app || {};
-    window.app = new App();
-    Object.assign(window.app, existingApp);
-    await window.app.init();
-  }
-
-  // Initialize Lucide icons after HTML partials are loaded
-  if (typeof lucide !== 'undefined') {
-    lucide.createIcons();
-  }
-
   const ham = document.getElementById('hamburger');
   const overlay = document.getElementById('menu-overlay');
+  const toggleHandle = document.getElementById('sidebar-toggle-handle');
 
-  function closeMenu() {
+  const closeMenu = () => {
     if (window.innerWidth <= 1024) {
       document.body.classList.remove('menu-open');
+      if (ham) ham.setAttribute('aria-expanded', 'false');
     }
-  }
-  function toggleMenu() {
+  };
+
+  const toggleMenu = () => {
     if (window.innerWidth <= 1024) {
-      document.body.classList.toggle('menu-open');
+      const isOpen = document.body.classList.toggle('menu-open');
+      if (ham) ham.setAttribute('aria-expanded', String(isOpen));
     } else {
       const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
       document.body.dataset.sidebarCollapsedByUser = isCollapsed ? 'true' : 'false';
+      if (ham) ham.setAttribute('aria-expanded', 'false');
     }
-  }
+  };
 
-  if (ham) ham.addEventListener('click', toggleMenu);
+  const syncMenuState = () => {
+    if (window.innerWidth > 1024) {
+      document.body.classList.remove('menu-open');
+      if (ham) ham.setAttribute('aria-expanded', 'false');
+    }
+  };
+
+  if (ham) {
+    ham.addEventListener('click', (event) => {
+      event.stopPropagation();
+      toggleMenu();
+    });
+  }
   if (overlay) overlay.addEventListener('click', closeMenu);
 
   // Floating Sidebar toggle handle click event
-  const toggleHandle = document.getElementById('sidebar-toggle-handle');
   if (toggleHandle) {
     toggleHandle.addEventListener('click', () => {
       const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
@@ -1081,4 +1084,23 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
   });
+
+  window.addEventListener('resize', syncMenuState);
+
+  // instantiate app & load HTML partials
+  if (!(window.app instanceof App)) {
+    const existingApp = window.app || {};
+    window.app = new App();
+    Object.assign(window.app, existingApp);
+    try {
+      await window.app.init();
+    } catch (error) {
+      console.error('[App] Initialization failed:', error);
+    }
+  }
+
+  // Initialize Lucide icons after HTML partials are loaded
+  if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+  }
 });

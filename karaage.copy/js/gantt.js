@@ -110,7 +110,6 @@ class GanttTool {
     const addTaskBtn = document.getElementById('add-task-btn');
     const inputActualBtn = document.getElementById('input-actual-btn');
     const deleteBtn = document.getElementById('delete-selected-btn');
-    const exportCsvBtn = document.getElementById('export-csv-btn');
 
     if (addPhaseBtn) {
       addPhaseBtn.onclick = () => this.addPhase();
@@ -128,9 +127,6 @@ class GanttTool {
     }
     if (deleteBtn) {
       deleteBtn.onclick = () => this.deleteSelected();
-    }
-    if (exportCsvBtn) {
-      exportCsvBtn.onclick = () => this.exportCSV();
     }
 
     const exportJsonBtn = document.getElementById('export-json-btn');
@@ -1642,25 +1638,4 @@ enableDrag() {
     }
   }
 
-  exportCSV() {
-    let csv = '\uFEFFタスク名,フェーズ,開始日,終了日\n'; // BOMを追加してExcelの文字化けを防止
-
-    this.tasks.forEach(t => {
-      const escapedName = `"${t.name.replace(/"/g, '""')}"`; // ダブルクオートのエスケープ
-      csv += `${escapedName},${t.phase ? 'はい' : 'いいえ'},${t.start},${t.end}\n`;
-    });
-
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const a = document.createElement('a');
-
-    a.href = URL.createObjectURL(blob);
-    a.download = 'gantt_chart.csv';
-    a.click();
-  }
-
-  showUserProfile() {
-    if (window.app && window.app.profile) {
-      window.app.profile.show();
-    }
-  }
 }

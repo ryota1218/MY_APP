@@ -366,10 +366,13 @@ class LayoutTool {
   addElementFromPalette(idx) {
     const item = this.paletteItems[idx];
     if (!item) return;
-    const canvasW = this.canvas.clientWidth;
-    const canvasH = this.canvas.clientHeight;
-    const x = Math.min(80 + (this.elemIdCounter % 4) * 140, Math.max(20, canvasW - item.w - 20));
-    const y = Math.min(60 + Math.floor(this.elemIdCounter / 4) * 80, Math.max(20, canvasH - item.h - 20));
+
+    const canvasW = Math.max(320, this.canvas.clientWidth || 960);
+    const canvasH = Math.max(240, this.canvas.clientHeight || 600);
+    const fallbackW = Math.max(80, item.w || 120);
+    const fallbackH = Math.max(40, item.h || 40);
+    const x = Math.min(80 + (this.elemIdCounter % 4) * 140, Math.max(20, canvasW - fallbackW - 20));
+    const y = Math.min(60 + Math.floor(this.elemIdCounter / 4) * 80, Math.max(20, canvasH - fallbackH - 20));
     this.addElement(item, x, y);
   }
 
@@ -448,7 +451,7 @@ class LayoutTool {
     div.appendChild(handle);
 
     let dragging = false, resizing = false, ox, oy, ow, oh;
-    el.dataset.id = div.id;
+    div.dataset.id = el.id;
 
     div.addEventListener('mousedown', e => {
       if (this.currentMode === 'erase') {
