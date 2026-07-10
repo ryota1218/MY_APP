@@ -18,6 +18,7 @@ class ERDiagramTool {
     this.svg = document.getElementById('er-svg');
     if (this.canvas) this.canvas.classList.add('grid-active');
     this.connectingFrom = null;
+    this.currentMode = 'select'; // 'select', 'connect', or 'erase'
     
     // AI Chat state
     this.prefix = 'er';
@@ -49,6 +50,16 @@ class ERDiagramTool {
     this.drawRelations();
 
     // キャンバスのクリックで選択解除および接続モードキャンセル
+    if (window.RadialMenu && this.canvas) {
+      this.radialMenu = new RadialMenu(this.canvas, [
+        { label: '選択', icon: 'mouse-pointer-2', mode: 'select' },
+        { label: '接続', icon: 'git-branch',      mode: 'connect' },
+        { label: '削除', icon: 'trash-2',         mode: 'erase'  },
+      ], (item) => {
+        if (item.mode) this.setMode(item.mode);
+      });
+    }
+
     this.canvas.addEventListener('mousedown', (e) => {
       if (e.target === this.canvas || e.target === this.svg) {
         if (this.connectingFrom) {
@@ -59,6 +70,47 @@ class ERDiagramTool {
         this.selectedEntity = null;
       }
     });
+  }
+
+  setMode(mode) {
+    this.currentMode = mode;
+    
+    // ツールバーボタンのアクティブ状態を更新（常に実行）
+    const container = document.getElementById('er-mode-segmented');
+    if (container) {
+      container.querySelectorAll('.tbtn').forEach(btn => {
+        const isMatch = btn.dataset.mode === mode;
+        const icon = btn.querySelector('i') || btn.querySelector('svg');
+        
+        btn.style.background = isMatch ? 'var(--bg-accent, #e0f2fe)' : 'transparent';
+        if (icon) {
+          icon.style.color = isMatch ? 'var(--text-accent, #0369a1)' : 'var(--text-secondary, #64748b)';
+        }
+      });
+    }
+
+    // Clean up states from previous mode
+    if (this.connectingFrom) {
+      this.connectingFrom = null;
+      if (this.activeConnectionLine) {
+        this.activeConnectionLine.remove();
+        this.activeConnectionLine = null;
+      }
+    }
+    this.canvas.querySelectorAll('.er-entity').forEach(el => el.classList.remove('selected'));
+    this.selectedEntity = null;
+
+    // Apply new cursor and toast
+    if (this.currentMode === 'erase') {
+      this.canvas.style.cursor = 'not-allowed';
+      showToast('削除モード: エンティティまたは線をクリックして削除');
+    } else if (this.currentMode === 'connect') {
+      this.canvas.style.cursor = 'crosshair';
+      showToast('接続モード: 接続元エンティティをクリックしてください');
+    } else {
+      this.canvas.style.cursor = 'default';
+      showToast('選択モード');
+    }
   }
 
   async saveDiagram() {
@@ -805,8 +857,53 @@ class ERDiagramTool {
 
     let dragging = false, ox, oy;
     el.addEventListener('mousedown', e => {
-      if (this.connectingFrom) {
-        if (this.connectingFrom.id !== entity.id) {
+      if (this.currentMode === 'erase') {
+        this.selectedEntity = entity;
+        this.deleteSelected();
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      
+      if (this.currentMode === 'connect') {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (!this.connectingFrom) {
+          // 接続元として選択
+          this.connectingFrom = entity;
+          el.classList.add('selected');
+          showToast('接続先エンティティをクリックしてください (余白クリックでキャンセル)');
+          
+          // 動的な線のトラッキング開始
+          this.activeConnectionLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+          this.activeConnectionLine.setAttribute('stroke','#f59e0b');
+          this.activeConnectionLine.setAttribute('stroke-width','2');
+          this.activeConnectionLine.setAttribute('stroke-dasharray','5,5');
+          this.svg.appendChild(this.activeConnectionLine);
+          
+          const mouseMoveHandler = (ev) => {
+            if (!this.connectingFrom) {
+              document.removeEventListener('mousemove', mouseMoveHandler);
+              if (this.activeConnectionLine) {
+                this.activeConnectionLine.remove();
+                this.activeConnectionLine = null;
+              }
+              return;
+            }
+            const rect = this.canvas.getBoundingClientRect();
+            const p1 = this.getEntityCenter(this.connectingFrom.id);
+            this.activeConnectionLine.setAttribute('x1', p1.x);
+            this.activeConnectionLine.setAttribute('y1', p1.y);
+            this.activeConnectionLine.setAttribute('x2', (ev.clientX - rect.left) / this.zoomLevel);
+            this.activeConnectionLine.setAttribute('y2', (ev.clientY - rect.top) / this.zoomLevel);
+          };
+          document.addEventListener('mousemove', mouseMoveHandler);
+          // Store the handler so it can be cleaned up if needed (though it self-cleans on this.connectingFrom = null)
+          this.mouseMoveHandler = mouseMoveHandler;
+          
+        } else if (this.connectingFrom.id !== entity.id) {
+          // 接続先として選択完了
           const label = prompt('リレーション (例: 1:N, N:M) [空でキャンセル]:', '1:N');
           if (label === null || label.trim() === '') {
             this.connectingFrom = null;
@@ -850,6 +947,15 @@ class ERDiagramTool {
             label,
           });
           this.connectingFrom = null;
+          this.saveSnapshot();
+          if (this.activeConnectionLine) {
+            this.activeConnectionLine.remove();
+            this.activeConnectionLine = null;
+          }
+          if (this.mouseMoveHandler) {
+            document.removeEventListener('mousemove', this.mouseMoveHandler);
+            this.mouseMoveHandler = null;
+          }
         }
         return;
       }
@@ -1107,6 +1213,12 @@ class ERDiagramTool {
 
       g.addEventListener('click', (e) => {
         e.stopPropagation();
+        if (this.eraseMode) {
+          this.pushUndoAction({ type: 'restoreRelation', relation: { ...rel } });
+          this.relations = this.relations.filter(r => r !== rel);
+          this.drawRelations();
+          return;
+        }
         const newLabel = prompt('リレーション (例: 1:N, N:M) [空で削除]:', rel.label);
         if (newLabel !== null) {
           if (newLabel.trim() === '') {
