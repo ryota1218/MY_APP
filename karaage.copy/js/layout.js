@@ -14,7 +14,7 @@ class LayoutTool {
     this.zoomLevel = 1.0; // ズーム初期値を追加
     this.isGridVisible = true; // グリッド初期値を追加
     this.clipboard = null; // コピペ用バッファを追加
-    this.isDirty = false;
+    this.isDirty = true;
 
     this.canvas = document.getElementById('layout-canvas');
     this.canvas.classList.add('free-size');

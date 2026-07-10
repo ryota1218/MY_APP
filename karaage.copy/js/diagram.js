@@ -641,7 +641,7 @@ class DiagramTool {
     this.zoomLevel = 1.0;
     this.isGridVisible = true;
     this.clipboard = null;
-    this.isDirty = false; // 未保存の変更フラグ
+    this.isDirty = true; // 未保存の変更フラグ
 
     this.isDropdownPalette = this.options.paletteMode === 'dropdown';
     this.umlType = this.options.umlType || null;
@@ -1780,11 +1780,22 @@ async saveDiagram() {
   const typeKey = `${this.prefix}_${this.umlType || 'main'}`;
 
   if (window.DBIO) {
-      return await window.DBIO.saveDiagramToDB(typeKey, data);
-    } else {
-      showToast('データベース連携モジュールが見つかりません', 'danger');
-      return false;
+    return await window.DBIO.saveDiagramToDB(typeKey, data);
+  } else {
     showToast('データベース連携モジュールが見つかりません', 'danger');
+    return false;
+  }
+}
+
+async openDiagramModal() {
+  if (window.DBIO) {
+    const typeKey = `${this.prefix}_${this.umlType || 'main'}`;
+    await window.DBIO.showOpenModal(typeKey, (data, id, name, status) => {
+      this.restoreSnapshot(data);
+      if(window.showToast) window.showToast(`${name} を読み込みました`);
+    });
+  } else {
+    if(window.showToast) window.showToast('データベース連携モジュールが見つかりません', 'danger');
   }
 }
 
