@@ -1112,30 +1112,7 @@ class DiagramTool {
     });
 
 
-    document.addEventListener('keydown', e => {
-      const target = e.target;
-      const isEditingField = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable);
-
-      if (e.ctrlKey || e.metaKey) {
-        const key = e.key.toLowerCase();
-        if (key === 'c') { if(!isEditingField) { e.preventDefault(); this.copySelected(); } }
-        else if (key === 'x') { if(!isEditingField) { e.preventDefault(); this.cutSelected(); } }
-        else if (key === 'v') { if(!isEditingField) { e.preventDefault(); this.pasteSelected(); } }
-        else if (key === 'z') {
-          if(!isEditingField) { e.preventDefault(); if (e.shiftKey) this.redoLastAction(); else this.undoLastAction(); }
-        } 
-        if (key === 'y') { if(!isEditingField) { e.preventDefault(); this.redoLastAction(); } }
-      }
-
-      if (isEditingField) return;
-      if (e.key !== 'Delete' && e.key !== 'Backspace') return;
-      console.debug('[DiagramTool] keydown', e.key, 'selectedNode=', this.selectedNode?.id, 'selectedConn=', this.selectedConnection?.id);
-      if (!this.selectedNode && !this.selectedConnection) return;
-      e.preventDefault();
-      this.deleteSelected();
-    });
   }
-
   initPropertyPanel() {
     this.propertyPanelNode = null;
     const panel = document.getElementById(this.prefix + '-property-panel');

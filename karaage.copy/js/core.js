@@ -31,6 +31,7 @@ class App {
   async init() {
     await this.loadSections();
     this.initNav();
+    this.initGlobalShortcuts();
     this.gantt = new GanttTool(); // 起動時にガントデータをロード/保存する
     this.initDashboard();
     this.proposal = new ProposalTool();
@@ -208,6 +209,8 @@ class App {
   
   
   navigateTo(tool) {
+    
+
     console.log('Navigating to:', tool);
     
     // ツール切り替え時、開いている右側パネルを閉じ、左側サイドバーを元の表示に復元する
@@ -273,6 +276,90 @@ class App {
       this.gantt.loadGanttData();
     }
   }
+
+  initGlobalShortcuts() {
+
+  if (this.shortcutsInitialized) return;
+  this.shortcutsInitialized = true;
+
+  document.addEventListener('keydown', (e) => {
+
+    if (
+      e.target.tagName === 'INPUT' ||
+      e.target.tagName === 'TEXTAREA' ||
+      e.target.isContentEditable
+    ) {
+      return;
+    }
+
+    const ctrl = e.ctrlKey || e.metaKey;
+    if (!ctrl) return;
+
+    const activeTool = this.getActiveToolInstance();
+
+    if (!activeTool) return;
+
+    switch (e.key.toLowerCase()) {
+
+      case 'z':
+        e.preventDefault();
+
+        if (e.shiftKey) {
+          activeTool.redoLastAction?.();
+        } else {
+          activeTool.undoLastAction?.();
+        }
+        break;
+
+      case 'y':
+        e.preventDefault();
+        activeTool.redoLastAction?.();
+        break;
+
+      case 'c':
+        e.preventDefault();
+        activeTool.copySelected?.();
+        break;
+
+      case 'x':
+        e.preventDefault();
+        activeTool.cutSelected?.();
+        break;
+
+      case 'v':
+        e.preventDefault();
+        activeTool.pasteSelected?.();
+        break;
+    }
+  });
+}
+
+getActiveToolInstance() {
+
+  switch (this.currentTool) {
+
+    case 'architecture':
+      return this.architecture;
+
+    case 'uml':
+      return this.uml;
+
+    case 'screen-transition':
+      return this.screenTransition;
+
+    case 'layout':
+      return this.layout;
+
+    case 'erdiagram':
+      return this.erdiagram;
+
+    case 'gantt':
+      return this.gantt;
+
+    default:
+      return null;
+  }
+}
   async initDashboard() {
     console.log("Dashboard initialized.");
     this.dashboardFilters = { name: '', type: '', date: '', status: '' };
