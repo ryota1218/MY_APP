@@ -118,3 +118,41 @@
 .toast-close:hover {
   background: rgba(255,255,255,0.08);
 }
+
+/* Radial Menu */
+.radial-menu-container {
+  position: fixed;
+  z-index: 10000;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.radial-menu-btn {
+  position: absolute;
+  transform: translate(-50%, -50%) scale(0.5);
+  opacity: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 0.5px solid var(--border-strong, #ccc);
+  background: var(--surface-2, #fff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.15s ease-out, transform 0.15s ease-out, left 0.15s ease-out, top 0.15s ease-out;
+  pointer-events: auto;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  left: 0;
+  top: 0;
+}
+.radial-menu-btn:hover {
+  background: var(--bg-hover, #f3f4f6);
+  transform: translate(-50%, -50%) scale(1.1) !important;
+}
+.radial-menu-container.open .radial-menu-btn {
+  left: var(--target-x);
+  top: var(--target-y);
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}

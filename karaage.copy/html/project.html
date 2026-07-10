@@ -118,5 +118,25 @@
         <!-- メンバーアイテムがここに入ります -->
       </div>
     </div>
+    
+    <div class="drawer-section" id="drawer-transfer-request-zone" style="display: none; border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem; background-color: #f0fdf4; border-radius: 8px; padding: 10px;">
+      <h3 style="color: #166534; font-size: 0.9rem; margin-bottom: 8px;"><i data-lucide="crown" style="width: 14px; height: 14px; margin-right: 4px;"></i>オーナー権限の譲渡リクエスト</h3>
+      <p style="font-size: 0.8rem; margin-bottom: 10px;">現在のオーナーから、あなたへオーナー権限の譲渡がリクエストされています。</p>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-primary" id="btn-approve-transfer" style="flex: 1; padding: 6px;">承認する</button>
+        <button class="btn btn-secondary" id="btn-reject-transfer" style="flex: 1; padding: 6px;">拒否する</button>
+      </div>
+    </div>
+    
+    <div class="drawer-section" id="drawer-danger-zone" style="display: none; border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem;">
+      <div class="drawer-section-header">
+        <h3 style="color: var(--danger);">Danger Zone</h3>
+      </div>
+      <div style="margin-top: 10px;">
+        <button class="btn btn-danger" id="drawer-delete-project-btn" style="width: 100%; justify-content: center; background-color: var(--danger); border-color: var(--danger); color: white;">
+          <i data-lucide="trash-2" style="margin-right: 6px;"></i> プロジェクトを削除する
+        </button>
+      </div>
+    </div>
   </div>
 </div>

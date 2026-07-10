@@ -24,8 +24,10 @@ CREATE TABLE public.projects (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   account_id uuid NOT NULL,
   name text NOT NULL,
+  pending_owner_id uuid,
   CONSTRAINT projects_pkey PRIMARY KEY (id),
-  CONSTRAINT projects_account_id_fkey FOREIGN KEY (account_id) REFERENCES public.users(id)
+  CONSTRAINT projects_account_id_fkey FOREIGN KEY (account_id) REFERENCES public.users(id),
+  CONSTRAINT projects_pending_owner_id_fkey FOREIGN KEY (pending_owner_id) REFERENCES public.users(id)
 );
 
 CREATE TABLE public.project_members (

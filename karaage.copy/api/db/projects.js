@@ -39,5 +39,35 @@ module.exports = async (req, res) => {
     return res.status(200).json({ project: createdProject });
   }
 
+  // プロジェクト削除 (DELETE)
+  if (req.method === 'DELETE') {
+    const projectId = req.query.projectId || req.body?.projectId;
+    if (!projectId) return res.status(400).json({ error: 'Project ID is required' });
+
+    const supabaseClient = createAuthClient(token);
+
+    // 削除権限チェック (オーナーのみ)
+    const { data: member, error: memberError } = await supabaseClient
+      .from('project_members')
+      .select('role')
+      .eq('project_id', projectId)
+      .eq('user_id', userId)
+      .single();
+
+    if (memberError || !member || member.role !== 'owner') {
+      return res.status(403).json({ error: 'Only owners can delete the project' });
+    }
+
+    // プロジェクト削除 (外部キー制約のカスケード削除がDB側で設定されている前提)
+    const { error: deleteError } = await supabaseClient
+      .from('projects')
+      .delete()
+      .eq('id', projectId);
+
+    if (deleteError) return res.status(500).json({ error: deleteError.message });
+
+    return res.status(200).json({ success: true });
+  }
+
   return res.status(405).json({ error: 'Method not allowed' });
 };

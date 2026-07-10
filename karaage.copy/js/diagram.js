@@ -645,7 +645,7 @@ class DiagramTool {
 
     this.isDropdownPalette = this.options.paletteMode === 'dropdown';
     this.umlType = this.options.umlType || null;
-    this.connectMode = false;
+    this.currentMode = 'select'; // 'select', 'connect', or 'erase'
     this.activeConnType = 'association'; // デフォルト接続タイプ
     this.nodes = [];
     this.connections = [];
@@ -772,7 +772,7 @@ class DiagramTool {
 
             dot.addEventListener('click', (e) => {
               e.stopPropagation();
-              if (!this.connectMode || this.umlType !== 'timing') return;
+              if (this.currentMode !== 'connect' || this.umlType !== 'timing') return;
               this._handleTimingDotClick(dot, waveSvg);
             });
 
@@ -979,53 +979,17 @@ class DiagramTool {
       connGroup.innerHTML = `
         <select class="uml-conn-select" id="${this.prefix}-conn-select">
           ${connTypes.map(t => `<option value="${t.key}">${t.icon}  ${t.label}</option>`).join('')}
-        </select>
-        <button type="button" class="palette-action-btn" id="${this.prefix}-connect-toggle">🔗 接続</button>`;
+        </select>`;
       connectButton.parentNode.insertBefore(connGroup, connectButton);
 
       const connSelect = document.getElementById(this.prefix + '-conn-select');
-      const connToggle = document.getElementById(this.prefix + '-connect-toggle');
       connSelect.addEventListener('change', () => {
         this.activeConnType = connSelect.value;
       });
-
-      this.updateConnectButton = () => {
-        connToggle.classList.toggle('active', this.connectMode);
-        connToggle.textContent = `🔗 接続 ${this.connectMode ? 'ON' : 'OFF'}`;
-      };
-      this.updateConnectButton();
-      connToggle.addEventListener('click', () => {
-        this.connectMode = !this.connectMode;
-        this.updateConnectButton();
-        this.canvas.style.cursor = this.connectMode ? 'crosshair' : 'default';
-        // タイミング図の場合、ドットを拡大表示するクラスを切り替え
-        if (this.umlType === 'timing') {
-          this.canvas.classList.toggle('timing-connect-active', this.connectMode);
-          this._timingDotFrom = null;
-        }
-        const typeDef = connTypes.find(t => t.key === this.activeConnType);
-        showToast(this.connectMode ? `接続モード: ON (${typeDef?.label || '関連'})` : '接続モード: OFF');
-      });
     } else {
-      this.updateConnectButton = () => {
-        connectButton.classList.toggle('active', this.connectMode);
-        connectButton.textContent = `🔗 接続モード ${this.connectMode ? 'ON' : 'OFF'}`;
-        if (!this.isDropdownPalette) {
-          // let css handle the active state style
-        }
-      };
-      this.updateConnectButton();
-      connectButton.addEventListener('click', () => {
-        this.connectMode = !this.connectMode;
-        this.updateConnectButton();
-        this.canvas.style.cursor = this.connectMode ? 'crosshair' : 'default';
-        // タイミング図の場合、ドットを拡大表示するクラスを切り替え
-        if (this.umlType === 'timing') {
-          this.canvas.classList.toggle('timing-connect-active', this.connectMode);
-          this._timingDotFrom = null;
-        }
-        showToast(this.connectMode ? '接続モード: ONー ノードをクリックして接続' : '接続モード: OFF');
-      });
+      if (connectButton) {
+        connectButton.style.display = 'none';
+      }
     }
 
     // タイミング図専用: メモリ設定 & メモリ一覧ボタン
@@ -1052,6 +1016,19 @@ class DiagramTool {
       listBtn.addEventListener('click', () => this.openTimingAxesListModal());
       if (parentEl) parentEl.insertBefore(listBtn, axisBtn.nextSibling);
     }
+    // Sidebar toggle button
+    const sidebarToggle = document.getElementById(this.prefix + '-sidebar-toggle');
+    if (sidebarToggle) {
+      sidebarToggle.addEventListener('click', () => {
+        const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
+        if (isCollapsed) {
+          document.body.dataset.sidebarCollapsedByUser = 'true';
+        } else {
+          document.body.dataset.sidebarCollapsedByUser = 'false';
+        }
+      });
+    }
+
     // Inline shape strip — show component icons directly in toolbar when space allows
     const inlineStrip = document.getElementById(this.prefix + '-inline-shapes');
     if (inlineStrip) {
@@ -1095,6 +1072,18 @@ class DiagramTool {
     this.addNode(comp, x, y, { quickAddCounterBefore });
   }
   initCanvasEvents() {
+    if (window.RadialMenu) {
+      this.radialMenu = new RadialMenu(this.canvas, [
+        { label: '選択',       icon: 'mouse-pointer-2', mode: 'select'  },
+        { label: '接続',       icon: 'git-branch',      mode: 'connect' },
+        { label: '削除',       icon: 'trash-2',         mode: 'erase'   },
+        { label: '図形追加',   icon: 'square-plus',     mode: null      },
+        { label: 'テキスト追加', icon: 'type',          mode: null      },
+      ], (item) => {
+        if (item.mode) this.setMode(item.mode);
+      });
+    }
+
     this.canvas.addEventListener('dragover', e => e.preventDefault());
     this.canvas.addEventListener('drop', e => {
       e.preventDefault();
@@ -1122,20 +1111,6 @@ class DiagramTool {
       }
     });
 
-    // UIボタンのイベントバインディング
-    // tool-sectionが見つからない場合は、さらに上の階層まで探す（ヘッダーとキャンバスが離れている場合のため）
-    const container = this.canvas.closest('.tool-section') || this.canvas.closest('.editor-header')?.parentElement || this.canvas.parentElement;
-    if (container) {
-      container.querySelectorAll('[data-action]').forEach(btn => {
-        btn.addEventListener('click', e => {
-          const action = btn.dataset.action;
-          if (typeof this[action] === 'function') {
-            e.stopPropagation();
-            this[action]();
-          }
-        });
-      });
-    }
 
     document.addEventListener('keydown', e => {
       const target = e.target;
@@ -1852,13 +1827,8 @@ addEntity() {
 }
 
 addRelation() {
-  this.connectMode = !this.connectMode;
-  if (typeof this.updateConnectButton === 'function') this.updateConnectButton();
-  this.canvas.style.cursor = this.connectMode ? 'crosshair' : 'default';
-  
-  // ER図の場合、デフォルトの接続タイプをリレーションに設定
   this.activeConnType = 'association';
-  showToast(this.connectMode ? 'リレーション作成モード: ON' : 'リレーション作成モード: OFF');
+  this.setMode('connect');
 }
 
 toggleNameView() {
@@ -2711,6 +2681,13 @@ renderNode(node) {
   // Drag
   let dragging = false, ox, oy;
   el.addEventListener('mousedown', e => {
+    if (this.currentMode === 'erase') {
+      this.selectedNode = node;
+      this.deleteSelectedNode();
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
     if (this.editingNodeId === node.id) return;
     if (e.target.classList.contains('node-port')) return;
     if (e.target.classList.contains('node-resize-handle')) {
@@ -2758,7 +2735,7 @@ renderNode(node) {
       e.stopPropagation();
       return;
     }
-    if (this.connectMode) {
+    if (this.currentMode === 'connect') {
       if (!this.connectingFrom) {
         this.connectingFrom = node;
         el.classList.add('selected');
@@ -2898,10 +2875,7 @@ renderNode(node) {
       e.stopPropagation();
       if (!this.connectingFrom) {
         this.connectingFrom = node;
-        this.connectMode = true;
-        if (typeof this.updateConnectButton === 'function') this.updateConnectButton();
-        this.canvas.style.cursor = 'crosshair';
-        showToast('接続モード: ONー ノードをクリックして接続');
+        this.setMode('connect');
         el.classList.add('selected');
       }
     });
@@ -3067,9 +3041,7 @@ detachNode(nodeId) {
   if (this.editingNodeId === nodeId) this.editingNodeId = null;
   if (this.connectingFrom && this.connectingFrom.id === nodeId) {
     this.connectingFrom = null;
-    this.connectMode = false;
-    if (typeof this.updateConnectButton === 'function') this.updateConnectButton();
-    this.canvas.style.cursor = 'default';
+    this.setMode('select');
   }
   return {
     node,
@@ -3327,6 +3299,66 @@ deleteSelectedNode() {
   this.deselectAll();
   this.drawConnections();
   showToast('選択した図形を削除しました');
+}
+
+setMode(mode) {
+  this.currentMode = mode;
+  
+  // ツールバーボタンのアクティブ状態を更新（常に実行）
+  const container = document.getElementById(this.prefix + '-mode-segmented');
+  if (container) {
+    container.querySelectorAll('.tbtn').forEach(btn => {
+      const isMatch = btn.dataset.mode === mode;
+      const icon = btn.querySelector('i') || btn.querySelector('svg');
+      
+      btn.style.background = isMatch ? 'var(--bg-accent, #e0f2fe)' : 'transparent';
+      if (icon) {
+        icon.style.color = isMatch ? 'var(--text-accent, #0369a1)' : 'var(--text-secondary, #64748b)';
+      }
+    });
+  }
+
+  // Handle mode-specific state clearing
+  if (this.currentMode !== 'connect') {
+    this.connectingFrom = null;
+    this.canvas.classList.remove('timing-connect-active');
+  }
+  
+  if (this.currentMode === 'erase') {
+    this.canvas.style.cursor = 'not-allowed';
+    showToast('削除モード: 図形や線をクリックして削除');
+  } else if (this.currentMode === 'connect') {
+    this.canvas.style.cursor = 'crosshair';
+    this.canvas.classList.add('timing-connect-active');
+    showToast('接続モード: 接続元図形をクリックしてください');
+  } else {
+    this.canvas.style.cursor = 'default';
+    showToast('選択モード');
+    this.deselectAll();
+  }
+}
+
+clearAll() {
+  if (this.nodes) {
+    this.nodes.forEach(n => {
+      const el = document.getElementById(n.id);
+      if (el) el.remove();
+    });
+  }
+  if (this.svg) this.svg.innerHTML = '';
+  this.nodes = [];
+  this.connections = [];
+  this.undoHistory = [];
+  this.redoHistory = [];
+  this.nodeIdCounter = 0;
+  this.connIdCounter = 0;
+  this.quickAddCounter = 0;
+  this.selectedNode = null;
+  this.selectedConnection = null;
+  this.connectingFrom = null;
+  this.closePropertyPanel();
+  this.isDirty = false;
+  this.drawConnections();
 }
 initTextStyleControls() {
   this.fontSizeControl = document.getElementById(this.prefix + '-font-size');
@@ -4109,6 +4141,11 @@ drawConnections() {
     path.style.cursor = 'pointer';
     path.addEventListener('mousedown', e => {
       e.stopPropagation();
+      if (this.currentMode === 'erase') {
+        this.selectedConnection = conn;
+        this.deleteSelected();
+        return;
+      }
       this.selectConnection(conn);
     });
 
@@ -4811,11 +4848,7 @@ swapComponents(newComponents, umlType) {
   this.quickAddCounter = 0;
 
   // 接続モードとカーソルのリセット
-  this.connectMode = false;
-  if (this.canvas) {
-    this.canvas.style.cursor = 'default';
-    this.canvas.classList.remove('timing-connect-active');
-  }
+  this.setMode('select');
 
   // 図の種類に応じたデフォルト接続タイプのリセット
   if (this.umlType === 'component' && typeof COMPONENT_CONNECTION_TYPES !== 'undefined') {
