@@ -16,3 +16,6 @@ venv/
 env/
 .vercel
 .env*
+
+# Ignore AI directory
+AI/
