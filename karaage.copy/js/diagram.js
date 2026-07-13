@@ -633,6 +633,65 @@ const COMMUNICATION_CONNECTION_TYPES = [
   { key: 'reply-msg', label: '応答メッセージ', icon: '- - ▷' },
 ];
 
+class VirtualCamera {
+  constructor(viewportEl, worldEl, options = {}) {
+    this.viewportEl = viewportEl;
+    this.worldEl = worldEl;
+    this.camX = 0;
+    this.camY = 0;
+    this.zoom = 1;
+    this.minZoom = options.minZoom ?? 0.1;
+    this.maxZoom = options.maxZoom ?? 4;
+    
+    // transform-origin:0 0 はCSSで設定済みと想定
+    this._applyTransform();
+  }
+
+  _applyTransform() {
+    this.worldEl.style.transform = `translate(${this.camX}px, ${this.camY}px) scale(${this.zoom})`;
+    if (this.viewportEl && this.viewportEl.classList.contains('grid-active')) {
+      this.viewportEl.style.backgroundPosition = `${this.camX}px ${this.camY}px`;
+      this.viewportEl.style.backgroundSize = `${24 * this.zoom}px ${24 * this.zoom}px`;
+    }
+  }
+
+  screenToWorld(screenX, screenY) {
+    return {
+      x: (screenX - this.camX) / this.zoom,
+      y: (screenY - this.camY) / this.zoom,
+    };
+  }
+
+  worldToScreen(worldX, worldY) {
+    return {
+      x: worldX * this.zoom + this.camX,
+      y: worldY * this.zoom + this.camY,
+    };
+  }
+
+  zoomAt(newZoom, pivotScreenX, pivotScreenY) {
+    const clampedZoom = Math.min(this.maxZoom, Math.max(this.minZoom, newZoom));
+    const worldPivot = this.screenToWorld(pivotScreenX, pivotScreenY);
+    this.zoom = clampedZoom;
+    this.camX = Math.min(0, pivotScreenX - worldPivot.x * this.zoom);
+    this.camY = Math.min(0, pivotScreenY - worldPivot.y * this.zoom);
+    this._applyTransform();
+  }
+
+  panBy(dx, dy) {
+    this.camX = Math.min(0, this.camX + dx);
+    this.camY = Math.min(0, this.camY + dy);
+    this._applyTransform();
+  }
+
+  reset(camX = 0, camY = 0, zoom = 1) {
+    this.camX = camX;
+    this.camY = camY;
+    this.zoom = zoom;
+    this._applyTransform();
+  }
+}
+
 class DiagramTool {
   constructor(prefix, components, options = {}) {
     this.prefix = prefix;
@@ -641,7 +700,7 @@ class DiagramTool {
     this.zoomLevel = 1.0;
     this.isGridVisible = true;
     this.clipboard = null;
-    this.isDirty = true; // 未保存の変更フラグ
+    this.isDirty = false; // 未保存の変更フラグ
 
     this.isDropdownPalette = this.options.paletteMode === 'dropdown';
     this.umlType = this.options.umlType || null;
@@ -692,11 +751,16 @@ class DiagramTool {
     this.canvas = document.getElementById(prefix + '-canvas');
     this.svg = document.getElementById(prefix + '-svg');
 
+    // viewportを事前に取得（initCanvasEventsが使うため先に設定）
+    this.viewport = document.getElementById(prefix + '-viewport');
+
     if (!this.canvas || !this.svg) {
       const tryInit = () => {
         this.canvas = document.getElementById(prefix + '-canvas');
         this.svg = document.getElementById(prefix + '-svg');
+        this.viewport = document.getElementById(prefix + '-viewport');
         if (this.canvas && this.svg) {
+          this.initCamera();  // 先にカメラ初期化
           this.initPalette();
           this.initCanvasEvents();
           this.initTextStyleControls();
@@ -707,13 +771,63 @@ class DiagramTool {
       };
       tryInit();
     } else {
+      this.initCamera();  // 先にカメラ初期化
       this.initPalette();
       this.initCanvasEvents();
       this.initTextStyleControls();
       this.initPropertyPanel();
       this.initThemeListener();
     }
+
     this.applyUmlMode();
+  }
+
+  initCamera() {
+    const viewport = document.getElementById(this.prefix + '-viewport');
+    this.viewport = viewport;
+    // canvas 自身が world 要素になりました
+    const world = this.canvas; 
+
+    if (viewport && world) {
+      this.camera = new VirtualCamera(viewport, world, { minZoom: 0.1, maxZoom: 4 });
+      // 無限キャンバス: 初期オフセットは設定しない（(0,0)が左上起点）
+      // this.camera.camX / camY = 0 のまま
+
+      viewport.addEventListener('wheel', (e) => {
+        // SVGやノード上でのスクロールを防ぐため
+        e.preventDefault();
+
+        if (e.ctrlKey || e.metaKey) {
+          // ズーム
+          const zoomStep = 0.002;
+          const factor = Math.exp(-e.deltaY * zoomStep);
+          
+          const vRect = viewport.getBoundingClientRect();
+          const pivotX = e.clientX - vRect.left;
+          const pivotY = e.clientY - vRect.top;
+          
+          this.camera.zoomAt(this.camera.zoom * factor, pivotX, pivotY);
+          
+          // UI側とも同期しておく（zoomLevelはUI表示用や互換性用）
+          this.zoomLevel = this.camera.zoom;
+        } else {
+          // パン（画面移動）
+          // Shift+Wheel は X方向移動, 通常 Wheel は Y方向移動
+          let dx = 0;
+          let dy = 0;
+          
+          if (e.shiftKey) {
+            dx = -e.deltaY; // shiftKeyがある場合は deltaY が水平移動扱いになるブラウザも多いが安全に
+            if (e.deltaX) dx = -e.deltaX; // 横スクロール対応マウスの場合
+          } else {
+            dx = -e.deltaX;
+            dy = -e.deltaY;
+          }
+          
+          this.camera.panBy(dx, dy);
+        }
+      }, { passive: false });
+    }
   }
 
   /** クラス図モード時に文字スタイルコントロールを非表示にする */
@@ -1061,13 +1175,20 @@ class DiagramTool {
     const comp = this.components[idx];
     if (!comp) return;
     const quickAddCounterBefore = this.quickAddCounter;
-    const canvasWidth = this.canvas.clientWidth;
-    const canvasHeight = this.canvas.clientHeight;
     const col = this.quickAddCounter % 4;
     const row = Math.floor(this.quickAddCounter / 4);
   
-    const x = Math.min(80 + col * 140, Math.max(20, canvasWidth - 180));
-    const y = Math.min(90 + row * 90, Math.max(20, canvasHeight - 80));
+    // カメラの現在の表示中心をワール座標に変換してそこから配置
+    let baseX = 80, baseY = 80;
+    if (this.camera && this.viewport) {
+      const vRect = this.viewport.getBoundingClientRect();
+      const center = this.camera.screenToWorld(vRect.width / 2, vRect.height / 2);
+      baseX = Math.max(0, center.x - 60);
+      baseY = Math.max(0, center.y - 40);
+    }
+
+    const x = baseX + col * 140;
+    const y = baseY + row * 90;
     this.quickAddCounter++;
     this.addNode(comp, x, y, { quickAddCounterBefore });
   }
@@ -1084,22 +1205,22 @@ class DiagramTool {
       });
     }
 
-    this.canvas.addEventListener('dragover', e => e.preventDefault());
-    this.canvas.addEventListener('drop', e => {
+    // dragover/dropはviewportで受ける（canvasはズームで縮むためviewport外にドロップできなくなる）
+    const dropTarget = this.viewport || this.canvas;
+    dropTarget.addEventListener('dragover', e => e.preventDefault());
+    dropTarget.addEventListener('drop', e => {
       e.preventDefault();
       const idx = parseInt(e.dataTransfer.getData('text/plain'));
       if (isNaN(idx)) return;
-      const rect = this.canvas.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / this.zoomLevel - 60;
-      const y = (e.clientY - rect.top) / this.zoomLevel - 20;
+      const vRect = this.viewport.getBoundingClientRect();
+      const worldPos = this.camera.screenToWorld(e.clientX - vRect.left, e.clientY - vRect.top);
+      const x = worldPos.x - 60;
+      const y = worldPos.y - 20;
 
       const comp = this.components[idx];
-      const approxW = comp.width || comp.size?.w || (comp.nodeType === 'group-boundary' ? 320 : 120);
-      const approxH = comp.height || comp.size?.h || (comp.nodeType === 'group-boundary' ? 200 : 80);
-      const maxX = this.canvas.clientWidth - approxW;
-      const maxY = this.canvas.clientHeight - approxH;
-      if (x < -10 || y < -10 || x > maxX + 10 || y > maxY + 10) {
-        if (typeof showToast === 'function') showToast('キャンバスの領域外には配置できません');
+      // 無限キャンバス（案B）: 左上（マイナス座標）のみ制限
+      if (x < 0 || y < 0) {
+        if (typeof showToast === 'function') showToast('キャンバスの左上端より外には配置できません');
         return;
       }
       this.addNode(comp, x, y);
@@ -1365,6 +1486,18 @@ openPropertyPanel(node) {
     const el = document.getElementById(this.prefix + '-prop-' + suffix);
     if (el) el.value = val;
   };
+
+  const gridToggleBtn = document.getElementById(this.prefix + '-grid-toggle');
+  if (gridToggleBtn) {
+    gridToggleBtn.addEventListener('click', () => {
+      this.isGridVisible = !this.isGridVisible;
+      if (this.viewport) {
+        this.viewport.classList.toggle('grid-active', this.isGridVisible);
+      } else {
+        this.canvas.classList.toggle('grid-active', this.isGridVisible);
+      }
+    });
+  }
 
   if (isNode) {
     setVal('label', node.label || '');
@@ -1672,26 +1805,32 @@ updateNodeDOM(node) {
 /* ===== 追加された機能の実装 ===== */
 
 zoomIn() {
-  this.zoomLevel = Math.min(2.0, this.zoomLevel + 0.1);
-  this.applyZoom();
+  if (this.camera) {
+    const vRect = this.viewport.getBoundingClientRect();
+    this.camera.zoomAt(this.camera.zoom + 0.1, vRect.width / 2, vRect.height / 2);
+    this.zoomLevel = this.camera.zoom;
+  }
 }
 
 zoomOut() {
-  this.zoomLevel = Math.max(0.5, this.zoomLevel - 0.1);
-  this.applyZoom();
+  if (this.camera) {
+    const vRect = this.viewport.getBoundingClientRect();
+    this.camera.zoomAt(this.camera.zoom - 0.1, vRect.width / 2, vRect.height / 2);
+    this.zoomLevel = this.camera.zoom;
+  }
 }
 
 resetZoom() {
-  this.zoomLevel = 1.0;
-  this.applyZoom();
+  if (this.camera) {
+    const vRect = this.viewport.getBoundingClientRect();
+    // 中央を原点に戻す
+    this.camera.reset(vRect.width / 2, vRect.height / 2, 1);
+    this.zoomLevel = this.camera.zoom;
+  }
 }
 
 applyZoom() {
-  this.canvas.style.transform = `scale(${this.zoomLevel})`;
-  this.canvas.style.transformOrigin = '0 0';
-
-  this.isGridVisible = !this.isGridVisible;
-  this.canvas.classList.toggle('grid-active', this.isGridVisible);
+  // VirtualCamera 内部で自動適用されるため何もしない
 }
 
 copySelected() {
@@ -2771,8 +2910,10 @@ renderNode(node) {
     this.selectNode(node, el);
     const dragStart = { x: node.x, y: node.y };
     let moved = false;
-    ox = (e.clientX / this.zoomLevel) - node.x;
-    oy = (e.clientY / this.zoomLevel) - node.y;
+    const vRect = this.viewport.getBoundingClientRect();
+    const startWorldPos = this.camera.screenToWorld(e.clientX - vRect.left, e.clientY - vRect.top);
+    ox = startWorldPos.x - node.x;
+    oy = startWorldPos.y - node.y;
     e.preventDefault();
     // Nesting: コンテナノードの場合、内部の子ノードを特定
     const isContainer = node.behaviorType === 'compositeState' || node.behaviorType === 'systemBoundary' || node.behaviorType === 'fragment' || node.nodeType === 'group-boundary';
@@ -2801,8 +2942,10 @@ renderNode(node) {
     }
     const onMouseMove = e => {
       if (!dragging) return;
-      const nextX = (e.clientX / this.zoomLevel) - ox;
-      const nextY = (e.clientY / this.zoomLevel) - oy;
+      const vRect = this.viewport.getBoundingClientRect();
+      const currentWorldPos = this.camera.screenToWorld(e.clientX - vRect.left, e.clientY - vRect.top);
+      const nextX = currentWorldPos.x - ox;
+      const nextY = currentWorldPos.y - oy;
       if (nextX !== node.x || nextY !== node.y) moved = true;
       node.x = nextX;
       node.y = nextY;
@@ -2824,10 +2967,11 @@ renderNode(node) {
     };
     const onMouseUp = () => {
       if (dragging && moved) {
-        const maxX = this.canvas.clientWidth - el.offsetWidth;
-        const maxY = this.canvas.clientHeight - el.offsetHeight;
-        if (node.x < -10 || node.y < -10 || node.x > maxX + 10 || node.y > maxY + 10) {
-          // 範囲外ならスナップバック（元の位置に戻す）
+        // 画面外ではなく、マイナス座標かどうかで判定（案B）
+        const isOutOfBounds = node.x < 0 || node.y < 0;
+        
+        if (isOutOfBounds) {
+          // マイナス座標なら元の位置に戻す
           node.x = dragStart.x;
           node.y = dragStart.y;
           el.style.left = node.x + 'px';
@@ -2844,7 +2988,7 @@ renderNode(node) {
             });
           }
           this.drawConnections();
-          if (typeof showToast === 'function') showToast('キャンバスの領域外には配置できません');
+          if (typeof showToast === 'function') showToast('キャンバスの左上端より外には配置できません');
         } else {
           // 範囲内なら確定してUndoに記録
           this.pushUndoAction({
@@ -3776,10 +3920,11 @@ drawConnections() {
     const cr = this.canvas.getBoundingClientRect();
     const fr = fromEl.getBoundingClientRect();
     const tr = toEl.getBoundingClientRect();
-    const cx1 = fr.left + fr.width / 2 - cr.left;
-    const cy1 = fr.top + fr.height / 2 - cr.top;
-    const cx2 = tr.left + tr.width / 2 - cr.left;
-    const cy2 = tr.top + tr.height / 2 - cr.top;
+    const zoom = this.camera ? this.camera.zoom : 1;
+    const cx1 = (fr.left + fr.width / 2 - cr.left) / zoom;
+    const cy1 = (fr.top + fr.height / 2 - cr.top) / zoom;
+    const cx2 = (tr.left + tr.width / 2 - cr.left) / zoom;
+    const cy2 = (tr.top + tr.height / 2 - cr.top) / zoom;
 
     const isHorizontal = Math.abs(cx2 - cx1) > Math.abs(cy2 - cy1);
     
@@ -3828,9 +3973,8 @@ drawConnections() {
       return margin + usable * (idx + 1) / (total + 1) - (length / 2);
     }
     
-    const maxSpread = length * 0.6;
-    const spacing = Math.min(24, maxSpread / Math.max(1, total - 1));
-    return -(total - 1) * spacing / 2 + idx * spacing;
+    // 通常のノードの場合は分散させず、四方の点（中央）から正確に線を引く
+    return 0;
   };
 
   this.connections.forEach(conn => {
@@ -3841,10 +3985,11 @@ drawConnections() {
     const cr = this.canvas.getBoundingClientRect();
     const fr = fromEl.getBoundingClientRect();
     const tr = toEl.getBoundingClientRect();
-    const cx1 = fr.left + fr.width / 2 - (cr.left + this.canvas.clientLeft);
-    const cy1 = fr.top + fr.height / 2 - (cr.top + this.canvas.clientTop);
-    const cx2 = tr.left + tr.width / 2 - (cr.left + this.canvas.clientLeft);
-    const cy2 = tr.top + tr.height / 2 - (cr.top + this.canvas.clientTop);
+    const zoom = this.camera ? this.camera.zoom : 1;
+    const cx1 = (fr.left + fr.width / 2 - (cr.left + this.canvas.clientLeft)) / zoom;
+    const cy1 = (fr.top + fr.height / 2 - (cr.top + this.canvas.clientTop)) / zoom;
+    const cx2 = (tr.left + tr.width / 2 - (cr.left + this.canvas.clientLeft)) / zoom;
+    const cy2 = (tr.top + tr.height / 2 - (cr.top + this.canvas.clientTop)) / zoom;
 
     let x1 = cx1, y1 = cy1, x2 = cx2, y2 = cy2;
     const isHorizontal = Math.abs(cx2 - cx1) > Math.abs(cy2 - cy1);
@@ -3969,11 +4114,12 @@ drawConnections() {
         const nEl = document.getElementById(n.id);
         if (!nEl) return;
         const nr = nEl.getBoundingClientRect();
+        const zoom = this.camera ? this.camera.zoom : 1;
         obstacles.push({
-          left: nr.left - cr.left - PAD,
-          right: nr.left - cr.left + nr.width + PAD,
-          top: nr.top - cr.top - PAD,
-          bottom: nr.top - cr.top + nr.height + PAD,
+          left: (nr.left - cr.left - PAD) / zoom,
+          right: (nr.left - cr.left + nr.width + PAD) / zoom,
+          top: (nr.top - cr.top - PAD) / zoom,
+          bottom: (nr.top - cr.top + nr.height + PAD) / zoom,
         });
       });
 
@@ -4303,10 +4449,11 @@ drawConnections() {
         hDragging = true;
         const onMouseMove = me => {
           if (!hDragging) return;
-          const rect = this.canvas.getBoundingClientRect();
+          const vRect = this.viewport.getBoundingClientRect();
+          const worldPos = this.camera.screenToWorld(me.clientX - vRect.left, me.clientY - vRect.top);
           conn.manualMid = {
-            x: me.clientX - rect.left,
-            y: me.clientY - rect.top
+            x: worldPos.x,
+            y: worldPos.y
           };
           this.drawConnections();
         };
@@ -4343,7 +4490,7 @@ drawConnections() {
     }
   });
 }
-clearAll() {
+clearAll(skipConfirm = false) {
   const performClear = () => {
     const snapshot = this.captureSnapshot();
     this.nodes = []; this.connections = []; this.nodeIdCounter = 0;
@@ -4355,6 +4502,11 @@ clearAll() {
     this.isDirty = false;
     showToast('キャンバスをクリアしました');
   };
+
+  if (skipConfirm) {
+    performClear();
+    return;
+  }
 
   if (this.isDirty) {
     if (typeof showConfirm !== 'undefined') {
@@ -4506,24 +4658,19 @@ async sendAIChatMessage() {
     diagramType = 'erdiagram';
   }
 
+  const aiPayload = this.buildAIPayload(this.nodes);
+  this.currentAIBoundingBox = aiPayload ? aiPayload.boundingBox : { x:0, y:0, width:1200, height:800 };
+
   const requestBody = {
     diagram_type: diagramType,
-    nodes: this.nodes.map(n => ({
-      id: n.id,
-      label: n.label,
-      x: n.x,
-      y: n.y,
-      width: n.width || 160,
-      height: n.height || 50,
-    })),
+    nodes: aiPayload ? aiPayload.nodes : [],
     existing_connections: this.connections.map(c => ({
       from: c.from,
       to: c.to,
       label: c.label || '',
     })),
-    // ノード幅(約160px)+ラベル余白分を差し引き、右端のはみ出しを防止する
-    canvas_width: (this.canvas.clientWidth || 1200) - 200,
-    canvas_height: (this.canvas.clientHeight || 800) - 80,
+    canvas_width: this.currentAIBoundingBox.width,
+    canvas_height: this.currentAIBoundingBox.height,
     user_instruction: text,
     chat_history: this.chatHistory || []
   };
@@ -4558,7 +4705,7 @@ async sendAIChatMessage() {
         const node = this.nodes.find(n => n.id === rn.id);
         if (node) {
           startPositions[rn.id] = { x: node.x, y: node.y };
-          targetPositions[rn.id] = { x: rn.x, y: rn.y };
+          targetPositions[rn.id] = { x: rn.x + this.currentAIBoundingBox.x, y: rn.y + this.currentAIBoundingBox.y };
         }
       });
 
@@ -4652,51 +4799,87 @@ autoLayout() {
   showToast('自動配置しました');
 }
 
-/**
- * AI自動配置＆自動接続
- * Pythonバックエンド（FastAPI + Gemini API）にノード情報を送信し、
- * AIが計算した最適な配置座標と接続情報を受け取って適用する。
- */
-async aiAutoLayout() {
-  // ノードがない場合は何もしない
-  if (!this.nodes || this.nodes.length === 0) {
-    showToast('配置するノードがありません');
-    return;
+  /**
+   * AI連携用: バウンディングボックス計算 & 相対座標変換
+   * 無限キャンバスのため、AIには配置済みノードの相対座標を渡す。
+   */
+  buildAIPayload(nodes) {
+    if (!nodes || nodes.length === 0) return null;
+
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    for (const node of nodes) {
+      minX = Math.min(minX, node.x);
+      minY = Math.min(minY, node.y);
+      maxX = Math.max(maxX, node.x + (node.width || 160));
+      maxY = Math.max(maxY, node.y + (node.height || 50));
+    }
+
+    const boundingBox = {
+      x: minX,
+      y: minY,
+      width: Math.max(800, maxX - minX), // AIが窮屈にならないように最小幅保証
+      height: Math.max(600, maxY - minY),
+    };
+
+    const normalizedNodes = nodes.map((node) => ({
+      id: node.id,
+      label: node.label,
+      x: node.x - minX,
+      y: node.y - minY,
+      width: node.width || 160,
+      height: node.height || 50,
+    }));
+
+    return {
+      boundingBox,
+      nodes: normalizedNodes,
+    };
   }
 
-  // 操作前のスナップショットを保存（Undo対応）
-  const snapshot = this.captureSnapshot();
+  /**
+   * AI自動配置＆自動接続
+   * Pythonバックエンド（FastAPI + Gemini API）にノード情報を送信し、
+   * AIが計算した最適な配置座標と接続情報を受け取って適用する。
+   */
+  async aiAutoLayout() {
+    // ノードがない場合は何もしない
+    if (!this.nodes || this.nodes.length === 0) {
+      showToast('配置するノードがありません');
+      return;
+    }
 
-  // diagram_type の決定
-  let diagramType = 'architecture';
-  if (this.prefix === 'st') {
-    diagramType = 'screen-transition';
-  } else if (this.prefix === 'uml' && this.umlType) {
-    diagramType = this.umlType;
-  } else if (this.prefix === 'er') {
-    diagramType = 'erdiagram';
-  }
+    // 操作前のスナップショットを保存（Undo対応）
+    const snapshot = this.captureSnapshot();
 
-  // リクエストボディの構築
-  const requestBody = {
-    diagram_type: diagramType,
-    nodes: this.nodes.map(n => ({
-      id: n.id,
-      label: n.label,
-      x: n.x,
-      y: n.y,
-      width: n.width || 160,
-      height: n.height || 50,
-    })),
-    existing_connections: this.connections.map(c => ({
-      from: c.from,
-      to: c.to,
-      label: c.label || '',
-    })),
-    // ノード幅(約160px)+ラベル余白分を差し引き、右端のはみ出しを防止する
-    canvas_width: (this.canvas.clientWidth || 1200) - 200,
-    canvas_height: (this.canvas.clientHeight || 800) - 80,
-  };
+    // diagram_type の決定
+    let diagramType = 'architecture';
+    if (this.prefix === 'st') {
+      diagramType = 'screen-transition';
+    } else if (this.prefix === 'uml' && this.umlType) {
+      diagramType = this.umlType;
+    } else if (this.prefix === 'er') {
+      diagramType = 'erdiagram';
+    }
+
+    const aiPayload = this.buildAIPayload(this.nodes);
+    this.currentAIBoundingBox = aiPayload.boundingBox; // 応答時に足し戻すため保存
+
+    // リクエストボディの構築
+    const requestBody = {
+      diagram_type: diagramType,
+      nodes: aiPayload.nodes,
+      existing_connections: this.connections.map(c => ({
+        from: c.from,
+        to: c.to,
+        label: c.label || '',
+      })),
+      canvas_width: aiPayload.boundingBox.width,
+      canvas_height: aiPayload.boundingBox.height,
+    };
 
   // ローディング表示
   showToast('🤖 AIが最適な配置を計算中...');
@@ -4731,7 +4914,7 @@ async aiAutoLayout() {
         const node = this.nodes.find(n => n.id === rn.id);
         if (node) {
           startPositions[rn.id] = { x: node.x, y: node.y };
-          targetPositions[rn.id] = { x: rn.x, y: rn.y };
+          targetPositions[rn.id] = { x: rn.x + this.currentAIBoundingBox.x, y: rn.y + this.currentAIBoundingBox.y };
         }
       });
 

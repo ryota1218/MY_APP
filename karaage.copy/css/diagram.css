@@ -632,7 +632,7 @@
   transform: translateY(2px);
 }
 
-/* Diagram Canvas */
+/* Diagram Canvas (Legacy support for others) */
 .diagram-canvas {
   flex: 1; position: relative;
   background: #ffffff; border: 1px solid var(--border);
@@ -640,6 +640,25 @@
   background-image:
     radial-gradient(circle, rgba(0,0,0,0.1) 1px, transparent 1px);
   background-size: 24px 24px;
+}
+
+/* Virtual Camera Overrides */
+.diagram-viewport {
+  background: #f8fafc;
+}
+.diagram-world {
+  /* will be transformed via JS */
+}
+.diagram-viewport.grid-active {
+  background-image: radial-gradient(circle, rgba(0,0,0,0.1) 1.5px, transparent 1.5px);
+  /* background-size and position will be updated by JS VirtualCamera */
+}
+.diagram-canvas[style*="transparent"] {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+  background-image: none !important;
 }
 .diagram-canvas svg.connections {
   position: absolute;

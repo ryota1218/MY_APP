@@ -136,29 +136,7 @@ class ProfileManager {
   }
 
 
-      try {
-        // 他のメソッドで Auth クラスが利用されているため、
-        // SupabaseやカスタムAuthの再認証（ログイン確認）メソッドを呼び出します。
-        // ※プロジェクトのAuth仕様に合わせて、適切なメソッド（signInWithPassword等）に変更してください。
-        const result = await Auth.signInWithPassword(user.email, password);
-
-        if (result && result.error) {
-          throw new Error(result.error.message || 'パスワードが正しくありません。');
-        }
-
-        // 認証に成功したら、本来のアカウント設定画面へ遷移
-        if (window.showToast) showToast('本人確認が完了しました');
-        this.renderFullAccountSettings(user);
-
-      } catch (err) {
-        console.error('[Profile] Re-authentication failed:', err);
-        errorDiv.textContent = err.message || '認証に失敗しました。';
-        verifyBtn.disabled = false;
-        verifyBtn.textContent = '認証する';
-      }
-    };
-  }
-
+      
   async renderFullAccountSettings(user) {
     const modalContainer = document.getElementById('modal-container');
     modalContainer.style.display = 'block';

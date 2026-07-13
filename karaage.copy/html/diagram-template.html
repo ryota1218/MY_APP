@@ -113,9 +113,9 @@
     </button>
   </div>
 </div>
-<div class="diagram-workspace architecture-workspace" style="position: relative; overflow: hidden; display: flex;">
-  <div class="diagram-canvas grid-active" id="{{prefix}}-canvas">
-    <svg class="connections" id="{{prefix}}-svg"></svg>
+<div class="diagram-workspace architecture-workspace diagram-viewport grid-active" id="{{prefix}}-viewport" style="position: relative; overflow: hidden; display: block; flex: 1;">
+  <div class="diagram-world diagram-canvas" id="{{prefix}}-canvas" style="position: absolute; top: 0; left: 0; transform-origin: 0 0; width: 100%; height: 100%; background: transparent; border: none; overflow: visible;">
+    <svg class="connections" id="{{prefix}}-svg" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 5;"></svg>
   </div>
   
   <!-- プロパティパネル (右からのスライドバー) -->
