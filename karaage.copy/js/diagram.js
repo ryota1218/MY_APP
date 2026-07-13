@@ -854,6 +854,7 @@ class DiagramTool {
       this.canvas.querySelector('.timing-labels-overlay')?.remove();
       this.canvas.querySelector('.timing-time-axis')?.remove();
       this.canvas.querySelector('.timing-wave-svg')?.remove();
+      this.canvas.querySelector('.timing-wave-svg-cross')?.remove();
 
       if (isTiming) {
         // ドットオーバーレイの生成（DOM要素として個別の点を配置）
@@ -866,6 +867,12 @@ class DiagramTool {
           waveSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
           waveSvg.classList.add('timing-wave-svg');
           this.canvas.appendChild(waveSvg);
+        }
+        let waveSvgCross = this.canvas.querySelector('.timing-wave-svg-cross');
+        if (!waveSvgCross) {
+          waveSvgCross = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          waveSvgCross.classList.add('timing-wave-svg-cross');
+          this.canvas.appendChild(waveSvgCross);
         }
 
         // 50列 × 12行のグリッドに点を配置
@@ -996,6 +1003,10 @@ class DiagramTool {
     if (oldConnGroup) oldConnGroup.remove();
     const oldConnBtn = document.getElementById(this.prefix + '-connect-mode');
     if (oldConnBtn) { oldConnBtn.style.display = ''; oldConnBtn.replaceWith(oldConnBtn.cloneNode(true)); }
+    
+    // 以前のシェイプメニューをクリーンアップ（ID重複防止）
+    const oldShapeMenu = document.getElementById(this.prefix + '-shape-menu');
+    if (oldShapeMenu) oldShapeMenu.remove();
 
     const palette = document.getElementById(this.prefix + '-palette');
     if (this.isDropdownPalette) {
@@ -2437,9 +2448,9 @@ _handleTimingDotClick(dot, waveSvg) {
   // 同一点をクリック → キャンセル
   if (fromCol === toCol && fromRow === toRow) return;
 
-  // 同一オブジェクト内：斜めは禁止（水平のみ許可）
-  if (fromArea === toArea && fromRow !== toRow) {
-    showToast('同一オブジェクト内では水平方向のみ接続できます');
+  // 同一オブジェクト内：斜めは禁止（水平・垂直のみ許可）
+  if (fromArea === toArea && fromCol !== toCol && fromRow !== toRow) {
+    showToast('同一オブジェクト内では斜め接続はできません（水平・垂直のみ可能です）');
     return;
   }
 
@@ -2455,8 +2466,19 @@ _handleTimingDotClick(dot, waveSvg) {
 
 _drawTimingWaveLines(waveSvg) {
   if (!waveSvg || !this._timingWaveLines) return;
-  // SVG内をクリア
-  waveSvg.innerHTML = '';
+  const waveSvgCross = this.canvas.querySelector('.timing-wave-svg-cross');
+  if (waveSvgCross) waveSvgCross.innerHTML = '';
+  // SVGクリアと矢印の定義（テーマカラー対応のためクラスを付与）
+  waveSvg.innerHTML = `
+    <defs>
+      <marker id="arrowhead-same" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+        <polygon points="0 0, 8 4, 0 8" class="timing-marker-same" />
+      </marker>
+      <marker id="arrowhead-cross" markerWidth="8" markerHeight="8" refX="8" refY="4" orient="auto">
+        <polygon points="0 0, 8 4, 0 8" class="timing-marker-cross" />
+      </marker>
+    </defs>
+  `;
 
   const overlay = this.canvas.querySelector('.timing-dots-overlay');
   if (!overlay) return;
@@ -2470,11 +2492,22 @@ _drawTimingWaveLines(waveSvg) {
   const rows = 12;
 
   this._timingWaveLines.forEach(seg => {
-    const x1 = offsetX + (seg.fromCol / cols) * w;
-    const y1 = offsetY + (seg.fromRow / rows) * h;
-    const x2 = offsetX + (seg.toCol / cols) * w;
-    const y2 = offsetY + (seg.toRow / rows) * h;
+    let x1 = offsetX + (seg.fromCol / cols) * w;
+    let y1 = offsetY + (seg.fromRow / rows) * h;
+    let x2 = offsetX + (seg.toCol / cols) * w;
+    let y2 = offsetY + (seg.toRow / rows) * h;
     const isCross = seg.fromArea !== seg.toArea;
+
+    if (isCross) {
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > 12) {
+        // 短くしてドットの中心ではなく縁（フチ）で線が止まるように計算
+        x2 = x2 - (dx / dist) * 6;
+        y2 = y2 - (dy / dist) * 6;
+      }
+    }
 
     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
     line.setAttribute('x1', x1);
@@ -2482,7 +2515,13 @@ _drawTimingWaveLines(waveSvg) {
     line.setAttribute('x2', x2);
     line.setAttribute('y2', y2);
     line.classList.add(isCross ? 'timing-line-cross' : 'timing-line-same');
-    waveSvg.appendChild(line);
+    if (isCross) {
+      line.setAttribute('marker-end', 'url(#arrowhead-cross)');
+      if (waveSvgCross) waveSvgCross.appendChild(line);
+      else waveSvg.appendChild(line);
+    } else {
+      waveSvg.appendChild(line);
+    }
   });
 }
 
