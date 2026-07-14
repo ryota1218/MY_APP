@@ -800,6 +800,11 @@ svg.connections circle {
   border: 1px solid var(--bg-secondary);
   transition: opacity 0.2s, transform 0.2s;
 }
+.behavior-node-initial .node-port,
+.behavior-node-final .node-port {
+  width: 5px;
+  height: 5px;
+}
 .node-type-port .node-port:hover,
 .node-type-interface .node-port:hover {
   opacity: 1;
@@ -807,12 +812,23 @@ svg.connections circle {
 }
 .node-type-port .node-port.port-top,
 .node-type-interface .node-port.port-top { top: -3px; }
+.behavior-node-initial .node-port.port-top { top: -3px; }
+.behavior-node-final .node-port.port-top { top: -4px; }
+
 .node-type-port .node-port.port-bottom,
 .node-type-interface .node-port.port-bottom { bottom: -3px; }
+.behavior-node-initial .node-port.port-bottom { bottom: -3px; }
+.behavior-node-final .node-port.port-bottom { bottom: -4px; }
+
 .node-type-port .node-port.port-left,
 .node-type-interface .node-port.port-left { left: -3px; }
+.behavior-node-initial .node-port.port-left { left: -3px; }
+.behavior-node-final .node-port.port-left { left: -4px; }
+
 .node-type-port .node-port.port-right,
 .node-type-interface .node-port.port-right { right: -3px; }
+.behavior-node-initial .node-port.port-right { right: -3px; }
+.behavior-node-final .node-port.port-right { right: -4px; }
 
 /* ===== UML Deployment Diagram (3D Nodes & Artifacts) ===== */
 .uml-deployment-node {
