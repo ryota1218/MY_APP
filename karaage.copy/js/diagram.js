@@ -834,14 +834,33 @@ class DiagramTool {
   applyUmlMode() {
     const section = this.canvas?.closest('.tool-section');
     if (!section) return;
+    
+    const isTiming = this.umlType === 'timing';
+    const isClass = this.umlType === 'class';
+    
     const styleControls = section.querySelector('.diagram-style-controls');
     if (styleControls) {
-      styleControls.style.display = this.umlType === 'class' ? 'none' : '';
+      styleControls.style.display = (isClass || isTiming) ? 'none' : '';
     }
     // セパレータも非表示
     const sep = styleControls?.nextElementSibling;
     if (sep && sep.classList.contains('toolbar-sep')) {
-      sep.style.display = this.umlType === 'class' ? 'none' : '';
+      sep.style.display = (isClass || isTiming) ? 'none' : '';
+    }
+
+    // タイミング図のときは図形ツールも非表示にする
+    const shapeControls = section.querySelector('.toolbar-inline-shapes-group');
+    if (shapeControls) {
+      shapeControls.style.display = isTiming ? 'none' : '';
+    }
+    const shapePaletteBtn = section.querySelector('.palette-dropdown');
+    if (shapePaletteBtn) {
+      shapePaletteBtn.style.display = isTiming ? 'none' : '';
+    }
+    // 図形ツール横のセパレータも非表示
+    const shapeSep = shapeControls?.nextElementSibling;
+    if (shapeSep && shapeSep.classList.contains('toolbar-sep')) {
+      shapeSep.style.display = isTiming ? 'none' : '';
     }
 
     // タイミング図の場合のみ上下二分割のガイドとドットオーバーレイを表示
@@ -874,6 +893,9 @@ class DiagramTool {
           waveSvgCross.classList.add('timing-wave-svg-cross');
           this.canvas.appendChild(waveSvgCross);
         }
+
+        // 再描画用に参照を保持
+        this._timingWaveSvg = waveSvg;
 
         // 50列 × 12行のグリッドに点を配置
         const cols = 50;
@@ -2468,53 +2490,89 @@ _drawTimingWaveLines(waveSvg) {
   if (!waveSvg || !this._timingWaveLines) return;
   const waveSvgCross = this.canvas.querySelector('.timing-wave-svg-cross');
   if (waveSvgCross) waveSvgCross.innerHTML = '';
-  // SVGクリアと矢印の定義（テーマカラー対応のためクラスを付与）
+  // SVGクリアと矢印の定義（userSpaceOnUse でサイズをピクセル固定）
   waveSvg.innerHTML = `
     <defs>
-      <marker id="arrowhead-same" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
-        <polygon points="0 0, 8 4, 0 8" class="timing-marker-same" />
+      <marker id="arrowhead-same" markerWidth="24" markerHeight="24" refX="18" refY="12" orient="auto" markerUnits="userSpaceOnUse">
+        <polygon points="0 0, 24 12, 0 24" class="timing-marker-same" />
       </marker>
-      <marker id="arrowhead-cross" markerWidth="8" markerHeight="8" refX="8" refY="4" orient="auto">
-        <polygon points="0 0, 8 4, 0 8" class="timing-marker-cross" />
+      <marker id="arrowhead-cross" markerWidth="16" markerHeight="16" refX="16" refY="8" orient="auto" markerUnits="userSpaceOnUse">
+        <polygon points="0 0, 16 8, 0 16" class="timing-marker-cross" />
       </marker>
     </defs>
   `;
 
-  const overlay = this.canvas.querySelector('.timing-dots-overlay');
-  if (!overlay) return;
-  const overlayRect = overlay.getBoundingClientRect();
-  const canvasRect = this.canvas.getBoundingClientRect();
-  const offsetX = overlayRect.left - canvasRect.left;
-  const offsetY = overlayRect.top - canvasRect.top;
-  const w = overlayRect.width;
-  const h = overlayRect.height;
+  // ──────────────────────────────────────────────────────────────
+  // % ベース座標系で線を描画
+  //   キャンバス幅の 1/6 がラベル領域、残り 5/6 がグリッド領域
+  //   SVG の viewBox は "0 0 100 100" の % 空間として扱う
+  //
+  //   x = ラベル幅(%) + グリッド幅(%) × (col / cols)
+  //   y =              グリッド高(%) × (row / rows)
+  //
+  // これにより getBoundingClientRect() に依存せず、
+  // キャンバスサイズが変わっても SVG が自動追従する。
+  // ──────────────────────────────────────────────────────────────
+  // % ベース座標系で線を描画
+  //   SVG はグリッドエリア（幅: calc(100% * 5/6 - 8px)）にぴったりフィットしているため、
+  //   x座標はシンプルに (col / cols) * 100 になります。
+  // ──────────────────────────────────────────────────────────────
   const cols = 50;
   const rows = 12;
+  // SVG の座標空間はピクセル等倍のまま（viewBoxは指定しない）にし、
+  // 線の座標（x1, y1 等）の指定時に "%" の文字列を付与してパーセント指定とします。
+  waveSvg.removeAttribute('viewBox');
+  waveSvg.removeAttribute('preserveAspectRatio');
+  if (waveSvgCross) {
+    waveSvgCross.removeAttribute('viewBox');
+    waveSvgCross.removeAttribute('preserveAspectRatio');
+  }
+
+  // 列・行インデックスを % 座標に変換する関数
+  const colToPct = col => (col / cols) * 100;
+  const rowToPct = row => (row / rows) * 100;
 
   this._timingWaveLines.forEach(seg => {
-    let x1 = offsetX + (seg.fromCol / cols) * w;
-    let y1 = offsetY + (seg.fromRow / rows) * h;
-    let x2 = offsetX + (seg.toCol / cols) * w;
-    let y2 = offsetY + (seg.toRow / rows) * h;
+    let x1 = colToPct(seg.fromCol);
+    let y1 = rowToPct(seg.fromRow);
+    let x2 = colToPct(seg.toCol);
+    let y2 = rowToPct(seg.toRow);
     const isCross = seg.fromArea !== seg.toArea;
 
     if (isCross) {
+      // 破線の終点を少し手前（ドットの縁）で止める
+      // % 空間上で dot の半径分（およそ 0.5%）引く
       const dx = x2 - x1;
       const dy = y2 - y1;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist > 12) {
-        // 短くしてドットの中心ではなく縁（フチ）で線が止まるように計算
-        x2 = x2 - (dx / dist) * 6;
-        y2 = y2 - (dy / dist) * 6;
+      if (dist > 0.5) {
+        x2 = x2 - (dx / dist) * 0.5;
+        y2 = y2 - (dy / dist) * 0.5;
       }
     }
 
     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('x1', x1);
-    line.setAttribute('y1', y1);
-    line.setAttribute('x2', x2);
-    line.setAttribute('y2', y2);
+    line.setAttribute('x1', x1 + '%');
+    line.setAttribute('y1', y1 + '%');
+    line.setAttribute('x2', x2 + '%');
+    line.setAttribute('y2', y2 + '%');
     line.classList.add(isCross ? 'timing-line-cross' : 'timing-line-same');
+    
+    // 削除モード時のクリック処理
+    line.addEventListener('mousedown', e => {
+      if (this.currentMode === 'erase') {
+        e.stopPropagation();
+        const idx = this._timingWaveLines.indexOf(seg);
+        if (idx > -1) {
+          this._timingWaveLines.splice(idx, 1);
+          // DOMから直接取得して確実に最新のSVG要素を参照する
+          const svgEl = this.canvas.querySelector('.timing-wave-svg');
+          if (svgEl) this._drawTimingWaveLines(svgEl);
+          if (typeof showToast === 'function') showToast('接続線を削除しました');
+        }
+      }
+    });
+
     if (isCross) {
       line.setAttribute('marker-end', 'url(#arrowhead-cross)');
       if (waveSvgCross) waveSvgCross.appendChild(line);
