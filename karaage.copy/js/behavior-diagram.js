@@ -34,8 +34,8 @@
     lane: { kind: 'card', minWidth: '180px' },
     decision: { kind: 'diamond', minWidth: '110px' },
     merge: { kind: 'diamond', minWidth: '110px' },
-    start: { kind: 'round', minWidth: '96px' },
-    end: { kind: 'round', minWidth: '96px', ring: true },
+    start: { kind: 'initial' },
+    end: { kind: 'final' },
     fork: { kind: 'bar', minWidth: '140px' },
     join: { kind: 'bar', minWidth: '140px' },
   };
@@ -52,6 +52,45 @@
     const icon = node.icon || '';
     const borderColor = node.color ? `${node.color}80` : '#e5e7eb';
     const baseStyle = { 'border-color': borderColor, background: 'var(--bg-secondary)' };
+    const ports = `
+      <span class="node-port port-top" data-port="top"></span>
+      <span class="node-port port-bottom" data-port="bottom"></span>
+      <span class="node-port port-left" data-port="left"></span>
+      <span class="node-port port-right" data-port="right"></span>`;
+
+    if (variant.kind === 'initial') {
+      return {
+        className: 'diagram-node behavior-node behavior-node-initial',
+        style: buildNodeStyleString({
+          ...baseStyle,
+          width: '34px',
+          height: '34px',
+          'min-width': '34px',
+          padding: '0',
+          border: 'none',
+          'border-radius': '50%',
+          background: '#111827',
+        }),
+        innerHTML: `${ports}`,
+      };
+    }
+
+    if (variant.kind === 'final') {
+      return {
+        className: 'diagram-node behavior-node behavior-node-final',
+        style: buildNodeStyleString({
+          ...baseStyle,
+          width: '34px',
+          height: '34px',
+          'min-width': '34px',
+          padding: '0',
+          'border-radius': '50%',
+          border: '2px solid #111827',
+          background: '#fff',
+        }),
+        innerHTML: `<div style="width:16px;height:16px;border-radius:50%;background:#111827;display:block;"></div>${ports}`,
+      };
+    }
 
     if (variant.kind === 'diamond') {
       return {
@@ -193,7 +232,6 @@
           border: 'none',
           'border-radius': '50%',
           background: '#111827',
-          'box-shadow': '0 0 0 5px rgba(17,24,39,0.12)',
         }),
         innerHTML: `${ports}`,
       };
@@ -211,7 +249,6 @@
           'border-radius': '50%',
           border: '2px solid #111827',
           background: '#fff',
-          'box-shadow': '0 0 0 4px rgba(17,24,39,0.08)',
         }),
         innerHTML: `<div style="width:16px;height:16px;border-radius:50%;background:#111827;display:block;"></div>${ports}`,
       };
@@ -377,6 +414,7 @@
       { icon:'<i data-lucide="user" class="node-lucide-icon"></i>', label:'アクター', color:'#10b981', behaviorType:'actor' },
       { icon:'<i data-lucide="circle" class="node-lucide-icon"></i>', label:'ユースケース', color:'#f59e0b', behaviorType:'usecase' },
       { icon:'<i data-lucide="rectangle-horizontal" class="node-lucide-icon"></i>', label:'システム境界', color:'#7c3aed', behaviorType:'systemBoundary' },
+      { icon:'<i data-lucide="list-plus" class="node-lucide-icon"></i>', label:'拡張ポイント', color:'#ec4899', behaviorType:'extensionPoint', defaults: { label: '拡張ポイント1' } },
       { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b', behaviorType:'usecaseNote' },
     ],
   };
@@ -386,6 +424,7 @@
     actor:           { kind: 'actor', width: '60px', height: '80px' },
     usecase:         { kind: 'ellipse', minWidth: '140px', minHeight: '80px' },
     systemBoundary:  { kind: 'systemBox', minWidth: '320px', minHeight: '240px' },
+    extensionPoint:  { kind: 'extensionPoint', minWidth: '160px', minHeight: '60px' },
     usecaseNote:     { kind: 'card', minWidth: '140px' },
   };
 
@@ -412,7 +451,7 @@
           height: variant.height,
           'min-width': variant.width,
           'min-height': variant.height,
-          padding: '0',
+          padding: '8px 4px 4px',
           display: 'flex',
           'flex-direction': 'column',
           'align-items': 'center',
@@ -470,6 +509,29 @@
             <span class="node-label" style="font-weight:700;white-space:nowrap;">${label}</span>
           </div>
           <div style="flex:1;"></div>
+          ${ports}`,
+      };
+    }
+
+    if (variant.kind === 'extensionPoint') {
+      return {
+        className: 'diagram-node usecase-node usecase-node-extension-point',
+        style: buildNodeStyleString({
+          ...baseStyle,
+          'min-width': variant.minWidth,
+          'min-height': variant.minHeight,
+          padding: '10px 14px',
+          display: 'flex',
+          'flex-direction': 'column',
+          gap: '6px',
+          'border-radius': '6px',
+          border: '1.5px dashed ' + (node.color || '#ec4899'),
+          background: 'transparent',
+          'box-sizing': 'border-box',
+        }),
+        innerHTML: `
+          <div style="font-size:0.75rem;font-weight:bold;border-bottom:1px solid ${node.color}40;padding-bottom:4px;text-align:center;color:${node.color};">extension points</div>
+          <span class="node-label" style="text-align:center;word-break:break-word;padding-top:4px;">${label}</span>
           ${ports}`,
       };
     }

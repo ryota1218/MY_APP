@@ -94,11 +94,13 @@ module.exports = async (req, res) => {
         .eq('project_id', projectId)
         .eq('user_id', userId);
 
-      // 4. pending_owner_id をクリア
-      await supabaseClient
+      // 4. pending_owner_id をクリアし、account_id（真のオーナー権限）も自分に変更する
+      const { error: finalError } = await supabaseClient
         .from('projects')
-        .update({ pending_owner_id: null })
+        .update({ pending_owner_id: null, account_id: userId })
         .eq('id', projectId);
+      
+      if (finalError) return res.status(500).json({ error: finalError.message });
 
       return res.status(200).json({ success: true, message: 'Transfer approved' });
     }

@@ -559,6 +559,7 @@ const umlDiagramTypes = {
   interaction: {
     label: '相互作用図',
     components: [
+      { icon: '<i data-lucide="layout" class="node-lucide-icon"></i>', label: 'フレーム', color: '#8b5cf6', nodeType: 'composite-frame', defaults: { stereotype: 'sd', label: 'Interaction' }, size: { w: 320, h: 220 } },
       { icon: '<i data-lucide="square" class="node-lucide-icon"></i>', label: '相互作用', color: 'var(--accent, #7c3aed)' },
       { icon: '<i data-lucide="user" class="node-lucide-icon"></i>', label: 'ライフライン', color: '#3b82f6' },
       { icon: '<i data-lucide="mail" class="node-lucide-icon"></i>', label: 'メッセージ', color: '#06b6d4' },
@@ -1211,13 +1212,12 @@ class DiagramTool {
     const col = this.quickAddCounter % 4;
     const row = Math.floor(this.quickAddCounter / 4);
   
-    // カメラの現在の表示中心をワール座標に変換してそこから配置
+    // 画面の左上（80, 80）をワールド座標に変換してそこから配置
     let baseX = 80, baseY = 80;
     if (this.camera && this.viewport) {
-      const vRect = this.viewport.getBoundingClientRect();
-      const center = this.camera.screenToWorld(vRect.width / 2, vRect.height / 2);
-      baseX = Math.max(0, center.x - 60);
-      baseY = Math.max(0, center.y - 40);
+      const topLeft = this.camera.screenToWorld(80, 80);
+      baseX = Math.max(0, topLeft.x);
+      baseY = Math.max(0, topLeft.y);
     }
 
     const x = baseX + col * 140;
@@ -1247,10 +1247,18 @@ class DiagramTool {
       if (isNaN(idx)) return;
       const vRect = this.viewport.getBoundingClientRect();
       const worldPos = this.camera.screenToWorld(e.clientX - vRect.left, e.clientY - vRect.top);
-      const x = worldPos.x - 60;
-      const y = worldPos.y - 20;
-
       const comp = this.components[idx];
+      if (!comp) return;
+
+      let w = 120, h = 40; // Default size
+      if (comp.behaviorType === 'stateInitial' || comp.behaviorType === 'stateFinal') { w = 34; h = 34; }
+      else if (comp.behaviorType === 'actor') { w = 60; h = 80; }
+      else if (comp.behaviorType === 'choice' || comp.nodeType === 'diamond') { w = 110; h = 110; }
+      else if (comp.width) { w = comp.width; }
+      if (comp.height) { h = comp.height; }
+
+      const x = worldPos.x - w / 2;
+      const y = worldPos.y - h / 2;
       // 無限キャンバス（案B）: 左上（マイナス座標）のみ制限
       if (x < 0 || y < 0) {
         if (typeof showToast === 'function') showToast('キャンバスの左上端より外には配置できません');
@@ -1856,8 +1864,8 @@ zoomOut() {
 resetZoom() {
   if (this.camera) {
     const vRect = this.viewport.getBoundingClientRect();
-    // 中央を原点に戻す
-    this.camera.reset(vRect.width / 2, vRect.height / 2, 1);
+    // キャンバスの左上（原点）をビューポートの左上に戻す
+    this.camera.reset(0, 0, 1);
     this.zoomLevel = this.camera.zoom;
   }
 }

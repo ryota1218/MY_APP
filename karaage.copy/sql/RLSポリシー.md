@@ -129,6 +129,17 @@ using (
   (project_id IN ( SELECT id FROM projects WHERE account_id = auth.uid() ))
 );
 
+-- 更新ポリシー (UPDATE) 追加分: 譲渡承認待ちのユーザー(pending_owner_id)もメンバー権限を更新可能
+create policy "Enable update project_members for pending owner"
+on "public"."project_members"
+for update
+to authenticated
+using (
+  project_id IN (SELECT id FROM projects WHERE pending_owner_id = auth.uid())
+) with check (
+  project_id IN (SELECT id FROM projects WHERE pending_owner_id = auth.uid())
+);
+
 -- 削除ポリシー (DELETE): プロジェクト作成者(オーナー)がメンバーを削除、またはメンバー本人が脱退可能
 create policy "Enable delete for owners or members themselves"
 on "public"."project_members"
@@ -177,6 +188,17 @@ using (
   (account_id = auth.uid())
 ) with check (
   (account_id = auth.uid())
+);
+
+-- 更新ポリシー (UPDATE) 追加分: 譲渡承認待ちのユーザー(pending_owner_id)もプロジェクト情報を更新可能
+create policy "Enable update projects for pending owner"
+on "public"."projects"
+for update
+to authenticated
+using (
+  pending_owner_id = auth.uid()
+) with check (
+  pending_owner_id = auth.uid()
 );
 
 -- 削除ポリシー (DELETE): プロジェクト作成者(オーナー)のみがプロジェクトを削除可能
