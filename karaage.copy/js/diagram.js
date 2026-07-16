@@ -80,8 +80,7 @@ const umlDiagramTypes = {
   object: {
     label: 'オブジェクト図',
     components: [
-      { icon: '<i data-lucide="square" class="node-lucide-icon"></i>', label: 'オブジェクト', color: '#14b8a6' },
-      { icon: '<i data-lucide="link-2" class="node-lucide-icon"></i>', label: 'リンク', color: 'var(--accent, #7c3aed)' },
+      { icon: '<i data-lucide="square" class="node-lucide-icon"></i>', label: 'オブジェクト', color: '#14b8a6', nodeType: 'object-box', defaults: { attributes: ['age = 25'] } },
       { icon: '<i data-lucide="box" class="node-lucide-icon"></i>', label: 'クラス', color: '#3b82f6' },
       { icon: '<i data-lucide="file-text" class="node-lucide-icon"></i>', label: 'ノート', color: '#64748b' },
     ],
@@ -1306,7 +1305,7 @@ class DiagramTool {
     const bindInput = (suffix, prop, parser = String) => {
       const el = document.getElementById(this.prefix + '-prop-' + suffix);
       if (el) {
-        el.addEventListener('input', (e) => {
+        const handler = (e) => {
           if (this.propertyPanelNode) {
             this.propertyPanelNode[prop] = parser(e.target.value);
             if (this.propertyPanelNode.from !== undefined) {
@@ -1315,7 +1314,11 @@ class DiagramTool {
               this.updateNodeDOM(this.propertyPanelNode);
             }
           }
-        });
+        };
+        el.addEventListener('input', handler);
+        if (el.tagName === 'SELECT') {
+          el.addEventListener('change', handler);
+        }
       }
     };
     bindInput('label', 'label');
@@ -1353,7 +1356,44 @@ class DiagramTool {
     bindInput('subtexttop', 'subtextTop');
     bindInput('subtextbottom', 'subtextBottom');
     bindInput('arrowdir', 'arrowDirection');
+    bindInput('conntype', 'connType');
 
+    const conntypeEl = document.getElementById(this.prefix + '-prop-conntype');
+    if (conntypeEl) {
+      conntypeEl.addEventListener('change', () => {
+        if (!this.propertyPanelNode) return;
+        const conn = this.propertyPanelNode;
+        const type = conntypeEl.value;
+
+        // portProtocol（ポートラベル）を自動設定
+        const portLabels = {
+          include: '<<include>>',
+          extend:  '<<extend>>',
+          dependency: '<<use>>',
+        };
+        if (portLabels[type] !== undefined) {
+          conn.portProtocol = portLabels[type];
+        } else {
+          // association / aggregation / composition は空にリセット
+          conn.portProtocol = '';
+        }
+
+        // ポート入力欄のUIへの反映
+        const portEl = document.getElementById(this.prefix + '-prop-port-center');
+        if (portEl) portEl.value = conn.portProtocol;
+
+        // 線スタイルを自動切替（include/extend/dependency は破線、その他は実線）
+        const dashedTypes = ['include', 'extend', 'dependency'];
+        conn.lineStyle = dashedTypes.includes(type) ? 'dashed' : 'solid';
+
+        // 線スタイルUIの同期
+        const lineStyleEl = document.getElementById(this.prefix + '-prop-linestyle');
+        if (lineStyleEl) lineStyleEl.value = conn.lineStyle;
+
+        this.drawConnections();
+        if (this.saveState) this.saveState();
+      });
+    }
     // プロパティパネルのカラーピッカー初期化
     this.initPropertyPanelColorPicker('textcolor', 'textColor');
     this.initPropertyPanelColorPicker('color', 'color');
@@ -1513,6 +1553,8 @@ openPropertyPanel(node) {
   if (nodeOnlyGroup) nodeOnlyGroup.style.display = isNode ? '' : 'none';
   const connOnlyGroup = document.getElementById(this.prefix + '-prop-group-conn-only');
   if (connOnlyGroup) connOnlyGroup.style.display = isConn ? '' : 'none';
+  const conntypeGroup = document.getElementById(this.prefix + '-prop-group-conntype');
+  if (conntypeGroup) conntypeGroup.style.display = isConn ? '' : 'none';
 
   const panel = document.getElementById(this.prefix + '-property-panel');
   if (panel) panel.classList.add('open');
@@ -1584,11 +1626,12 @@ openPropertyPanel(node) {
   } else if (isConn) {
     // 線（コネクション）を選択した場合
     setVal('label', node.label || '');
-    setVal('arrowdir', node.arrowDirection || 'one-way');
+    setVal('arrowdir', node.arrowDirection || 'default');
     setVal('routing', node.routing || 'straight');
     setVal('linestyle', node.lineStyle || 'solid');
     setVal('multFrom', node.multiplicityFrom || '');
     setVal('multTo', node.multiplicityTo || '');
+    setVal('conntype', node.connType || 'association');
 
     // ポートモード初期化
     if (!node.portMode) {
@@ -1672,32 +1715,99 @@ openPropertyPanel(node) {
   // 以前の動的フィールドを削除
   panelBody?.querySelectorAll('.uml-class-prop-group').forEach(g => g.remove());
 
-  // class-box の場合: フォントサイズ・文字色フィールドを非表示にする
+  // class-box, object-box の場合: フォントサイズ・文字色フィールドを非表示にする
   const fontsizeGroup = document.getElementById(this.prefix + '-prop-fontsize')?.closest('.property-group');
   const textcolorGroup = document.getElementById(this.prefix + '-prop-textcolor')?.closest('.property-group');
-  if (fontsizeGroup) fontsizeGroup.style.display = node.nodeType === 'class-box' ? 'none' : '';
-  if (textcolorGroup) textcolorGroup.style.display = node.nodeType === 'class-box' ? 'none' : '';
+  const labelGroup = document.getElementById(this.prefix + '-prop-label')?.closest('.property-group');
+  
+  const isClassOrObjectBox = node.nodeType === 'class-box' || node.nodeType === 'object-box';
+  if (fontsizeGroup) fontsizeGroup.style.display = isClassOrObjectBox ? 'none' : '';
+  if (textcolorGroup) textcolorGroup.style.display = isClassOrObjectBox ? 'none' : '';
+  if (labelGroup) labelGroup.style.display = node.nodeType === 'object-box' ? 'none' : '';
 
-  if (node.nodeType === 'class-box' && panelBody) {
+  if (isClassOrObjectBox && panelBody) {
     const deleteBtn = panelBody.querySelector('[data-action="deleteSelectedNode"]');
 
-    // ステレオタイプ
-    const stereoGroup = document.createElement('div');
-    stereoGroup.className = 'property-group uml-class-prop-group';
-    stereoGroup.innerHTML = `<label>ステレオタイプ</label>
-        <input type="text" class="property-input" value="${this.escapeHtml(node.stereotype || '')}" placeholder="例: «interface»">`;
-    panelBody.insertBefore(stereoGroup, deleteBtn);
-    stereoGroup.querySelector('input').addEventListener('input', e => {
-      if (!this.propertyPanelNode) return;
-      this.propertyPanelNode.stereotype = e.target.value;
-      this.updateNodeDOM(this.propertyPanelNode);
-    });
+    if (node.nodeType === 'object-box') {
+      let objName = '';
+      let className = '';
+      if (node.label) {
+        const parts = node.label.split(':').map(s => s.trim());
+        if (parts.length > 1) {
+          objName = parts[0];
+          className = parts.slice(1).join(':').trim();
+        } else {
+          // No colon, so it's just an object name
+          objName = parts[0];
+        }
+      }
+      
+      const nameGroup = document.createElement('div');
+      nameGroup.className = 'property-group uml-class-prop-group';
+      nameGroup.innerHTML = `
+        <div style="display: flex; gap: 10px; margin-bottom: 5px;">
+          <div style="flex: 1;">
+            <label>オブジェクト名 <span class="prop-hint">(任意)</span></label>
+            <input type="text" class="property-input" id="${this.prefix}-prop-obj-name" value="${this.escapeHtml(objName)}" placeholder="例: taro">
+          </div>
+          <div style="flex: 1;">
+            <label>クラス名 <span class="prop-hint">(任意)</span></label>
+            <input type="text" class="property-input" id="${this.prefix}-prop-class-name" value="${this.escapeHtml(className)}" placeholder="例: User">
+          </div>
+        </div>
+        <div class="prop-hint" id="${this.prefix}-prop-name-preview" style="font-weight: bold; margin-bottom: 10px;">
+          プレビュー: <span style="text-decoration: underline;">(未入力)</span>
+        </div>
+      `;
+      panelBody.insertBefore(nameGroup, deleteBtn);
+      
+      const objInput = nameGroup.querySelector(`#${this.prefix}-prop-obj-name`);
+      const classInput = nameGroup.querySelector(`#${this.prefix}-prop-class-name`);
+      const preview = nameGroup.querySelector(`#${this.prefix}-prop-name-preview span`);
+      
+      const updateLabel = () => {
+        const o = objInput.value.trim();
+        const c = classInput.value.trim();
+        let newLabel = '';
+        if (o && c) newLabel = `${o} : ${c}`;
+        else if (c) newLabel = `: ${c}`;
+        else if (o) newLabel = o;
+        
+        preview.textContent = newLabel || '(未入力)';
+        if (!this.propertyPanelNode) return;
+        this.propertyPanelNode.label = newLabel;
+        this.updateNodeDOM(this.propertyPanelNode);
+      };
+      
+      objInput.addEventListener('input', updateLabel);
+      classInput.addEventListener('input', updateLabel);
+      updateLabel(); // 初期表示更新
+    }
 
-    // 属性
+    if (node.nodeType === 'class-box') {
+      // ステレオタイプ
+      const stereoGroup = document.createElement('div');
+      stereoGroup.className = 'property-group uml-class-prop-group';
+      stereoGroup.innerHTML = `<label>ステレオタイプ</label>
+          <input type="text" class="property-input" value="${this.escapeHtml(node.stereotype || '')}" placeholder="例: «interface»">`;
+      panelBody.insertBefore(stereoGroup, deleteBtn);
+      stereoGroup.querySelector('input').addEventListener('input', e => {
+        if (!this.propertyPanelNode) return;
+        this.propertyPanelNode.stereotype = e.target.value;
+        this.updateNodeDOM(this.propertyPanelNode);
+      });
+    }
+
+    // 属性 / スロット
     const attrGroup = document.createElement('div');
     attrGroup.className = 'property-group uml-class-prop-group';
-    attrGroup.innerHTML = `<label>属性 <span class="prop-hint">(1行1属性)</span></label>
-        <textarea class="property-input property-textarea" rows="4" placeholder="-属性名 : 型">${(node.attributes || []).join('\n')}</textarea>`;
+    if (node.nodeType === 'class-box') {
+      attrGroup.innerHTML = `<label>属性 <span class="prop-hint">(1行1属性)</span></label>
+          <textarea class="property-input property-textarea" rows="4" placeholder="-属性名 : 型">${(node.attributes || []).join('\n')}</textarea>`;
+    } else {
+      attrGroup.innerHTML = `<label>スロット (属性の現在値) <span class="prop-hint">(1行1スロット)</span></label>
+          <textarea class="property-input property-textarea" rows="4" placeholder="age = 25">${(node.attributes || []).join('\n')}</textarea>`;
+    }
     panelBody.insertBefore(attrGroup, deleteBtn);
     attrGroup.querySelector('textarea').addEventListener('input', e => {
       if (!this.propertyPanelNode) return;
@@ -1705,17 +1815,19 @@ openPropertyPanel(node) {
       this.updateNodeDOM(this.propertyPanelNode);
     });
 
-    // 操作
-    const methodGroup = document.createElement('div');
-    methodGroup.className = 'property-group uml-class-prop-group';
-    methodGroup.innerHTML = `<label>操作 <span class="prop-hint">(1行1操作)</span></label>
-        <textarea class="property-input property-textarea" rows="4" placeholder="+操作名() : 戻り値型">${(node.methods || []).join('\n')}</textarea>`;
-    panelBody.insertBefore(methodGroup, deleteBtn);
-    methodGroup.querySelector('textarea').addEventListener('input', e => {
-      if (!this.propertyPanelNode) return;
-      this.propertyPanelNode.methods = e.target.value.split('\n').filter(l => l.trim() !== '');
-      this.updateNodeDOM(this.propertyPanelNode);
-    });
+    if (node.nodeType === 'class-box') {
+      // 操作
+      const methodGroup = document.createElement('div');
+      methodGroup.className = 'property-group uml-class-prop-group';
+      methodGroup.innerHTML = `<label>操作 <span class="prop-hint">(1行1操作)</span></label>
+          <textarea class="property-input property-textarea" rows="4" placeholder="+操作名() : 戻り値型">${(node.methods || []).join('\n')}</textarea>`;
+      panelBody.insertBefore(methodGroup, deleteBtn);
+      methodGroup.querySelector('textarea').addEventListener('input', e => {
+        if (!this.propertyPanelNode) return;
+        this.propertyPanelNode.methods = e.target.value.split('\n').filter(l => l.trim() !== '');
+        this.updateNodeDOM(this.propertyPanelNode);
+      });
+    }
   }
 
   // Focus and select the label input
@@ -2043,8 +2155,8 @@ toggleSidebar() {
 /* ================================ */
 
 addNode(comp, x, y, options = {}) {
-  // クラス図ノードの場合はフォームを表示
-  if (comp.nodeType === 'class-box') {
+  // クラス図・オブジェクト図ノードの場合はフォームを表示
+  if (comp.nodeType === 'class-box' || comp.nodeType === 'object-box') {
     this.showClassBoxForm(comp, x, y, options);
     return;
   }
@@ -2075,8 +2187,8 @@ _createNode(comp, x, y, options = {}, overrides = {}) {
     width: resolvedWidth,
     height: resolvedHeight,
   };
-  if (comp.nodeType === 'class-box') {
-    node.nodeType = 'class-box';
+  if (comp.nodeType === 'class-box' || comp.nodeType === 'object-box') {
+    node.nodeType = comp.nodeType;
     node.stereotype = overrides.stereotype ?? (comp.defaults?.stereotype || '');
     node.attributes = overrides.attributes || (comp.defaults?.attributes ? [...comp.defaults.attributes] : []);
     node.methods = overrides.methods || (comp.defaults?.methods ? [...comp.defaults.methods] : []);
@@ -2097,28 +2209,55 @@ showClassBoxForm(comp, x, y, options) {
   if (!container) { this._createNode(comp, x, y, options); return; }
 
   container.style.display = 'block';
+  const isObjectBox = comp.nodeType === 'object-box';
+  const nameLabel = isObjectBox ? 'オブジェクト名 : クラス名（例：taro : User）' : 'クラス名';
+  const attrLabel = isObjectBox ? 'スロット <span class="prop-hint">(名前と値を入力)</span>' : '属性 <span class="prop-hint">(名前と型を入力 → 可視性は左のボタンで選択)</span>';
+
+  let nameInputHtml = '';
+  if (isObjectBox) {
+    nameInputHtml = `
+      <div class="form-group" style="display: flex; gap: 10px; margin-bottom: 5px;">
+        <div style="flex: 1;">
+          <label>オブジェクト名 <span class="prop-hint">(任意)</span></label>
+          <input type="text" class="form-input" id="uml-form-obj-name" placeholder="例: taro" autofocus>
+        </div>
+        <div style="flex: 1;">
+          <label>クラス名 <span class="prop-hint">(任意)</span></label>
+          <input type="text" class="form-input" id="uml-form-class-name" placeholder="例: User">
+        </div>
+      </div>
+      <div class="prop-hint" id="uml-form-name-preview" style="font-weight: bold; margin-bottom: 10px;">
+        プレビュー: <span style="text-decoration: underline;">(未入力)</span>
+      </div>
+    `;
+  } else {
+    nameInputHtml = `
+      <div class="form-group">
+        <label>${nameLabel}</label>
+        <input type="text" class="form-input" id="uml-form-name" value="${this.escapeHtml(comp.label)}" autofocus>
+      </div>
+    `;
+  }
+
   container.innerHTML = `
     <div class="modal-overlay">
       <div class="modal uml-class-modal">
         <h2>${this.escapeHtml(comp.label)}を作成</h2>
 
-        <div class="form-group">
-          <label>クラス名</label>
-          <input type="text" class="form-input" id="uml-form-name" value="${this.escapeHtml(comp.label)}" autofocus>
-        </div>
+        ${nameInputHtml}
 
-        <div class="form-group" id="uml-form-stereo-group" style="${d.stereotype ? '' : 'display:none'}">
+        <div class="form-group" id="uml-form-stereo-group" style="${(!isObjectBox && d.stereotype) ? '' : 'display:none'}">
           <label>ステレオタイプ</label>
           <input type="text" class="form-input" id="uml-form-stereo" value="${this.escapeHtml(d.stereotype || '')}">
         </div>
 
         <div class="form-group">
-          <label>属性 <span class="prop-hint">(名前と型を入力 → 可視性は左のボタンで選択)</span></label>
+          <label>${attrLabel}</label>
           <div id="uml-form-attrs" class="uml-form-rows"></div>
-          <button type="button" class="btn btn-sm btn-secondary uml-form-add-btn" id="uml-form-add-attr">＋ 属性を追加</button>
+          <button type="button" class="btn btn-sm btn-secondary uml-form-add-btn" id="uml-form-add-attr">＋ ${isObjectBox ? 'スロットを追加' : '属性を追加'}</button>
         </div>
 
-        <div class="form-group">
+        <div class="form-group" style="${isObjectBox ? 'display:none' : ''}">
           <label>操作 <span class="prop-hint">(名前と戻り値型を入力 → () は自動挿入)</span></label>
           <div id="uml-form-methods" class="uml-form-rows"></div>
           <button type="button" class="btn btn-sm btn-secondary uml-form-add-btn" id="uml-form-add-method">＋ 操作を追加</button>
@@ -2157,18 +2296,21 @@ showClassBoxForm(comp, x, y, options) {
       visBtn.textContent = visibilityOptions[nextIdx].symbol;
       visBtn.title = visibilityOptions[nextIdx].label;
     });
+    if (isObjectBox) {
+      visBtn.style.display = 'none';
+    }
 
     // 名前入力
     const nameInput = document.createElement('input');
     nameInput.type = 'text';
     nameInput.className = 'form-input uml-form-name-input';
-    nameInput.placeholder = type === 'attr' ? '属性名' : '操作名';
+    nameInput.placeholder = type === 'attr' ? (isObjectBox ? 'スロット名' : '属性名') : '操作名';
 
     // 型入力
     const typeInput = document.createElement('input');
     typeInput.type = 'text';
     typeInput.className = 'form-input uml-form-type-input';
-    typeInput.placeholder = type === 'attr' ? '型' : '戻り値型';
+    typeInput.placeholder = type === 'attr' ? (isObjectBox ? '値' : '型') : '戻り値型';
 
     // 削除ボタン
     const delBtn = document.createElement('button');
@@ -2210,7 +2352,22 @@ showClassBoxForm(comp, x, y, options) {
 
   // 確定
   container.querySelector('#uml-form-confirm').addEventListener('click', () => {
-    const name = container.querySelector('#uml-form-name').value.trim() || comp.label;
+    let name = '';
+    if (isObjectBox) {
+      const objName = container.querySelector('#uml-form-obj-name').value.trim();
+      const className = container.querySelector('#uml-form-class-name').value.trim();
+      if (objName && className) {
+        name = `${objName} : ${className}`;
+      } else if (className) {
+        name = `: ${className}`;
+      } else if (objName) {
+        name = objName;
+      } else {
+        name = comp.label;
+      }
+    } else {
+      name = container.querySelector('#uml-form-name').value.trim() || comp.label;
+    }
     const stereo = container.querySelector('#uml-form-stereo')?.value.trim() || d.stereotype || '';
 
     // 属性を収集
@@ -2220,7 +2377,11 @@ showClassBoxForm(comp, x, y, options) {
       const attrName = row.querySelector('.uml-form-name-input').value.trim();
       const attrType = row.querySelector('.uml-form-type-input').value.trim();
       if (attrName) {
-        attrs.push(attrType ? `${vis}${attrName} : ${attrType}` : `${vis}${attrName}`);
+        if (isObjectBox) {
+          attrs.push(attrType ? `${attrName} = ${attrType}` : `${attrName}`);
+        } else {
+          attrs.push(attrType ? `${vis}${attrName} : ${attrType}` : `${vis}${attrName}`);
+        }
       }
     });
 
@@ -2240,11 +2401,36 @@ showClassBoxForm(comp, x, y, options) {
   });
 
   // Enter キーで確定
-  container.querySelector('#uml-form-name').addEventListener('keydown', e => {
-    if (e.key === 'Enter') container.querySelector('#uml-form-confirm').click();
-  });
+  const nameInputEl = isObjectBox ? container.querySelector('#uml-form-obj-name') : container.querySelector('#uml-form-name');
+  if (nameInputEl) {
+    nameInputEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter') container.querySelector('#uml-form-confirm').click();
+    });
+  }
+  if (isObjectBox) {
+    container.querySelector('#uml-form-class-name').addEventListener('keydown', e => {
+      if (e.key === 'Enter') container.querySelector('#uml-form-confirm').click();
+    });
+    
+    // Preview update logic
+    const objInput = container.querySelector('#uml-form-obj-name');
+    const classInput = container.querySelector('#uml-form-class-name');
+    const preview = container.querySelector('#uml-form-name-preview span');
+    
+    const updatePreview = () => {
+      const o = objInput.value.trim();
+      const c = classInput.value.trim();
+      if (o && c) preview.textContent = `${o} : ${c}`;
+      else if (c) preview.textContent = `: ${c}`;
+      else if (o) preview.textContent = o;
+      else preview.textContent = '(未入力)';
+    };
+    objInput.addEventListener('input', updatePreview);
+    classInput.addEventListener('input', updatePreview);
+  }
+
   // フォーカスを名前入力へ
-  setTimeout(() => container.querySelector('#uml-form-name')?.select(), 100);
+  setTimeout(() => nameInputEl?.select(), 100);
 }
 
 openTimingConfigModal(idx) {
@@ -2889,6 +3075,23 @@ renderNode(node) {
         <span class="node-port port-bottom" data-port="bottom"></span>
         <span class="node-port port-left" data-port="left"></span>
         <span class="node-port port-right" data-port="right"></span>`;
+  } else if (node.nodeType === 'object-box') {
+    // UMLオブジェクト図の2コンパートメントノード
+    el.className = 'diagram-node uml-class-box object-box';
+    const borderColorBase = (typeof node.color === 'string' && node.color.includes('var')) ? node.color : (node.color || '#14b8a6');
+    el.style.borderColor = borderColorBase + (borderColorBase.includes('var') ? '' : '80');
+    const attrsHtml = (node.attributes || []).map(a => `<div class="uml-class-row">${this.escapeHtml(a)}</div>`).join('');
+    el.innerHTML = `
+        <div class="uml-class-header" style="border-bottom-color:${borderColorBase}${borderColorBase.includes('var') ? '' : '40'}">
+          <div class="uml-class-name node-label" style="text-decoration: underline;">${this.escapeHtml(node.label)}</div>
+        </div>
+        <div class="uml-class-section uml-class-attrs">
+          ${attrsHtml || '<div class="uml-class-row uml-class-empty"></div>'}
+        </div>
+        <span class="node-port port-top" data-port="top"></span>
+        <span class="node-port port-bottom" data-port="bottom"></span>
+        <span class="node-port port-left" data-port="left"></span>
+        <span class="node-port port-right" data-port="right"></span>`;
   } else {
     // 通常のノード
     el.className = 'diagram-node';
@@ -3032,6 +3235,14 @@ renderNode(node) {
         const childEl = document.getElementById(n.id);
         if (!childEl) return false;
         const cr = childEl.getBoundingClientRect();
+        const isBoundaryNode = n.behaviorType === 'entryPoint' || n.behaviorType === 'exitPoint';
+        if (isBoundaryNode) {
+          const cx = cr.left + cr.width / 2;
+          const cy = cr.top + cr.height / 2;
+          const margin = 20;
+          return cx >= containerRect.left - margin && cx <= containerRect.right + margin &&
+                 cy >= containerRect.top - margin && cy <= containerRect.bottom + margin;
+        }
         return cr.left >= containerRect.left && cr.right <= containerRect.right &&
           cr.top >= containerRect.top && cr.bottom <= containerRect.bottom;
       }).map(n => ({ node: n, offsetX: n.x - node.x, offsetY: n.y - node.y }));
@@ -3994,15 +4205,33 @@ drawConnections() {
   const p = this.prefix;
   // SVGマーカー定義（各接続タイプ用）
   this.svg.innerHTML = `<defs>
-      <marker id="arrow-${p}" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="var(--accent, #7c3aed)"/></marker>
-      <marker id="arrow-open-${p}" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" style="fill:var(--bg-card, #111827)" stroke="var(--accent, #7c3aed)" stroke-width="1.5"/></marker>
-      <marker id="arrow-vee-${p}" markerWidth="12" markerHeight="10" refX="10" refY="5" orient="auto"><path d="M 0 1 L 10 5 L 0 9" fill="none" stroke="var(--accent, #7c3aed)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></marker>
-      <marker id="diamond-empty-${p}" markerWidth="14" markerHeight="10" refX="0" refY="5" orient="auto"><polygon points="0 5, 7 0, 14 5, 7 10" style="fill:var(--bg-card, #111827)" stroke="var(--accent, #7c3aed)" stroke-width="1.5"/></marker>
-      <marker id="lollipop-${p}" markerWidth="14" markerHeight="14" refX="0" refY="7" orient="auto"><circle cx="7" cy="7" r="6" style="fill:var(--bg-card, #111827)" stroke="var(--accent, #7c3aed)" stroke-width="1.5"/></marker>
-      <marker id="socket-${p}" markerWidth="10" markerHeight="16" refX="8" refY="8" orient="auto"><path d="M 0 1 A 7 7 0 0 1 0 15" fill="none" stroke="var(--accent, #7c3aed)" stroke-width="1.5"/></marker>
-      <marker id="diamond-fill-${p}" markerWidth="14" markerHeight="10" refX="0" refY="5" orient="auto"><polygon points="0 5, 7 0, 14 5, 7 10" fill="var(--accent, #7c3aed)" stroke="var(--accent, #7c3aed)" stroke-width="1"/></marker>
-      <marker id="triangle-empty-${p}" markerWidth="12" markerHeight="10" refX="12" refY="5" orient="auto"><polygon points="0 0, 12 5, 0 10" style="fill:var(--bg-card, #111827)" stroke="var(--accent, #7c3aed)" stroke-width="1.5"/></marker>
-      <marker id="x-mark-${p}" markerWidth="10" markerHeight="10" refX="0" refY="5" orient="auto"><circle cx="5" cy="5" r="4" style="fill:var(--bg-card, #111827)" stroke="none"/><line x1="2" y1="2" x2="8" y2="8" stroke="var(--accent, #7c3aed)" stroke-width="2"/><line x1="8" y1="2" x2="2" y2="8" stroke="var(--accent, #7c3aed)" stroke-width="2"/></marker>
+      <marker id="arrow-${p}" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto-start-reverse">
+        <polygon points="0 1, 8 4, 0 7, 2 4" fill="context-stroke" stroke-dasharray="none"/>
+      </marker>
+      <marker id="arrow-open-${p}" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto-start-reverse">
+        <path d="M 0 1 L 8 4 L 0 7" fill="none" stroke="context-stroke" stroke-dasharray="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      </marker>
+      <marker id="arrow-vee-${p}" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto-start-reverse">
+        <path d="M 0 1 L 8 4 L 0 7" fill="none" stroke="context-stroke" stroke-dasharray="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+      </marker>
+      <marker id="diamond-empty-${p}" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto-start-reverse">
+        <polygon points="0 4, 6 0, 12 4, 6 8" style="fill:var(--bg-card, #111827)" stroke="context-stroke" stroke-dasharray="none" stroke-width="1.5"/>
+      </marker>
+      <marker id="lollipop-${p}" markerWidth="11" markerHeight="11" refX="11" refY="5.5" orient="auto-start-reverse">
+        <circle cx="5.5" cy="5.5" r="4.5" style="fill:var(--bg-card, #111827)" stroke="context-stroke" stroke-dasharray="none" stroke-width="1.5"/>
+      </marker>
+      <marker id="socket-${p}" markerWidth="9" markerHeight="12" refX="8" refY="6" orient="auto-start-reverse">
+        <path d="M 0 1 A 5.5 5.5 0 0 1 0 11" fill="none" stroke="context-stroke" stroke-dasharray="none" stroke-width="1.5"/>
+      </marker>
+      <marker id="diamond-fill-${p}" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto-start-reverse">
+        <polygon points="0 4, 6 0, 12 4, 6 8" fill="context-stroke" stroke="context-stroke" stroke-dasharray="none" stroke-width="1"/>
+      </marker>
+      <marker id="triangle-empty-${p}" markerWidth="9" markerHeight="8" refX="9" refY="4" orient="auto-start-reverse">
+        <polygon points="0 0, 9 4, 0 8" style="fill:var(--bg-card, #111827)" stroke="context-stroke" stroke-dasharray="none" stroke-width="1.5"/>
+      </marker>
+      <marker id="x-mark-${p}" markerWidth="9" markerHeight="9" refX="0" refY="4.5" orient="auto-start-reverse">
+        <line x1="1.5" y1="1.5" x2="7.5" y2="7.5" stroke="context-stroke" stroke-dasharray="none" stroke-width="2"/><line x1="7.5" y1="1.5" x2="1.5" y2="7.5" stroke="context-stroke" stroke-dasharray="none" stroke-width="2"/>
+      </marker>
     </defs>`;
   
   this.canvas.querySelectorAll('.diagram-conn-label, .diagram-conn-multiplicity, .diagram-conn-port').forEach(el => el.remove());
@@ -4385,7 +4614,7 @@ drawConnections() {
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute('d', dStr);
     path.setAttribute('stroke', isSelected ? 'var(--warn, #f59e0b)' : 'var(--accent, #7c3aed)');
-    path.setAttribute('stroke-width', isSelected ? '5' : '3');
+    path.setAttribute('stroke-width', isSelected ? '3' : '3');
     path.setAttribute('fill', 'none');
     path.setAttribute('pointer-events', 'visibleStroke');
     path.setAttribute('opacity', '0.8');
@@ -4400,66 +4629,77 @@ drawConnections() {
       this.selectConnection(conn);
     });
 
-    const arrowDir = conn.arrowDirection || 'one-way';
+    const arrowDir = conn.arrowDirection || 'default';
 
-    if (arrowDir === 'none') {
-      // 矢印なし
-    } else if (arrowDir === 'two-way') {
-      path.setAttribute('marker-start', `url(#arrow-open-${p})`);
-      path.setAttribute('marker-end', `url(#arrow-${p})`);
-    } else {
-      // one-way
-      switch (connType) {
-        case 'association':
-        case 'link':
-          // 実線のみ
-          break;
-        case 'sync-msg':
-          path.setAttribute('marker-end', `url(#arrow-${p})`);
-          break;
-        case 'async-msg':
-          path.setAttribute('marker-end', `url(#arrow-vee-${p})`);
-          break;
-        case 'reply-msg':
-          path.setAttribute('stroke-dasharray', '6 3');
-          path.setAttribute('marker-end', `url(#arrow-vee-${p})`);
-          break;
-        case 'aggregation':
-          path.setAttribute('marker-start', `url(#diamond-empty-${p})`);
-          break;
-        case 'provided':
-          path.setAttribute('marker-start', `url(#lollipop-${p})`);
-          break;
-        case 'required':
-          path.setAttribute('marker-start', `url(#socket-${p})`);
-          break;
-        case 'composition':
-          path.setAttribute('marker-start', `url(#diamond-fill-${p})`);
-          break;
-        case 'dependency':
-        case 'deploy':
-        case 'manifest':
-          path.setAttribute('stroke-dasharray', '6 3');
-          path.setAttribute('marker-end', `url(#arrow-open-${p})`);
-          break;
-        case 'dashed':
-          path.setAttribute('stroke-dasharray', '6 3');
-          break;
-        case 'generalization':
-          path.setAttribute('marker-end', `url(#triangle-empty-${p})`);
-          break;
-        case 'realization':
-          path.setAttribute('stroke-dasharray', '6 3');
-          path.setAttribute('marker-end', `url(#triangle-empty-${p})`);
-          break;
-        case 'navigable':
-          path.setAttribute('marker-start', `url(#x-mark-${p})`);
-          path.setAttribute('marker-end', `url(#arrow-open-${p})`);
-          break;
-        default:
-          path.setAttribute('marker-end', `url(#arrow-${p})`);
-      }
+    let markerStart = '';
+    let markerEnd = '';
+
+    // 1. Determine the default end marker based on connection type
+    switch (connType) {
+      case 'sync-msg':
+        markerEnd = `url(#arrow-${p})`;
+        break;
+      case 'async-msg':
+        markerEnd = `url(#arrow-vee-${p})`;
+        break;
+      case 'reply-msg':
+        path.setAttribute('stroke-dasharray', '6 3');
+        markerEnd = `url(#arrow-vee-${p})`;
+        break;
+      case 'aggregation':
+        markerStart = `url(#diamond-empty-${p})`;
+        break;
+      case 'provided':
+        markerStart = `url(#lollipop-${p})`;
+        break;
+      case 'required':
+        markerStart = `url(#socket-${p})`;
+        break;
+      case 'composition':
+        markerStart = `url(#diamond-fill-${p})`;
+        break;
+      case 'dependency':
+      case 'deploy':
+      case 'manifest':
+        path.setAttribute('stroke-dasharray', '6 3');
+        markerEnd = `url(#arrow-open-${p})`;
+        break;
+      case 'dashed':
+        path.setAttribute('stroke-dasharray', '6 3');
+        break;
+      case 'generalization':
+        markerEnd = `url(#triangle-empty-${p})`;
+        break;
+      case 'realization':
+        path.setAttribute('stroke-dasharray', '6 3');
+        markerEnd = `url(#triangle-empty-${p})`;
+        break;
+      case 'navigable':
+        markerStart = `url(#x-mark-${p})`;
+        markerEnd = `url(#arrow-open-${p})`;
+        break;
+      case 'association':
+      case 'link':
+        // No arrow by default
+        break;
+      default:
+        markerEnd = `url(#arrow-${p})`;
     }
+
+    // 2. Override based on arrowDirection
+    if (arrowDir === 'none') {
+      markerStart = '';
+      markerEnd = '';
+    } else if (arrowDir === 'one-way') {
+      markerStart = '';
+      if (!markerEnd) markerEnd = `url(#arrow-${p})`; // generic arrow if not set
+    } else if (arrowDir === 'two-way') {
+      if (!markerEnd) markerEnd = `url(#arrow-${p})`; // generic arrow if not set
+      markerStart = markerEnd;
+    }
+
+    if (markerStart) path.setAttribute('marker-start', markerStart);
+    if (markerEnd) path.setAttribute('marker-end', markerEnd);
 
     if (conn.lineStyle === 'dashed') {
       path.setAttribute('stroke-dasharray', '5 5');

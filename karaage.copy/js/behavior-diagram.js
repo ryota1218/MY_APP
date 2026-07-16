@@ -190,6 +190,8 @@
     { icon:'<i data-lucide="minus" class="node-lucide-icon"></i>', label:'ジョイン', color:'#8b5cf6', behaviorType:'stateJoin' },
     { icon:'<i data-lucide="history" class="node-lucide-icon"></i>', label:'浅い履歴', color:'#0ea5e9', behaviorType:'historyShallow' },
     { icon:'<i data-lucide="history" class="node-lucide-icon"></i>', label:'深い履歴', color:'#0ea5e9', behaviorType:'historyDeep' },
+    { icon:'<i data-lucide="circle-dashed" class="node-lucide-icon"></i>', label:'エントリポイント', color:'#111827', behaviorType:'entryPoint' },
+    { icon:'<i data-lucide="circle-dot-dashed" class="node-lucide-icon"></i>', label:'エグジットポイント', color:'#111827', behaviorType:'exitPoint' },
     { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b', behaviorType:'stateNote' },
   ];
 
@@ -203,6 +205,8 @@
     stateJoin:       { kind: 'bar', minWidth: '140px' },
     historyShallow:  { kind: 'history', depth: 'H' },
     historyDeep:     { kind: 'history', depth: 'H*' },
+    entryPoint:      { kind: 'entryPoint' },
+    exitPoint:       { kind: 'exitPoint' },
     stateNote:       { kind: 'card', minWidth: '140px' },
   };
 
@@ -251,6 +255,48 @@
           background: '#fff',
         }),
         innerHTML: `<div style="width:16px;height:16px;border-radius:50%;background:#111827;display:block;"></div>${ports}`,
+      };
+    }
+
+    if (variant.kind === 'entryPoint') {
+      return {
+        className: 'diagram-node behavior-node behavior-node-entry-point',
+        style: buildNodeStyleString({
+          ...baseStyle,
+          width: '34px',
+          height: '34px',
+          'min-width': '34px',
+          padding: '0',
+          'border-radius': '50%',
+          border: '2px solid #111827',
+          background: 'var(--bg-secondary)',
+          display: 'grid',
+          'place-items': 'center',
+        }),
+        innerHTML: `${ports}`,
+      };
+    }
+
+    if (variant.kind === 'exitPoint') {
+      return {
+        className: 'diagram-node behavior-node behavior-node-exit-point',
+        style: buildNodeStyleString({
+          ...baseStyle,
+          width: '34px',
+          height: '34px',
+          'min-width': '34px',
+          padding: '0',
+          'border-radius': '50%',
+          border: '2px solid #111827',
+          background: 'var(--bg-secondary)',
+          display: 'grid',
+          'place-items': 'center',
+          position: 'relative',
+        }),
+        innerHTML: `
+          <div style="position:absolute; width:44px; height:2px; background:#111827; transform:rotate(45deg);"></div>
+          <div style="position:absolute; width:44px; height:2px; background:#111827; transform:rotate(-45deg);"></div>
+          ${ports}`,
       };
     }
 
@@ -375,8 +421,7 @@
       { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
     ],
     object: [
-      { icon:'<i data-lucide="square" class="node-lucide-icon"></i>', label:'オブジェクト', color:'#14b8a6' },
-      { icon:'<i data-lucide="link-2" class="node-lucide-icon"></i>', label:'リンク', color:'#7c3aed' },
+      { icon:'<i data-lucide="square" class="node-lucide-icon"></i>', label:'オブジェクト', color:'#14b8a6', nodeType:'object-box', defaults: { attributes: ['age = 25'] } },
       { icon:'<i data-lucide="box" class="node-lucide-icon"></i>', label:'クラス', color:'#3b82f6' },
       { icon:'<i data-lucide="file-text" class="node-lucide-icon"></i>', label:'ノート', color:'#64748b' },
     ],

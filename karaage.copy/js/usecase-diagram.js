@@ -35,24 +35,31 @@
       <span class="node-port port-right" data-port="right"></span>`;
 
     if (variant.kind === 'actor') {
+      // 幅・高さを強制的に解除して文字サイズに合わせて広がるようにする
+      delete node.width;
+      delete node.height;
+
       return {
         className: 'diagram-node usecase-node usecase-node-actor',
         style: buildNodeStyleString({
-          ...baseStyle,
-          width: variant.width,
-          height: variant.height,
+          'width': 'auto !important',
+          'height': 'auto !important',
           'min-width': variant.width,
           'min-height': variant.height,
           padding: '0',
           display: 'flex',
           'flex-direction': 'column',
           'align-items': 'center',
-          gap: '6px',
+          gap: '8px',
           'box-sizing': 'border-box',
+          'background': 'transparent !important',
+          'border': 'none !important',
+          'box-shadow': 'none !important',
         }),
         innerHTML: `
-          <div style="flex-shrink:0;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:${node.color}20;border:1.5px solid ${node.color};color:${node.color};">${icon}</div>
-          <span class="node-label" style="font-size:0.8rem;text-align:center;word-break:break-word;flex:1;display:flex;align-items:center;justify-content:center;padding:0 2px;">${label}</span>
+          <div class="actor-icon-container" style="flex-shrink:0;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:${node.color}15;border:2px solid ${node.color};color:${node.color}; transition: box-shadow 0.2s;">${icon}</div>
+          <style>.usecase-node-actor.selected .actor-icon-container { box-shadow: 0 0 20px rgba(16,185,129,0.5); }</style>
+          <span class="node-label" style="font-size:0.85rem;text-align:center;word-break:break-word;flex:1;display:flex;align-items:center;justify-content:center;padding:0 2px;font-weight:600;">${label}</span>
           ${ports}`,
       };
     }
