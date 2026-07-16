@@ -247,10 +247,10 @@ const DBIO = {
 
           if (isNew || !this.currentDiagramId) {
             savedId = await this.insertDiagram(projectId, finalName, diagramType, chartJson, finalStatus);
-            if (window.showToast) showToast('新規保存しました');
+            // if (window.showToast) showToast('新規保存しました');
           } else {
             savedId = await this.updateDiagram(this.currentDiagramId, finalName, chartJson, finalStatus);
-            if (window.showToast) showToast('上書き保存しました');
+            // if (window.showToast) showToast('上書き保存しました');
           }
           
           this.currentDiagramId = savedId;

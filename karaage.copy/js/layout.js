@@ -75,10 +75,10 @@ class LayoutTool {
     // Cursor and state cleanup
     if (this.currentMode === 'erase') {
       this.canvas.style.cursor = 'not-allowed';
-      showToast('削除モード: 図形をクリックして削除');
+      // showToast('削除モード: 図形をクリックして削除');
     } else {
       this.canvas.style.cursor = 'default';
-      showToast('選択モード');
+      // showToast('選択モード');
       this.canvas.querySelectorAll('.layout-element').forEach(e => e.classList.remove('selected'));
       this.selectedEl = null;
     }
@@ -179,52 +179,7 @@ class LayoutTool {
     });
 
     // キーボードによるショートカット処理
-    document.addEventListener('keydown', e => {
-      const section = this.canvas.closest('.tool-section');
-      if (!section || !section.classList.contains('active')) return;
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
-      const key = e.key.toLowerCase();
-      const ctrl = e.ctrlKey || e.metaKey;
-
-      if (ctrl && key === 'c') {
-        e.preventDefault();
-        this.copySelected();
-      } else if (ctrl && key === 'x') {
-        e.preventDefault();
-        this.cutSelected();
-      } else if (ctrl && key === 'v') {
-        e.preventDefault();
-        this.pasteSelected();
-      } else if (key === 'delete' || key === 'backspace') {
-        if (this.selectedEl) {
-          this.deleteSelected();
-        }
-      } else if (ctrl && key === 'z') {
-        e.preventDefault();
-        if (e.shiftKey) this.redoLastAction();
-        else this.undoLastAction();
-      } else if (ctrl && key === 'y') {
-        e.preventDefault();
-        this.redoLastAction();
-      } else if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
-        if (this.selectedEl) {
-          e.preventDefault();
-          const step = e.shiftKey ? 10 : 1;
-          const el = this.selectedEl;
-          const div = document.getElementById(el.id);
-          if (key === 'arrowup') el.y -= step;
-          if (key === 'arrowdown') el.y += step;
-          if (key === 'arrowleft') el.x -= step;
-          if (key === 'arrowright') el.x += step;
-          el.x = Math.max(0, el.x);
-          el.y = Math.max(0, el.y);
-          div.style.left = el.x + 'px';
-          div.style.top = el.y + 'px';
-          if (this.propertyPanelEl && this.propertyPanelEl.id === el.id) this.syncPropertyPanel(el);
-        }
-      }
-    });
+  
 
     // クリップボードからの画像ペースト処理
     document.addEventListener('paste', e => {
@@ -411,10 +366,13 @@ class LayoutTool {
   addElementFromPalette(idx) {
     const item = this.paletteItems[idx];
     if (!item) return;
-    const canvasW = this.canvas.clientWidth;
-    const canvasH = this.canvas.clientHeight;
-    const x = Math.min(80 + (this.elemIdCounter % 4) * 140, Math.max(20, canvasW - item.w - 20));
-    const y = Math.min(60 + Math.floor(this.elemIdCounter / 4) * 80, Math.max(20, canvasH - item.h - 20));
+
+    const canvasW = Math.max(320, this.canvas.clientWidth || 960);
+    const canvasH = Math.max(240, this.canvas.clientHeight || 600);
+    const fallbackW = Math.max(80, item.w || 120);
+    const fallbackH = Math.max(40, item.h || 40);
+    const x = Math.min(80 + (this.elemIdCounter % 4) * 140, Math.max(20, canvasW - fallbackW - 20));
+    const y = Math.min(60 + Math.floor(this.elemIdCounter / 4) * 80, Math.max(20, canvasH - fallbackH - 20));
     this.addElement(item, x, y);
   }
 
@@ -493,7 +451,7 @@ class LayoutTool {
     div.appendChild(handle);
 
     let dragging = false, resizing = false, ox, oy, ow, oh;
-    el.dataset.id = div.id;
+    div.dataset.id = el.id;
 
     div.addEventListener('mousedown', e => {
       if (this.currentMode === 'erase') {
@@ -629,7 +587,7 @@ class LayoutTool {
     const currentZ = el.zIndex || 0;
     
     if (currentZ === 0) {
-      showToast('これ以上背面に移動できません');
+      // showToast('これ以上背面に移動できません');
       return;
     }
     
@@ -661,7 +619,7 @@ class LayoutTool {
     });
     this.removeElementById(el.id);
     this.closePropertyPanel();
-    showToast('削除しました');
+    // showToast('削除しました');
   }
 
   pushUndoAction(action) {
@@ -706,7 +664,7 @@ class LayoutTool {
     try {
       const redoAction = this.applyHistoryAction(action);
       if (redoAction) this.pushRedoAction(redoAction);
-      showToast('一つ戻しました');
+      // showToast('一つ戻しました');
     } finally {
       this.isApplyingUndo = false;
     }
@@ -722,7 +680,7 @@ class LayoutTool {
     try {
       const undoAction = this.applyHistoryAction(action);
       if (undoAction) this.undoHistory.push(undoAction);
-      showToast('一つ先に進めました');
+      // showToast('一つ先に進めました');
     } finally {
       this.isApplyingUndo = false;
     }
@@ -786,7 +744,7 @@ class LayoutTool {
       this.pushUndoAction({ type: 'clearAll', snapshot });
       this.isDirty = false;
       this.deselectAll();
-      showToast('キャンバスをクリアしました');
+      // showToast('キャンバスをクリアしました');
     };
 
     if (this.isDirty) {
@@ -856,7 +814,6 @@ class LayoutTool {
     const a = document.createElement('a');
     a.href = url; a.download = 'layout_export.svg';
     a.click(); URL.revokeObjectURL(url);
-    showToast('SVGをエクスポートしました');
   }
 
   exportJSON() {
@@ -892,26 +849,18 @@ class LayoutTool {
     this.canvas.style.transformOrigin = '0 0';
   }
 
-  /* ===== グリッド切り替え ===== */
-  toggleGrid() {
-    this.isGridVisible = !this.isGridVisible;
-    this.canvas.classList.toggle('grid-visible', this.isGridVisible);
-    this.canvas.classList.toggle('grid-active', this.isGridVisible);
-    showToast(this.isGridVisible ? 'グリッドを表示しました' : 'グリッドを非表示にしました');
-  }
-
   /* ===== コピー＆ペースト機能 ===== */
   copySelected() {
     if (this.selectedEl) {
       this.clipboard = { ...this.selectedEl };
-      showToast('コピーしました');
+      // showToast('コピーしました');
     }
   }
 
   cutSelected() {
     if (this.selectedEl) {
       this.clipboard = { ...this.selectedEl };
-      showToast('切り取りました');
+      // showToast('切り取りました');
       // 削除メッセージを表示しないように直接削除する
       const el = this.selectedEl;
       this.pushUndoAction({
@@ -927,7 +876,7 @@ class LayoutTool {
     if (!this.clipboard) return;
     const item = { ...this.clipboard };
     this.addElement(item, item.x + 20, item.y + 20);
-    showToast('貼り付けました');
+    // showToast('貼り付けました');
   }
 
   /* ===== ストレージ保存・読み込み ===== */
@@ -966,37 +915,8 @@ class LayoutTool {
     this.deselectAll();
   }
 
-  /* ===== ヘルプ・その他モック ===== */
-  showHelp() {
-    alert('【画面レイアウト ヘルプ】\n・左のUI要素をドラッグして配置\n・要素をダブルクリックでテキスト編集\n・プロパティパネルで色やサイズを調整');
-  }
-
-  showSettings() {
-    showToast('設定パネルを開きます');
-    if (window.themeManager) window.themeManager.toggleModal();
-  }
-
-  shareDiagram() {
-    showToast('共有機能は現在準備中です', 'info');
-  }
-
   showUserProfile() {
     if (window.app && window.app.profile) window.app.profile.showModal();
-  }
-
-  autoLayout() {
-    const cols = Math.ceil(Math.sqrt(this.elements.length));
-    this.elements.forEach((el, i) => {
-      el.x = 40 + (i % cols) * 240;
-      el.y = 40 + Math.floor(i / cols) * 160;
-      this.updateElementDOM(el);
-    });
-    showToast('グリッド状に自動配置しました');
-  }
-  
-
-  exportPNG() {
-    showToast('PNGエクスポートは現在モック実装です', 'info');
   }
 
   initThemeListener() {

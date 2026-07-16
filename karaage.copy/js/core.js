@@ -31,6 +31,7 @@ class App {
   async init() {
     await this.loadSections();
     this.initNav();
+    this.initGlobalShortcuts();
     this.gantt = new GanttTool(); // 起動時にガントデータをロード/保存する
     this.initDashboard();
     this.proposal = new ProposalTool();
@@ -180,7 +181,6 @@ class App {
 
           // Close submenu
           umlSubmenuContainer.classList.remove('open');
-          showToast(`${typeDef.label}モードに切り替えました`);
         };
 
         // 別の図からUML図に遷移した時は確認ダイアログを出さない（現在UMLツールを開いている時のみ）
@@ -213,6 +213,8 @@ class App {
   
   
   navigateTo(tool) {
+    
+
     console.log('Navigating to:', tool);
     
     // ツール切り替え時、開いている右側パネルを閉じ、左側サイドバーを元の表示に復元する
@@ -278,6 +280,90 @@ class App {
       this.gantt.loadGanttData();
     }
   }
+
+  initGlobalShortcuts() {
+
+  if (this.shortcutsInitialized) return;
+  this.shortcutsInitialized = true;
+
+  document.addEventListener('keydown', (e) => {
+
+    if (
+      e.target.tagName === 'INPUT' ||
+      e.target.tagName === 'TEXTAREA' ||
+      e.target.isContentEditable
+    ) {
+      return;
+    }
+
+    const ctrl = e.ctrlKey || e.metaKey;
+    if (!ctrl) return;
+
+    const activeTool = this.getActiveToolInstance();
+
+    if (!activeTool) return;
+
+    switch (e.key.toLowerCase()) {
+
+      case 'z':
+        e.preventDefault();
+
+        if (e.shiftKey) {
+          activeTool.redoLastAction?.();
+        } else {
+          activeTool.undoLastAction?.();
+        }
+        break;
+
+      case 'y':
+        e.preventDefault();
+        activeTool.redoLastAction?.();
+        break;
+
+      case 'c':
+        e.preventDefault();
+        activeTool.copySelected?.();
+        break;
+
+      case 'x':
+        e.preventDefault();
+        activeTool.cutSelected?.();
+        break;
+
+      case 'v':
+        e.preventDefault();
+        activeTool.pasteSelected?.();
+        break;
+    }
+  });
+}
+
+getActiveToolInstance() {
+
+  switch (this.currentTool) {
+
+    case 'architecture':
+      return this.architecture;
+
+    case 'uml':
+      return this.uml;
+
+    case 'screen-transition':
+      return this.screenTransition;
+
+    case 'layout':
+      return this.layout;
+
+    case 'erdiagram':
+      return this.erdiagram;
+
+    case 'gantt':
+      return this.gantt;
+
+    default:
+      return null;
+  }
+}
   async initDashboard() {
     console.log("Dashboard initialized.");
     this.dashboardFilters = { name: '', type: '', date: '', status: '' };
@@ -347,7 +433,6 @@ class App {
         status: document.getElementById('filter-status').value
       };
       this.renderDashboardCards(); // フィルタ適用時は保持しているデータから再描画
-      showToast('フィルタを適用しました');
     });
   }
 
@@ -758,7 +843,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-function showToast(msg) {
+function showToast(msg, duration = 8000) {
   let container = document.getElementById('toast-container');
   if (!container) {
     container = document.createElement('div');
@@ -770,9 +855,21 @@ function showToast(msg) {
   t.className = 'toast';
   t.innerHTML = `<span class="toast-message">${msg}</span><button type="button" class="toast-close" aria-label="閉じる">×</button>`;
   const closeBtn = t.querySelector('.toast-close');
-  closeBtn.addEventListener('click', () => {
+
+  const removeToast = () => {
+    if (!t.parentNode) return;
     t.style.opacity = '0';
-    setTimeout(() => t.remove(), 200);
+    setTimeout(() => {
+      if (t.parentNode) t.remove();
+    }, 250);
+  };
+
+  const autoRemoveTimer = setTimeout(removeToast, duration);
+  t.dataset.toastTimer = String(autoRemoveTimer);
+
+  closeBtn.addEventListener('click', () => {
+    clearTimeout(autoRemoveTimer);
+    removeToast();
   });
 
   container.appendChild(t);
@@ -780,8 +877,12 @@ function showToast(msg) {
   if (container.children.length > 5) {
     const oldest = container.firstElementChild;
     if (oldest && oldest !== t) {
+      const oldestTimerId = Number(oldest.dataset.toastTimer);
+      if (!Number.isNaN(oldestTimerId)) clearTimeout(oldestTimerId);
       oldest.style.opacity = '0';
-      setTimeout(() => oldest.remove(), 200);
+      setTimeout(() => {
+        if (oldest.parentNode) oldest.remove();
+      }, 250);
     }
   }
 }
@@ -903,41 +1004,44 @@ function installInstantTooltips() {
 document.addEventListener('DOMContentLoaded', async () => {
   installInstantTooltips();
 
-  // instantiate app & load HTML partials
-  if (!(window.app instanceof App)) {
-    const existingApp = window.app || {};
-    window.app = new App();
-    Object.assign(window.app, existingApp);
-    await window.app.init();
-  }
-
-  // Initialize Lucide icons after HTML partials are loaded
-  if (typeof lucide !== 'undefined') {
-    lucide.createIcons();
-  }
-
   const ham = document.getElementById('hamburger');
   const overlay = document.getElementById('menu-overlay');
+  const toggleHandle = document.getElementById('sidebar-toggle-handle');
 
-  function closeMenu() {
+  const closeMenu = () => {
     if (window.innerWidth <= 1024) {
       document.body.classList.remove('menu-open');
+      if (ham) ham.setAttribute('aria-expanded', 'false');
     }
-  }
-  function toggleMenu() {
+  };
+
+  const toggleMenu = () => {
     if (window.innerWidth <= 1024) {
-      document.body.classList.toggle('menu-open');
+      const isOpen = document.body.classList.toggle('menu-open');
+      if (ham) ham.setAttribute('aria-expanded', String(isOpen));
     } else {
       const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
       document.body.dataset.sidebarCollapsedByUser = isCollapsed ? 'true' : 'false';
+      if (ham) ham.setAttribute('aria-expanded', 'false');
     }
-  }
+  };
 
-  if (ham) ham.addEventListener('click', toggleMenu);
+  const syncMenuState = () => {
+    if (window.innerWidth > 1024) {
+      document.body.classList.remove('menu-open');
+      if (ham) ham.setAttribute('aria-expanded', 'false');
+    }
+  };
+
+  if (ham) {
+    ham.addEventListener('click', (event) => {
+      event.stopPropagation();
+      toggleMenu();
+    });
+  }
   if (overlay) overlay.addEventListener('click', closeMenu);
 
   // Floating Sidebar toggle handle click event
-  const toggleHandle = document.getElementById('sidebar-toggle-handle');
   if (toggleHandle) {
     toggleHandle.addEventListener('click', () => {
       const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
@@ -962,4 +1066,23 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
   });
+
+  window.addEventListener('resize', syncMenuState);
+
+  // instantiate app & load HTML partials
+  if (!(window.app instanceof App)) {
+    const existingApp = window.app || {};
+    window.app = new App();
+    Object.assign(window.app, existingApp);
+    try {
+      await window.app.init();
+    } catch (error) {
+      console.error('[App] Initialization failed:', error);
+    }
+  }
+
+  // Initialize Lucide icons after HTML partials are loaded
+  if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+  }
 });

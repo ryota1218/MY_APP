@@ -4,45 +4,6 @@
  */
 const FileIO = {
   /**
-   * エディタキャンバスをSVGとしてダウンロード
-   */
-  exportSVG(diagramInstance) {
-    if (!diagramInstance.svg || !diagramInstance.canvas) return;
-    try {
-      const svgClone = diagramInstance.svg.cloneNode(true);
-      const w = diagramInstance.canvas.offsetWidth, h = diagramInstance.canvas.offsetHeight;
-      svgClone.setAttribute('width', w);
-      svgClone.setAttribute('height', h);
-      const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      bg.setAttribute('width', '100%');
-      bg.setAttribute('height', '100%');
-      bg.setAttribute('fill', getComputedStyle(document.body).getPropertyValue('--bg-main').trim() || '#0f172a');
-      svgClone.insertBefore(bg, svgClone.firstChild);
-
-      const serializer = new XMLSerializer();
-      let source = serializer.serializeToString(svgClone);
-      if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
-        source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
-      }
-      source = '<?xml version="1.0" standalone="no"?>\r\n' + source;
-
-      const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = (diagramInstance.prefix || 'diagram') + '_export.svg';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      if (typeof showToast === 'function') showToast('SVGをエクスポートしました');
-    } catch (e) {
-      console.error('SVG Export Error:', e);
-      if (typeof showToast === 'function') showToast('SVGのエクスポートに失敗しました', 'error');
-    }
-  },
-
-  /**
    * ダイアグラムのデータをJSONとしてダウンロード
    */
   exportJSON(diagramInstance) {
