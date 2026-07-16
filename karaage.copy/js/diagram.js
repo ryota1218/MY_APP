@@ -4176,10 +4176,10 @@ drawConnections() {
         <polygon points="0 1, 8 4, 0 7, 2 4" fill="context-stroke" stroke-dasharray="none"/>
       </marker>
       <marker id="arrow-open-${p}" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto-start-reverse">
-        <path d="M 0 1 L 8 4 L 0 7" fill="none" stroke="context-stroke" stroke-dasharray="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+        <path d="M 1 1 L 8 4 L 1 7" fill="none" stroke="context-stroke" stroke-dasharray="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
       </marker>
       <marker id="arrow-vee-${p}" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto-start-reverse">
-        <path d="M 0 1 L 8 4 L 0 7" fill="none" stroke="context-stroke" stroke-dasharray="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+        <path d="M 1 1 L 8 4 L 1 7" fill="none" stroke="context-stroke" stroke-dasharray="none" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
       </marker>
       <marker id="diamond-empty-${p}" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto-start-reverse">
         <polygon points="0 4, 6 0, 12 4, 6 8" style="fill:var(--bg-card, #111827)" stroke="context-stroke" stroke-dasharray="none" stroke-width="1.5"/>
@@ -4283,22 +4283,53 @@ drawConnections() {
     const fromEl = document.getElementById(conn.from);
     const toEl = document.getElementById(conn.to);
     if (!fromEl || !toEl) return;
-    const cr = this.canvas.getBoundingClientRect();
-    const fr = fromEl.getBoundingClientRect();
-    const tr = toEl.getBoundingClientRect();
-    const zoom = this.camera ? this.camera.zoom : 1;
-    const cx1 = (fr.left + fr.width / 2 - (cr.left + this.canvas.clientLeft)) / zoom;
-    const cy1 = (fr.top + fr.height / 2 - (cr.top + this.canvas.clientTop)) / zoom;
-    const cx2 = (tr.left + tr.width / 2 - (cr.left + this.canvas.clientLeft)) / zoom;
-    const cy2 = (tr.top + tr.height / 2 - (cr.top + this.canvas.clientTop)) / zoom;
+    const fromNode = this.nodes.find(n => n.id === conn.from);
+    const toNode = this.nodes.find(n => n.id === conn.to);
+
+    // ノードの保存済みキャンバス座標を使用（BoundingRectはzoom/選択状態で乱れるため）
+    // フォールバック: nodeデータがない場合はBoundingRectで計算
+    let cx1, cy1, cx2, cy2;
+    let fw, fh, tw, th; // 幅・高さ
+
+    if (fromNode && fromNode.x != null && fromNode.width != null) {
+      fw = fromNode.width;
+      fh = fromNode.height;
+      cx1 = fromNode.x + fw / 2;
+      cy1 = fromNode.y + fh / 2;
+    } else {
+      const cr = this.canvas.getBoundingClientRect();
+      const fr = fromEl.getBoundingClientRect();
+      const zoom = this.camera ? this.camera.zoom : 1;
+      fw = fr.width / zoom;
+      fh = fr.height / zoom;
+      cx1 = (fr.left + fr.width / 2 - (cr.left + this.canvas.clientLeft)) / zoom;
+      cy1 = (fr.top + fr.height / 2 - (cr.top + this.canvas.clientTop)) / zoom;
+    }
+
+    if (toNode && toNode.x != null && toNode.width != null) {
+      tw = toNode.width;
+      th = toNode.height;
+      cx2 = toNode.x + tw / 2;
+      cy2 = toNode.y + th / 2;
+    } else {
+      const cr = this.canvas.getBoundingClientRect();
+      const tr = toEl.getBoundingClientRect();
+      const zoom = this.camera ? this.camera.zoom : 1;
+      tw = tr.width / zoom;
+      th = tr.height / zoom;
+      cx2 = (tr.left + tr.width / 2 - (cr.left + this.canvas.clientLeft)) / zoom;
+      cy2 = (tr.top + tr.height / 2 - (cr.top + this.canvas.clientTop)) / zoom;
+    }
+
+    // BoundingRect の fr/tr 互換シム（getOffset等で参照される幅・高さ）
+    const fr = { width: fw, height: fh };
+    const tr = { width: tw, height: th };
 
     let x1 = cx1, y1 = cy1, x2 = cx2, y2 = cy2;
     const isHorizontal = Math.abs(cx2 - cx1) > Math.abs(cy2 - cy1);
 
     // シーケンス図: ライフライン間のメッセージは自動的に水平にする
     const seqLib = window.SequenceDiagramLibrary;
-    const fromNode = this.nodes.find(n => n.id === conn.from);
-    const toNode = this.nodes.find(n => n.id === conn.to);
     const isSeqMessage = seqLib && this.umlType === 'sequence' &&
       (seqLib.isSequenceNode(fromNode) && seqLib.isSequenceNode(toNode));
 
