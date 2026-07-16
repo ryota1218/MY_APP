@@ -80,6 +80,9 @@ const server = http.createServer(async (req, res) => {
     };
     
     res.setHeader('Content-Type', mimeTypes[ext] || 'text/plain');
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     fs.createReadStream(filePath).pipe(res);
   });
 });

@@ -158,7 +158,7 @@ class App {
           // Also mark trigger as active
           umlTrigger?.classList.add('active');
 
-          if (this.uml) this.uml.clearAll();
+          if (this.uml) this.uml.clearAll(true);
 
           // Lazy init then swap components
           if (!this.uml) {
@@ -184,15 +184,19 @@ class App {
         };
 
         // 別の図からUML図に遷移した時は確認ダイアログを出さない（現在UMLツールを開いている時のみ）
-        if (this.currentTool === 'uml' && this.uml && this.uml.nodes && this.uml.nodes.length > 0) {
+        // かつ、図に未保存の変更（差分）がある場合のみダイアログを出す
+        if (this.currentTool === 'uml' && this.uml && this.uml.isDirty) {
           showConfirm(
-            '保存の確認',
-            '図の種類を変更すると現在の作業領域がクリアされます。<br>現在の内容を保存（JSONとしてダウンロード）して移動しますか？<br><small style="color:var(--text-muted);">(背景をクリックするとキャンセルします)</small>',
+            '未保存の変更',
+            '図の種類を変更すると現在の作業領域がクリアされます。<br>現在の内容を保存して移動しますか？<br><small style="color:var(--text-muted);">(背景をクリックするとキャンセルします)</small>',
             () => {
-              if (window.FileIO && window.FileIO.exportJSON) {
-                window.FileIO.exportJSON(this.uml);
+              if (typeof this.uml.saveDiagram === 'function') {
+                this.uml.saveDiagram().then((saved) => {
+                  if (saved) proceedWithSwitch();
+                });
+              } else {
+                proceedWithSwitch();
               }
-              proceedWithSwitch();
             },
             '保存して移動',
             '保存せず移動',
@@ -559,32 +563,10 @@ getActiveToolInstance() {
           if (window.DBIO) {
             await window.DBIO.deleteDiagram(id);
             if (window.showToast) showToast('図面を削除しました');
-            
+            // DB側の反映を少し待つ（Supabase等の遅延対策）
+            await new Promise(resolve => setTimeout(resolve, 500));
             // 再取得して再描画
-            const projectId = window.DBIO.getCurrentProjectId();
-            if (projectId) {
-              const rawData = await window.DBIO.fetchDiagrams(projectId, null);
-              const formatted = rawData.map(item => {
-                let label = item.chart_type;
-                let typeKey = 'system-flow';
-                if (label === 'システム構成図') typeKey = 'system-flow';
-                else if (label === '画面遷移図') typeKey = 'screen-transition';
-                else if (label === 'ステートマシン図') typeKey = 'state-machine';
-                else if (label === 'E-R図') typeKey = 'er-diagram';
-                else if (label === 'クラス図') typeKey = 'class-diagram';
-                return {
-                  id: item.id,
-                  toolType: typeKey,
-                  toolLabel: label,
-                  title: item.name || '無題の図面',
-                  updated_at: new Date(item.update_att || item.create_at).toLocaleString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit' }).replace(/\//g, '-'),
-                  status: item.stats || 'creating',
-                };
-              });
-              this.allDiagrams = formatted;
-              this.updateStats();
-              this.renderDashboardCards();
-            }
+            await this.refreshDashboardData();
           }
         } catch (e) {
           console.error(e);

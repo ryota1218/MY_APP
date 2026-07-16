@@ -27,15 +27,15 @@
 
 .timing-dots-overlay {
   position: absolute;
-  top: 0; bottom: 0; right: 0;
-  width: calc(100% * 5 / 6);
+  top: 0; bottom: 0; right: 8px;
+  width: calc(100% * 5 / 6 - 8px);
   pointer-events: none;
   z-index: 5;
 }
 .timing-dot {
   position: absolute;
-  width: 3px; height: 3px;
-  background: #a855f7;
+  width: 8px; height: 8px;
+  background: rgb(var(--accent-rgb));
   border-radius: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
@@ -47,40 +47,63 @@
   z-index: 15;
 }
 .timing-split-view.timing-connect-active .timing-dot {
-  width: 8px; height: 8px;
+  width: 12px; height: 12px;
   pointer-events: auto;
   cursor: crosshair;
-  box-shadow: 0 0 4px #a855f7;
+  box-shadow: 0 0 4px rgba(var(--accent-rgb), 0.5);
 }
 .timing-split-view.timing-connect-active .timing-dot:hover {
-  width: 12px; height: 12px;
-  background: #c084fc;
-  box-shadow: 0 0 8px #c084fc;
+  width: 14px; height: 14px;
+  background: rgb(var(--accent-rgb));
+  box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.8);
 }
 .timing-split-view.timing-connect-active .timing-dot.timing-dot-selected {
-  width: 12px; height: 12px;
-  background: #f59e0b;
-  box-shadow: 0 0 10px #f59e0b;
+  width: 14px; height: 14px;
+  background: var(--warn);
+  box-shadow: 0 0 10px var(--warn);
 }
 
 /* タイミング波形線 */
-.timing-wave-svg {
+.timing-wave-svg, .timing-wave-svg-cross {
   position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
+  top: 0;
+  left: calc(100% / 6);
+  width: calc(100% * 5 / 6 - 8px);
+  height: 100%;
   pointer-events: none;
-  z-index: 10;
+}
+.timing-wave-svg {
+  z-index: 4;
+}
+.timing-wave-svg-cross {
+  z-index: 20;
+}
+.timing-wave-svg line.timing-line-same,
+.timing-wave-svg-cross line.timing-line-cross {
+  pointer-events: stroke;
+  cursor: pointer;
+  transition: stroke 0.2s;
+}
+.timing-wave-svg line.timing-line-same:hover,
+.timing-wave-svg-cross line.timing-line-cross:hover {
+  stroke: #ef4444; /* ホバー時（または削除モード時）に赤くする */
 }
 .timing-wave-svg line.timing-line-same {
-  stroke: #ffffff;
-  stroke-width: 3;
+  stroke: #000;
+  stroke-width: 5;
   stroke-linecap: round;
 }
-.timing-wave-svg line.timing-line-cross {
-  stroke: #facc15;
-  stroke-width: 2;
-  stroke-dasharray: 6 3;
+.timing-wave-svg .timing-marker-same {
+  fill: #000;
+}
+.timing-wave-svg-cross line.timing-line-cross {
+  stroke: #000;
+  stroke-width: 4;
+  stroke-dasharray: 8 12;
   stroke-linecap: round;
+}
+.timing-wave-svg-cross .timing-marker-cross {
+  fill: #000;
 }
 
 .timing-labels-overlay {
@@ -112,8 +135,8 @@
 
 .timing-time-axis {
   position: absolute;
-  bottom: 5px; right: 0;
-  width: calc(100% * 5 / 6);
+  bottom: 5px; right: 8px;
+  width: calc(100% * 5 / 6 - 8px);
   height: 20px;
   pointer-events: none;
   z-index: 1;

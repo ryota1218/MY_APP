@@ -632,7 +632,7 @@
   transform: translateY(2px);
 }
 
-/* Diagram Canvas */
+/* Diagram Canvas (Legacy support for others) */
 .diagram-canvas {
   flex: 1; position: relative;
   background: #ffffff; border: 1px solid var(--border);
@@ -640,6 +640,25 @@
   background-image:
     radial-gradient(circle, rgba(0,0,0,0.1) 1px, transparent 1px);
   background-size: 24px 24px;
+}
+
+/* Virtual Camera Overrides */
+.diagram-viewport {
+  background: #f8fafc;
+}
+.diagram-world {
+  /* will be transformed via JS */
+}
+.diagram-viewport.grid-active {
+  background-image: radial-gradient(circle, rgba(0,0,0,0.1) 1.5px, transparent 1.5px);
+  /* background-size and position will be updated by JS VirtualCamera */
+}
+.diagram-canvas[style*="transparent"] {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+  background-image: none !important;
 }
 .diagram-canvas svg.connections {
   position: absolute;
@@ -730,6 +749,9 @@ svg.connections circle {
 }
 .diagram-node:hover { border-color: var(--accent); box-shadow: 0 0 20px rgba(124,58,237,0.2); }
 .diagram-node.selected { border-color: var(--accent); box-shadow: 0 0 20px rgba(124,58,237,0.3); }
+.usecase-node-actor { box-shadow: none !important; width: auto !important; height: auto !important; min-width: 60px !important; }
+.usecase-node-actor:hover .actor-icon-container { box-shadow: 0 0 15px rgba(16,185,129,0.3); }
+.usecase-node-actor.selected .actor-icon-container { box-shadow: 0 0 20px rgba(16,185,129,0.5); border-color: var(--accent) !important; }
 .node-type-interface,
 .node-type-port {
   min-width: 0 !important;
@@ -781,6 +803,13 @@ svg.connections circle {
   border: 1px solid var(--bg-secondary);
   transition: opacity 0.2s, transform 0.2s;
 }
+.behavior-node-initial .node-port,
+.behavior-node-final .node-port,
+.behavior-node-entry-point .node-port,
+.behavior-node-exit-point .node-port {
+  width: 5px;
+  height: 5px;
+}
 .node-type-port .node-port:hover,
 .node-type-interface .node-port:hover {
   opacity: 1;
@@ -788,12 +817,31 @@ svg.connections circle {
 }
 .node-type-port .node-port.port-top,
 .node-type-interface .node-port.port-top { top: -3px; }
+.behavior-node-initial .node-port.port-top { top: -3px; }
+.behavior-node-final .node-port.port-top,
+.behavior-node-entry-point .node-port.port-top,
+.behavior-node-exit-point .node-port.port-top { top: -4px; }
+
 .node-type-port .node-port.port-bottom,
 .node-type-interface .node-port.port-bottom { bottom: -3px; }
+.behavior-node-initial .node-port.port-bottom { bottom: -3px; }
+.behavior-node-final .node-port.port-bottom,
+.behavior-node-entry-point .node-port.port-bottom,
+.behavior-node-exit-point .node-port.port-bottom { bottom: -4px; }
+
 .node-type-port .node-port.port-left,
 .node-type-interface .node-port.port-left { left: -3px; }
+.behavior-node-initial .node-port.port-left { left: -3px; }
+.behavior-node-final .node-port.port-left,
+.behavior-node-entry-point .node-port.port-left,
+.behavior-node-exit-point .node-port.port-left { left: -4px; }
+
 .node-type-port .node-port.port-right,
 .node-type-interface .node-port.port-right { right: -3px; }
+.behavior-node-initial .node-port.port-right { right: -3px; }
+.behavior-node-final .node-port.port-right,
+.behavior-node-entry-point .node-port.port-right,
+.behavior-node-exit-point .node-port.port-right { right: -4px; }
 
 /* ===== UML Deployment Diagram (3D Nodes & Artifacts) ===== */
 .uml-deployment-node {
