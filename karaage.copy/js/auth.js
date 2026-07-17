@@ -5,6 +5,34 @@ const Auth = {
   currentUser: null,
 
   async init() {
+    // CSRFトークンの取得とfetchのグローバルインターセプト設定
+    try {
+      const csrfRes = await fetch('/api/csrf');
+      if (csrfRes.ok) {
+        const csrfData = await csrfRes.json();
+        window.csrfToken = csrfData.csrfToken;
+        
+        // fetch関数のグローバルオーバーライド
+        const originalFetch = window.fetch;
+        window.fetch = async function(...args) {
+          let [resource, config] = args;
+          if (typeof resource === 'string' && resource.startsWith('/api/')) {
+            config = config || {};
+            if (config.method && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(config.method.toUpperCase())) {
+              config.headers = {
+                ...config.headers,
+                'X-CSRF-Token': window.csrfToken || ''
+              };
+              args[1] = config;
+            }
+          }
+          return originalFetch.apply(this, args);
+        };
+      }
+    } catch (e) {
+      console.warn('Failed to initialize CSRF token', e);
+    }
+
     let sessionUser = null;
     let sessionProfile = null;
 

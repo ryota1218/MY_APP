@@ -46,6 +46,17 @@ const server = http.createServer(async (req, res) => {
         }
 
         const handler = require(apiPath);
+        
+        // CSRF Verification
+        if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+          const csrfHeader = req.headers['x-csrf-token'];
+          const csrfCookie = req.cookies['csrf_token'];
+          if (!csrfHeader || !csrfCookie || csrfHeader !== csrfCookie) {
+            res.status(403).json({ error: 'CSRF token validation failed' });
+            return;
+          }
+        }
+
         await handler(req, res);
       } catch (err) {
         console.error('API Error:', err);
