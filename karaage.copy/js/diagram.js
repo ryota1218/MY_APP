@@ -775,7 +775,7 @@ class DiagramTool {
       this.initPalette();
       this.initCanvasEvents();
       this.initTextStyleControls();
-      this.initPropertyPanel();
+      this.propertyPanelManager = new PropertyPanelManager(this);
       this.initThemeListener();
     }
 
@@ -1268,579 +1268,13 @@ class DiagramTool {
     this.canvas.addEventListener('click', e => {
       if (e.target === this.canvas || e.target === this.svg) {
         this.deselectAll();
-        this.closePropertyPanel();
+        this.propertyPanelManager.closePropertyPanel();
       }
     });
 
 
   }
-  initPropertyPanel() {
-    this.propertyPanelNode = null;
-    const panel = document.getElementById(this.prefix + '-property-panel');
-    if (!panel) return;
-
-    const bindInput = (suffix, prop, parser = String) => {
-      const el = document.getElementById(this.prefix + '-prop-' + suffix);
-      if (el) {
-        const handler = (e) => {
-          if (this.propertyPanelNode) {
-            this.propertyPanelNode[prop] = parser(e.target.value);
-            if (this.propertyPanelNode.from !== undefined) {
-              this.drawConnections();
-            } else {
-              this.updateNodeDOM(this.propertyPanelNode);
-            }
-          }
-        };
-        el.addEventListener('input', handler);
-        if (el.tagName === 'SELECT') {
-          el.addEventListener('change', handler);
-        }
-      }
-    };
-    bindInput('label', 'label');
-    bindInput('x', 'x', Number);
-    bindInput('y', 'y', Number);
-    bindInput('fontsize', 'textSize', Number);
-    // fontsize専用：プロパティパネル → ツールバーへの同期
-    const fontsizeEl = document.getElementById(this.prefix + '-prop-fontsize');
-    if (fontsizeEl) {
-      fontsizeEl.addEventListener('input', () => {
-        if (this.fontSizeControl) {
-          const val = fontsizeEl.value;
-          if (val) {
-            let exists = Array.from(this.fontSizeControl.options).some(o => o.value === val);
-            if (!exists) {
-              const opt = document.createElement('option');
-              opt.value = val;
-              opt.text = val;
-              this.fontSizeControl.appendChild(opt);
-            }
-          }
-          this.fontSizeControl.value = val;
-        }
-      });
-    }
-
-    bindInput('routing', 'routing');
-    bindInput('linestyle', 'lineStyle');
-    bindInput('fragtype', 'fragmentType');
-    bindInput('fraglabel', 'fragmentLabel');
-    bindInput('timingval', 'timingValue');
-    bindInput('timingtext', 'timingValue');
-    bindInput('multFrom', 'multiplicityFrom');
-    bindInput('multTo', 'multiplicityTo');
-    bindInput('subtexttop', 'subtextTop');
-    bindInput('subtextbottom', 'subtextBottom');
-    bindInput('arrowdir', 'arrowDirection');
-    bindInput('conntype', 'connType');
-
-    const conntypeEl = document.getElementById(this.prefix + '-prop-conntype');
-    if (conntypeEl) {
-      conntypeEl.addEventListener('change', () => {
-        if (!this.propertyPanelNode) return;
-        const conn = this.propertyPanelNode;
-        const type = conntypeEl.value;
-
-        // portProtocol（ポートラベル）を自動設定
-        const portLabels = {
-          include: '<<include>>',
-          extend:  '<<extend>>',
-          dependency: '<<use>>',
-        };
-        if (portLabels[type] !== undefined) {
-          conn.portProtocol = portLabels[type];
-        } else {
-          // association / aggregation / composition は空にリセット
-          conn.portProtocol = '';
-        }
-
-        // ポート入力欄のUIへの反映
-        const portEl = document.getElementById(this.prefix + '-prop-port-center');
-        if (portEl) portEl.value = conn.portProtocol;
-
-        // 線スタイルを自動切替（include/extend/dependency は破線、その他は実線）
-        const dashedTypes = ['include', 'extend', 'dependency'];
-        conn.lineStyle = dashedTypes.includes(type) ? 'dashed' : 'solid';
-
-        // 線スタイルUIの同期
-        const lineStyleEl = document.getElementById(this.prefix + '-prop-linestyle');
-        if (lineStyleEl) lineStyleEl.value = conn.lineStyle;
-
-        this.drawConnections();
-        if (this.saveState) this.saveState();
-      });
-    }
-    // プロパティパネルのカラーピッカー初期化
-    this.initPropertyPanelColorPicker('textcolor', 'textColor');
-    this.initPropertyPanelColorPicker('color', 'color');
-  }
-
-  initPropertyPanelColorPicker(suffix, nodeProp) {
-    const pickerEl = document.getElementById(this.prefix + '-prop-' + suffix + '-picker');
-    const menuEl = document.getElementById(this.prefix + '-prop-' + suffix + '-menu');
-    const themeRowEl = document.getElementById(this.prefix + '-prop-' + suffix + '-theme-row');
-    const shadeGridEl = document.getElementById(this.prefix + '-prop-' + suffix + '-shade-grid');
-    const standardRowEl = document.getElementById(this.prefix + '-prop-' + suffix + '-standard-row');
-    const otherBtn = document.getElementById(this.prefix + '-prop-' + suffix + '-other-btn');
-    const sampleEl = document.getElementById(this.prefix + '-prop-' + suffix + '-sample');
-    const textEl = document.getElementById(this.prefix + '-prop-' + suffix + '-text');
-
-    if (!pickerEl || !menuEl) return;
-
-    // カラーパレット構築
-    const themeColors = [
-      { label: '黒', color: '#111111', shades: ['#f3f4f6', '#d1d5db', '#6b7280', '#111111'] },
-      { label: '赤', color: '#ef4444', shades: ['#fee2e2', '#fca5a5', '#ef4444', '#991b1b'] },
-      { label: '灰', color: '#9ca3af', shades: ['#f3f4f6', '#d1d5db', '#9ca3af', '#4b5563'] },
-      { label: '青', color: '#3b82f6', shades: ['#dbeafe', '#93c5fd', '#3b82f6', '#1d4ed8'] },
-      { label: '水色', color: '#60a5fa', shades: ['#dbeafe', '#bfdbfe', '#60a5fa', '#2563eb'] },
-      { label: '橙', color: '#f97316', shades: ['#ffedd5', '#fdba74', '#f97316', '#c2410c'] },
-      { label: '銀', color: '#a3a3a3', shades: ['#f5f5f5', '#e5e7eb', '#a3a3a3', '#525252'] },
-      { label: '黄', color: '#facc15', shades: ['#fef9c3', '#fde68a', '#facc15', '#ca8a04'] },
-      { label: '青系', color: '#60a5fa', shades: ['#eff6ff', '#dbeafe', '#60a5fa', '#1d4ed8'] },
-      { label: '緑', color: '#84cc16', shades: ['#ecfccb', '#bef264', '#84cc16', '#3f6212'] },
-    ];
-    const standardColors = ['#dc2626', '#ff0000', '#f59e0b', '#ffea00', '#84cc16', '#10b981', '#06b6d4', '#0284c7', '#1d4ed8', '#7c3aed'];
-
-    if (themeRowEl) {
-      themeRowEl.innerHTML = themeColors.map(item => `
-        <button type="button" class="diagram-color-option" data-color="${item.color}" data-label="${item.label}">
-          <span class="diagram-color-option-swatch" style="background:${item.color}"></span>
-        </button>
-      `).join('');
-    }
-
-    if (shadeGridEl) {
-      shadeGridEl.innerHTML = themeColors.map(item => `
-        <div class="diagram-color-shade-column" data-label="${item.label}">
-          ${item.shades.map((shade, index) => `<button type="button" class="diagram-color-shade-option" data-color="${shade}" data-label="${item.label} ${index + 1}" style="background:${shade}"></button>`).join('')}
-        </div>
-      `).join('');
-    }
-
-    if (standardRowEl) {
-      standardRowEl.innerHTML = standardColors.map((color, index) => `
-        <button type="button" class="diagram-color-option" data-color="${color}" data-label="標準 ${index + 1}">
-          <span class="diagram-color-option-swatch" style="background:${color}"></span>
-        </button>
-      `).join('');
-    }
-
-    // カラー選択イベント
-    menuEl.addEventListener('click', e => {
-      const option = e.target.closest('[data-color]');
-      if (!option) return;
-      const selectedColor = option.dataset.color || '';
-      if (!this.propertyPanelNode) return;
-      this.propertyPanelNode[nodeProp] = selectedColor;
-      this.updateNodeDOM(this.propertyPanelNode);
-      this.refreshPropertyPanelColorButton(suffix, nodeProp);
-      // textcolorの場合、ツールバー側も更新
-      if (suffix === 'textcolor') {
-        this.setTextColor(selectedColor);
-        this.refreshTextColorButton(selectedColor || this.defaultTextStyle.color);
-      }
-      pickerEl.open = false;
-    });
-
-  // その他の色ボタン（カラーピッカーの続き）
-  if(otherBtn) {
-    const inputId = this.prefix + '-native-' + suffix;
-    let nativeColorInput = document.getElementById(inputId);
-
-    if (!nativeColorInput) {
-      nativeColorInput = document.createElement('input');
-      nativeColorInput.id = inputId;
-      nativeColorInput.type = 'color';
-      nativeColorInput.value = '#e5e7eb';
-      nativeColorInput.style.display = 'none';
-      document.body.appendChild(nativeColorInput);
-    }
-
-    otherBtn.addEventListener('click', e => {
-      e.preventDefault();
-      e.stopPropagation();
-      nativeColorInput.value = this.propertyPanelNode && this.propertyPanelNode[nodeProp] ? this.propertyPanelNode[nodeProp] : '#e5e7eb';
-      nativeColorInput.click();
-    });
-
-    nativeColorInput.addEventListener('change', () => {
-      const selectedColor = nativeColorInput.value;
-      if (!this.propertyPanelNode) return;
-      this.propertyPanelNode[nodeProp] = selectedColor;
-      this.updateNodeDOM(this.propertyPanelNode);
-      this.refreshPropertyPanelColorButton(suffix, nodeProp);
-      // textcolorの場合、ツールバー側も更新
-      if (suffix === 'textcolor') {
-        this.setTextColor(selectedColor);
-        this.refreshTextColorButton(selectedColor || this.defaultTextStyle.color);
-      }
-      pickerEl.open = false;
-    });
-  }
-
-    // 外部クリックで閉じる
-    document.addEventListener('click', e => {
-    if (!pickerEl.contains(e.target)) {
-  pickerEl.open = false;
-}
-    });
-  }
-
-refreshPropertyPanelColorButton(suffix, nodeProp) {
-  const sampleEl = document.getElementById(this.prefix + '-prop-' + suffix + '-sample');
-  const textEl = document.getElementById(this.prefix + '-prop-' + suffix + '-text');
-  const menuEl = document.getElementById(this.prefix + '-prop-' + suffix + '-menu');
-
-  if (!this.propertyPanelNode || !sampleEl || !textEl) return;
-
-  const color = this.propertyPanelNode[nodeProp] || '';
-  const isAuto = !color;
-  const displayColor = isAuto ? '#e5e7eb' : color;
-
-  sampleEl.style.background = displayColor;
-
-  if (menuEl) {
-    const activeOption = isAuto ? menuEl.querySelector('.diagram-color-auto-row') : menuEl.querySelector(`.diagram-color-option[data-color="${color}"]`);
-    textEl.textContent = activeOption?.dataset.label || (isAuto ? '自動' : color);
-  }
-}
-
-openPropertyPanel(node) {
-  this.propertyPanelNode = node;
-  const isConn = node && node.from !== undefined;
-  const isNode = node && node.from === undefined;
-
-  // パネル項目の表示切り替え（タイミング図などの設定）
-  const routingGroup = document.getElementById(this.prefix + '-prop-group-routing');
-  if (routingGroup) routingGroup.style.display = isConn ? '' : 'none';
-  const linestyleGroup = document.getElementById(this.prefix + '-prop-group-linestyle');
-  if (linestyleGroup) linestyleGroup.style.display = isConn ? '' : 'none';
-  const multFromGroup = document.getElementById(this.prefix + '-prop-group-multFrom');
-  if (multFromGroup) multFromGroup.style.display = isConn ? '' : 'none';
-  const multToGroup = document.getElementById(this.prefix + '-prop-group-multTo');
-  if (multToGroup) multToGroup.style.display = isConn ? '' : 'none';
-  const fragmentGroup = document.getElementById(this.prefix + '-prop-group-fragment');
-  if (fragmentGroup) fragmentGroup.style.display = (node && node.behaviorType === 'fragment') ? '' : 'none';
-  const timingGroup = document.getElementById(this.prefix + '-prop-group-timing');
-  if (timingGroup) timingGroup.style.display = (node && (node.behaviorType === 'stateTimeline' || node.behaviorType === 'valueTimeline')) ? '' : 'none';
-  
-  const nodeOnlyGroup = document.getElementById(this.prefix + '-prop-group-node-only');
-  if (nodeOnlyGroup) nodeOnlyGroup.style.display = isNode ? '' : 'none';
-  const connOnlyGroup = document.getElementById(this.prefix + '-prop-group-conn-only');
-  if (connOnlyGroup) connOnlyGroup.style.display = isConn ? '' : 'none';
-  const conntypeGroup = document.getElementById(this.prefix + '-prop-group-conntype');
-  if (conntypeGroup) conntypeGroup.style.display = isConn ? '' : 'none';
-
-  const panel = document.getElementById(this.prefix + '-property-panel');
-  if (panel) panel.classList.add('open');
-
-  // 押し出し式連動: 右のプロパティが開いたら左のサイドバーを隠し、右のチャットも閉じる
-  document.body.classList.add('sidebar-collapsed');
-  const aiPanel = document.getElementById(this.prefix + '-ai-chat-panel');
-  if (aiPanel) aiPanel.classList.remove('open');
-
-  // Populate fields
-  const setVal = (suffix, val) => {
-    const el = document.getElementById(this.prefix + '-prop-' + suffix);
-    if (el) el.value = val;
-  };
-
-  const gridToggleBtn = document.getElementById(this.prefix + '-grid-toggle');
-  if (gridToggleBtn) {
-    gridToggleBtn.addEventListener('click', () => {
-      this.isGridVisible = !this.isGridVisible;
-      if (this.viewport) {
-        this.viewport.classList.toggle('grid-active', this.isGridVisible);
-      } else {
-        this.canvas.classList.toggle('grid-active', this.isGridVisible);
-      }
-    });
-  }
-
-  if (isNode) {
-    setVal('label', node.label || '');
-    setVal('subtexttop', node.subtextTop || '');
-    setVal('subtextbottom', node.subtextBottom || '');
-
-    // アクティビティ図専用のUI調整
-    const isActivity = this.umlType === 'activity';
-    const topGroup = document.getElementById(this.prefix + '-prop-subtexttop')?.closest('.property-group');
-    const bottomGroup = document.getElementById(this.prefix + '-prop-subtextbottom')?.closest('.property-group');
-    if (topGroup) topGroup.style.display = isActivity ? 'none' : '';
-    if (bottomGroup) bottomGroup.style.display = isActivity ? 'none' : '';
-
-    const labelInput = document.getElementById(this.prefix + '-prop-label');
-    if (labelInput) {
-      const labelTextEl = labelInput.closest('.property-group')?.querySelector('label');
-      if (isActivity && (node.behaviorType === 'decision' || node.behaviorType === 'merge')) {
-        if (labelTextEl) labelTextEl.textContent = "判定条件 (メイン名)";
-        labelInput.placeholder = "例: 休日か";
-      } else {
-        if (labelTextEl) labelTextEl.textContent = "名前 (メイン名)";
-        labelInput.placeholder = "";
-      }
-    }
-    setVal('x', node.x);
-    setVal('y', node.y);
-    setVal('fontsize', node.textSize || this.defaultTextStyle.fontSize);
-
-    // カラーボタンの表示を更新（新方式）
-    this.refreshPropertyPanelColorButton('textcolor', 'textColor');
-    this.refreshPropertyPanelColorButton('color', 'color');
-
-    // タイミング図やフラグメント専用の設定
-    if (node.behaviorType === 'fragment') {
-      setVal('fragtype', node.fragmentType || 'alt');
-      setVal('fraglabel', node.fragmentLabel || '');
-    }
-    if (node.behaviorType === 'stateTimeline' || node.behaviorType === 'valueTimeline') {
-      const val = node.timingValue || 'High';
-      setVal('timingval', (val === 'High' || val === 'Low') ? val : 'Other');
-      setVal('timingtext', val);
-    }
-  } else if (isConn) {
-    // 線（コネクション）を選択した場合
-    setVal('label', node.label || '');
-    setVal('arrowdir', node.arrowDirection || 'default');
-    setVal('routing', node.routing || 'straight');
-    setVal('linestyle', node.lineStyle || 'solid');
-    setVal('multFrom', node.multiplicityFrom || '');
-    setVal('multTo', node.multiplicityTo || '');
-    setVal('conntype', node.connType || 'association');
-
-    // ポートモード初期化
-    if (!node.portMode) {
-      node.portMode = node.portFrom || node.portTo ? 'dual' : 'single';
-    }
-
-    const singleView = document.getElementById(this.prefix + '-prop-port-single-view');
-    const dualView = document.getElementById(this.prefix + '-prop-port-dual-view');
-    
-    const updatePortModeUI = () => {
-      if (singleView) singleView.style.display = node.portMode === 'single' ? 'block' : 'none';
-      if (dualView) dualView.style.display = node.portMode === 'dual' ? 'block' : 'none';
-    };
-
-    updatePortModeUI();
-
-    // 値をセット
-    const inputCenter = document.getElementById(this.prefix + '-prop-port-center');
-    const inputFrom = document.getElementById(this.prefix + '-prop-port-from');
-    const inputTo = document.getElementById(this.prefix + '-prop-port-to');
-
-    if (inputCenter) inputCenter.value = node.portProtocol || '';
-    if (inputFrom) inputFrom.value = node.portFrom || '';
-    if (inputTo) inputTo.value = node.portTo || '';
-
-    // イベントリスナー (蓄積を防ぐためcloneNode)
-    const setupInput = (el, propName) => {
-      if (!el) return;
-      const newEl = el.cloneNode(true);
-      el.parentNode.replaceChild(newEl, el);
-      newEl.addEventListener('input', (e) => {
-        node[propName] = e.target.value;
-        this.drawConnections();
-      });
-    };
-
-    setupInput(inputCenter, 'portProtocol');
-    setupInput(inputFrom, 'portFrom');
-    setupInput(inputTo, 'portTo');
-
-    // モード切り替えボタン
-    const switchDualBtn = document.getElementById(this.prefix + '-prop-switch-dual-btn');
-    if (switchDualBtn) {
-      const newBtn = switchDualBtn.cloneNode(true);
-      switchDualBtn.parentNode.replaceChild(newBtn, switchDualBtn);
-      newBtn.addEventListener('click', () => {
-        node.portMode = 'dual';
-        if (node.portProtocol && !node.portTo) {
-          node.portTo = node.portProtocol;
-          const toEl = document.getElementById(this.prefix + '-prop-port-to');
-          if (toEl) toEl.value = node.portTo;
-        }
-        updatePortModeUI();
-        this.drawConnections();
-      });
-    }
-
-    const switchSingleBtn = document.getElementById(this.prefix + '-prop-switch-single-btn');
-    if (switchSingleBtn) {
-      const newBtn = switchSingleBtn.cloneNode(true);
-      switchSingleBtn.parentNode.replaceChild(newBtn, switchSingleBtn);
-      newBtn.addEventListener('click', () => {
-        node.portMode = 'single';
-        updatePortModeUI();
-        this.drawConnections();
-      });
-    }
-
-    updatePortModeUI();
-    setupAddBtn('center');
-    setupAddBtn('from');
-    setupAddBtn('to');
-
-    // 線の場合の色更新（線の色変更用）
-    this.refreshPropertyPanelColorButton('color', 'color');
-  }
-
-
-  // --- クラスボックス専用フィールドの動的生成 ---
-  const panelBody = panel?.querySelector('.property-panel-body');
-  // 以前の動的フィールドを削除
-  panelBody?.querySelectorAll('.uml-class-prop-group').forEach(g => g.remove());
-
-  // class-box, object-box の場合: フォントサイズ・文字色フィールドを非表示にする
-  const fontsizeGroup = document.getElementById(this.prefix + '-prop-fontsize')?.closest('.property-group');
-  const textcolorGroup = document.getElementById(this.prefix + '-prop-textcolor')?.closest('.property-group');
-  const labelGroup = document.getElementById(this.prefix + '-prop-label')?.closest('.property-group');
-  
-  const isClassOrObjectBox = node.nodeType === 'class-box' || node.nodeType === 'object-box';
-  if (fontsizeGroup) fontsizeGroup.style.display = isClassOrObjectBox ? 'none' : '';
-  if (textcolorGroup) textcolorGroup.style.display = isClassOrObjectBox ? 'none' : '';
-  if (labelGroup) labelGroup.style.display = node.nodeType === 'object-box' ? 'none' : '';
-
-  if (isClassOrObjectBox && panelBody) {
-    const deleteBtn = panelBody.querySelector('[data-action="deleteSelectedNode"]');
-
-    if (node.nodeType === 'object-box') {
-      let objName = '';
-      let className = '';
-      if (node.label) {
-        const parts = node.label.split(':').map(s => s.trim());
-        if (parts.length > 1) {
-          objName = parts[0];
-          className = parts.slice(1).join(':').trim();
-        } else {
-          // No colon, so it's just an object name
-          objName = parts[0];
-        }
-      }
-      
-      const nameGroup = document.createElement('div');
-      nameGroup.className = 'property-group uml-class-prop-group';
-      nameGroup.innerHTML = `
-        <div style="display: flex; gap: 10px; margin-bottom: 5px;">
-          <div style="flex: 1;">
-            <label>オブジェクト名 <span class="prop-hint">(任意)</span></label>
-            <input type="text" class="property-input" id="${this.prefix}-prop-obj-name" value="${this.escapeHtml(objName)}" placeholder="例: taro">
-          </div>
-          <div style="flex: 1;">
-            <label>クラス名 <span class="prop-hint">(任意)</span></label>
-            <input type="text" class="property-input" id="${this.prefix}-prop-class-name" value="${this.escapeHtml(className)}" placeholder="例: User">
-          </div>
-        </div>
-        <div class="prop-hint" id="${this.prefix}-prop-name-preview" style="font-weight: bold; margin-bottom: 10px;">
-          プレビュー: <span style="text-decoration: underline;">(未入力)</span>
-        </div>
-      `;
-      panelBody.insertBefore(nameGroup, deleteBtn);
-      
-      const objInput = nameGroup.querySelector(`#${this.prefix}-prop-obj-name`);
-      const classInput = nameGroup.querySelector(`#${this.prefix}-prop-class-name`);
-      const preview = nameGroup.querySelector(`#${this.prefix}-prop-name-preview span`);
-      
-      const updateLabel = () => {
-        const o = objInput.value.trim();
-        const c = classInput.value.trim();
-        let newLabel = '';
-        if (o && c) newLabel = `${o} : ${c}`;
-        else if (c) newLabel = `: ${c}`;
-        else if (o) newLabel = o;
-        
-        preview.textContent = newLabel || '(未入力)';
-        if (!this.propertyPanelNode) return;
-        this.propertyPanelNode.label = newLabel;
-        this.updateNodeDOM(this.propertyPanelNode);
-      };
-      
-      objInput.addEventListener('input', updateLabel);
-      classInput.addEventListener('input', updateLabel);
-      updateLabel(); // 初期表示更新
-    }
-
-    if (node.nodeType === 'class-box') {
-      // ステレオタイプ
-      const stereoGroup = document.createElement('div');
-      stereoGroup.className = 'property-group uml-class-prop-group';
-      stereoGroup.innerHTML = `<label>ステレオタイプ</label>
-          <input type="text" class="property-input" value="${this.escapeHtml(node.stereotype || '')}" placeholder="例: «interface»">`;
-      panelBody.insertBefore(stereoGroup, deleteBtn);
-      stereoGroup.querySelector('input').addEventListener('input', e => {
-        if (!this.propertyPanelNode) return;
-        this.propertyPanelNode.stereotype = e.target.value;
-        this.updateNodeDOM(this.propertyPanelNode);
-      });
-    }
-
-    // 属性 / スロット
-    const attrGroup = document.createElement('div');
-    attrGroup.className = 'property-group uml-class-prop-group';
-    if (node.nodeType === 'class-box') {
-      attrGroup.innerHTML = `<label>属性 <span class="prop-hint">(1行1属性)</span></label>
-          <textarea class="property-input property-textarea" rows="4" placeholder="-属性名 : 型">${(node.attributes || []).join('\n')}</textarea>`;
-    } else {
-      attrGroup.innerHTML = `<label>スロット (属性の現在値) <span class="prop-hint">(1行1スロット)</span></label>
-          <textarea class="property-input property-textarea" rows="4" placeholder="age = 25">${(node.attributes || []).join('\n')}</textarea>`;
-    }
-    panelBody.insertBefore(attrGroup, deleteBtn);
-    attrGroup.querySelector('textarea').addEventListener('input', e => {
-      if (!this.propertyPanelNode) return;
-      this.propertyPanelNode.attributes = e.target.value.split('\n').filter(l => l.trim() !== '');
-      this.updateNodeDOM(this.propertyPanelNode);
-    });
-
-    if (node.nodeType === 'class-box') {
-      // 操作
-      const methodGroup = document.createElement('div');
-      methodGroup.className = 'property-group uml-class-prop-group';
-      methodGroup.innerHTML = `<label>操作 <span class="prop-hint">(1行1操作)</span></label>
-          <textarea class="property-input property-textarea" rows="4" placeholder="+操作名() : 戻り値型">${(node.methods || []).join('\n')}</textarea>`;
-      panelBody.insertBefore(methodGroup, deleteBtn);
-      methodGroup.querySelector('textarea').addEventListener('input', e => {
-        if (!this.propertyPanelNode) return;
-        this.propertyPanelNode.methods = e.target.value.split('\n').filter(l => l.trim() !== '');
-        this.updateNodeDOM(this.propertyPanelNode);
-      });
-    }
-  }
-
-  // Focus and select the label input
-  setTimeout(() => {
-    const labelInput = document.getElementById(this.prefix + '-prop-label');
-    if (labelInput) {
-      labelInput.focus({ preventScroll: true });
-      labelInput.select();
-      
-      // アクティビティ図の判定ノードで、デフォルト名なら自動クリアして即座に入力可能にする
-      const isActivity = this.umlType === 'activity';
-      const isDecisionNode = node && (node.behaviorType === 'decision' || node.behaviorType === 'merge');
-      if (isActivity && isDecisionNode && (labelInput.value === '判定/分岐' || labelInput.value === '合流')) {
-        labelInput.value = '';
-        labelInput.dispatchEvent(new Event('input'));
-      }
-    }
-  }, 300);
-}
-
-closePropertyPanel() {
-  this.propertyPanelNode = null;
-  const panel = document.getElementById(this.prefix + '-property-panel');
-  if (panel) panel.classList.remove('open');
-
-  // 押し出し式連動: チャットパネルも閉じていれば、左のサイドバーを復元する
-  const aiPanel = document.getElementById(this.prefix + '-ai-chat-panel');
-  const isAIChatOpen = aiPanel && aiPanel.classList.contains('open');
-  if (!isAIChatOpen) {
-    if (document.body.dataset.sidebarCollapsedByUser !== 'true') {
-      document.body.classList.remove('sidebar-collapsed');
-    }
-  }
-}
-
-updateNodeDOM(node) {
+  updateNodeDOM(node) {
   if (node && node.from !== undefined) {
     this.drawConnections();
     return;
@@ -1988,7 +1422,7 @@ cutSelected() {
       this.connections = this.connections.filter(conn => conn.from !== this.selectedNode.id && conn.to !== this.selectedNode.id);
       
       this.selectedNode = null;
-      this.closePropertyPanel();
+      this.propertyPanelManager.closePropertyPanel();
       
       // 3. 接続線を再描画し、全体を更新
       this.drawConnections();
@@ -3152,8 +2586,9 @@ renderNode(node) {
     if (this.currentMode === 'connect') {
       if (!this.connectingFrom) {
         this.connectingFrom = node;
+        this.connectingFromPort = null;
         el.classList.add('selected');
-        showToast('接続先ノードをクリックしてください');
+        if (typeof showToast === 'function') showToast('接続先ノードをクリックしてください');
       } else if (this.connectingFrom.id !== node.id) {
         let initialLabel = '';
         if (this.activeConnType === 'deploy') initialLabel = '«deploy»';
@@ -3163,8 +2598,9 @@ renderNode(node) {
           id: this.prefix + '_conn_' + (this.connIdCounter++),
           from: this.connectingFrom.id,
           to: node.id,
+          fixedFromPort: this.connectingFromPort,
           connType: this.activeConnType || 'association',
-          routing: 'straight',
+          routing: this.connectingFromPort ? 'orthogonal' : 'straight',
           label: initialLabel,
           multiplicityFrom: '',
           multiplicityTo: '',
@@ -3178,6 +2614,8 @@ renderNode(node) {
           to: node.id,
         });
         this.connectingFrom = null;
+        this.connectingFromPort = null;
+        this.setMode('select');
       }
       return;
     }
@@ -3227,8 +2665,41 @@ renderNode(node) {
       if (!dragging) return;
       const vRect = this.viewport.getBoundingClientRect();
       const currentWorldPos = this.camera.screenToWorld(e.clientX - vRect.left, e.clientY - vRect.top);
-      const nextX = currentWorldPos.x - ox;
-      const nextY = currentWorldPos.y - oy;
+      let nextX = currentWorldPos.x - ox;
+      let nextY = currentWorldPos.y - oy;
+
+      // Snapping logic for entry/exit points to the center of container edges
+      if (node.behaviorType === 'entryPoint' || node.behaviorType === 'exitPoint') {
+        const SNAP_DIST = 30;
+        const nodeW = node.width || 34;
+        const nodeH = node.height || 34;
+        const cx = nextX + nodeW / 2;
+        const cy = nextY + nodeH / 2;
+        
+        for (const n of this.nodes) {
+          if (n.id === node.id) continue;
+          if (n.behaviorType === 'compositeState' || n.nodeType === 'group-boundary' || n.behaviorType === 'systemBoundary') {
+            const elN = document.getElementById(n.id);
+            if (!elN) continue;
+            const cw = n.width || parseInt(elN.style.width) || 200;
+            const ch = n.height || parseInt(elN.style.height) || 100;
+            const left = n.x, right = n.x + cw, top = n.y, bottom = n.y + ch;
+            const midX = n.x + cw / 2;
+            const midY = n.y + ch / 2;
+            
+            if (Math.abs(cx - left) < SNAP_DIST && Math.abs(cy - midY) < SNAP_DIST * 2) {
+              nextX = left - nodeW / 2; nextY = midY - nodeH / 2; break;
+            } else if (Math.abs(cx - right) < SNAP_DIST && Math.abs(cy - midY) < SNAP_DIST * 2) {
+              nextX = right - nodeW / 2; nextY = midY - nodeH / 2; break;
+            } else if (Math.abs(cx - midX) < SNAP_DIST * 2 && Math.abs(cy - top) < SNAP_DIST) {
+              nextX = midX - nodeW / 2; nextY = top - nodeH / 2; break;
+            } else if (Math.abs(cx - midX) < SNAP_DIST * 2 && Math.abs(cy - bottom) < SNAP_DIST) {
+              nextX = midX - nodeW / 2; nextY = bottom - nodeH / 2; break;
+            }
+          }
+        }
+      }
+
       if (nextX !== node.x || nextY !== node.y) moved = true;
       node.x = nextX;
       node.y = nextY;
@@ -3294,7 +2765,7 @@ renderNode(node) {
     e.preventDefault();
     e.stopPropagation();
     this.selectNode(node, el);
-    this.openPropertyPanel(node);
+    this.propertyPanelManager.openPropertyPanel(node);
   });
   // Port click for connection
   el.querySelectorAll('.node-port').forEach(port => {
@@ -3302,8 +2773,37 @@ renderNode(node) {
       e.stopPropagation();
       if (!this.connectingFrom) {
         this.connectingFrom = node;
+        this.connectingFromPort = port.dataset.port;
         this.setMode('connect');
         el.classList.add('selected');
+      } else if (this.connectingFrom.id !== node.id) {
+        let initialLabel = '';
+        if (this.activeConnType === 'deploy') initialLabel = '«deploy»';
+        else if (this.activeConnType === 'manifest') initialLabel = '«manifest»';
+
+        const newConn = {
+          id: this.prefix + '_conn_' + (this.connIdCounter++),
+          from: this.connectingFrom.id,
+          to: node.id,
+          fixedFromPort: this.connectingFromPort,
+          fixedToPort: port.dataset.port,
+          connType: this.activeConnType || 'association',
+          routing: this.connectingFromPort ? 'orthogonal' : 'straight',
+          label: initialLabel,
+          multiplicityFrom: '',
+          multiplicityTo: '',
+        };
+        this.connections.push(newConn);
+        this.drawConnections();
+        document.getElementById(this.connectingFrom.id)?.classList.remove('selected');
+        this.pushUndoAction({
+          type: 'removeConnection',
+          from: this.connectingFrom.id,
+          to: node.id,
+        });
+        this.connectingFrom = null;
+        this.connectingFromPort = null;
+        this.setMode('select');
       }
     });
   });
@@ -3371,7 +2871,7 @@ selectConnection(conn) {
   this.deselectAll();
   this.selectedConnection = conn;
   this.drawConnections();
-  this.openPropertyPanel(conn);
+  this.propertyPanelManager.openPropertyPanel(conn);
 }
 selectNode(node, el) {
   this.deselectAll();
@@ -3495,11 +2995,13 @@ deleteSelected() {
       portMode: conn.portMode,
       portFrom: conn.portFrom,
       portTo: conn.portTo,
+      textSize: conn.textSize,
+      textColor: conn.textColor,
     });
     this.deselectAll();
     this.drawConnections();
-    if (this.propertyPanelNode && this.propertyPanelNode.id === conn.id) {
-      this.closePropertyPanel();
+    if (this.propertyPanelManager.propertyPanelNode && this.propertyPanelManager.propertyPanelNode.id === conn.id) {
+      this.propertyPanelManager.closePropertyPanel();
     }
     // showToast('選択した線を削除しました');
     return;
@@ -3514,8 +3016,8 @@ deleteSelected() {
       node: result.node,
       connections: result.connections,
     });
-    if (this.propertyPanelNode && this.propertyPanelNode.id === nodeId) {
-      this.closePropertyPanel();
+    if (this.propertyPanelManager.propertyPanelNode && this.propertyPanelManager.propertyPanelNode.id === nodeId) {
+      this.propertyPanelManager.closePropertyPanel();
     }
     this.drawConnections();
   }
@@ -3599,6 +3101,8 @@ applyHistoryAction(action) {
       portMode: removedConn?.portMode || action.portMode,
       portFrom: removedConn?.portFrom || action.portFrom,
       portTo: removedConn?.portTo || action.portTo,
+      textSize: removedConn?.textSize || action.textSize,
+      textColor: removedConn?.textColor || action.textColor,
     };
   }
 
@@ -3617,6 +3121,8 @@ applyHistoryAction(action) {
       portMode: action.portMode,
       portFrom: action.portFrom,
       portTo: action.portTo,
+      textSize: action.textSize,
+      textColor: action.textColor,
     });
     this.drawConnections();
     return {
@@ -3783,7 +3289,7 @@ clearAll() {
   this.selectedNode = null;
   this.selectedConnection = null;
   this.connectingFrom = null;
-  this.closePropertyPanel();
+  this.propertyPanelManager.closePropertyPanel();
   this.isDirty = false;
   this.drawConnections();
 }
@@ -3812,7 +3318,7 @@ initTextStyleControls() {
     if (labelEl) this.applyNodeTextStyle(node, labelEl);
     this.refreshTextColorButton(node.textColor);
     // プロパティパネル側の文字色ビューも同期
-    if (this.propertyPanelNode && this.propertyPanelNode.id === node.id) {
+    if (this.propertyPanelManager.propertyPanelNode && this.propertyPanelManager.propertyPanelNode.id === node.id) {
       this.refreshPropertyPanelColorButton('textcolor', 'textColor');
     }
   };
@@ -4325,76 +3831,34 @@ drawConnections() {
     const fr = { width: fw, height: fh };
     const tr = { width: tw, height: th };
 
-    let x1 = cx1, y1 = cy1, x2 = cx2, y2 = cy2;
-    const isHorizontal = Math.abs(cx2 - cx1) > Math.abs(cy2 - cy1);
-
     // シーケンス図: ライフライン間のメッセージは自動的に水平にする
     const seqLib = window.SequenceDiagramLibrary;
     const isSeqMessage = seqLib && this.umlType === 'sequence' &&
       (seqLib.isSequenceNode(fromNode) && seqLib.isSequenceNode(toNode));
 
-    // fromNodeの接続点計算
-    if (isBarNode(fromNode)) {
-      if (cy2 >= cy1) {
-        y1 = cy1 + fr.height / 2;
-        x1 += getOffset(conn.from, 'bottom', fr.width, true);
-      } else {
-        y1 = cy1 - fr.height / 2;
-        x1 += getOffset(conn.from, 'top', fr.width, true);
-      }
+    let endpoints;
+    if (window.ConnectionRouting) {
+      endpoints = window.ConnectionRouting.calculateEndpoints({
+        conn,
+        cx1, cy1, fw, fh,
+        cx2, cy2, tw, th,
+        isSeqMessage,
+        isFromBar: isBarNode(fromNode),
+        isToBar: isBarNode(toNode),
+        getOffset
+      });
     } else {
-      if (isHorizontal) {
-        if (cx1 < cx2) {
-          x1 = cx1 + fr.width / 2;
-          y1 += getOffset(conn.from, 'right', fr.height, false);
-        } else {
-          x1 = cx1 - fr.width / 2;
-          y1 += getOffset(conn.from, 'left', fr.height, false);
-        }
-      } else {
-        if (cy1 < cy2) {
-          y1 = cy1 + fr.height / 2;
-          x1 += getOffset(conn.from, 'bottom', fr.width, false);
-        } else {
-          y1 = cy1 - fr.height / 2;
-          x1 += getOffset(conn.from, 'top', fr.width, false);
-        }
-      }
+      // Fallback if not loaded
+      endpoints = { x1: cx1, y1: cy1, x2: cx2, y2: cy2 };
     }
-
-    // toNodeの接続点計算
-    if (isBarNode(toNode)) {
-      if (cy1 <= cy2) {
-        y2 = cy2 - tr.height / 2;
-        x2 += getOffset(conn.to, 'top', tr.width, true);
-      } else {
-        y2 = cy2 + tr.height / 2;
-        x2 += getOffset(conn.to, 'bottom', tr.width, true);
-      }
-    } else {
-      if (isHorizontal) {
-        if (cx1 < cx2) {
-          x2 = cx2 - tr.width / 2;
-          y2 += getOffset(conn.to, 'left', tr.height, false);
-        } else {
-          x2 = cx2 + tr.width / 2;
-          y2 += getOffset(conn.to, 'right', tr.height, false);
-        }
-      } else {
-        if (cy1 < cy2) {
-          y2 = cy2 - tr.height / 2;
-          x2 += getOffset(conn.to, 'top', tr.width, false);
-        } else {
-          y2 = cy2 + tr.height / 2;
-          x2 += getOffset(conn.to, 'bottom', tr.width, false);
-        }
-      }
-    }
-
-    // シーケンス図水平補正: Y座標を揃える
-    if (isSeqMessage) {
-      y2 = y1;
-    }
+    
+    let x1 = endpoints.x1;
+    let y1 = endpoints.y1;
+    let x2 = endpoints.x2;
+    let y2 = endpoints.y2;
+    
+    // 互換性のため残す
+    const isHorizontal = Math.abs(cx2 - cx1) > Math.abs(cy2 - cy1);
 
     // オフセット計算（斜め配置でもベクトル方向に沿って短縮し、マーカーが浮いたりめり込んだりするのを防ぐ）
     if (conn.connType === 'required') {
@@ -4413,8 +3877,8 @@ drawConnections() {
 
     if (conn.from === conn.to) {
       // 自己ループ（同一ノード内のメッセージ呼び出し）
-      const nodeW = fr.width || 120;
-      const nodeH = fr.height || 60;
+      const nodeW = fw || 120;
+      const nodeH = fh || 60;
       // ノードの上部から出て、上部に戻る「コ」の字型のループ
       const topCenterX = cx1;
       const topCenterY = cy1 - nodeH / 2;
@@ -4436,24 +3900,39 @@ drawConnections() {
       midY = topCenterY - loopH - 12; // ラベルをループの上に配置
     } else if (routing === 'orthogonal') {
       // 障害物回避 直交ルーティング
-      const PAD = 15; // ノードからの迂回余白
-      const STUB = 10; // ノードから出る際の直進距離
+      const PAD = 20; // ノードからの迂回余白
+      const STUB = 25; // ノードから出る際の直進距離（PADより大きくして必ずパディング外へ）
 
-      // 接続元・先以外の全ノードの矩形を収集
+      // 接続元・先以外の全ノードの矩形を収集（通常の障害物）
       const obstacles = [];
       this.nodes.forEach(n => {
         if (n.id === conn.from || n.id === conn.to) return;
-        const nEl = document.getElementById(n.id);
-        if (!nEl) return;
-        const nr = nEl.getBoundingClientRect();
-        const zoom = this.camera ? this.camera.zoom : 1;
+        const nW = n.width || 120;
+        const nH = n.height || 60;
         obstacles.push({
-          left: (nr.left - cr.left - PAD) / zoom,
-          right: (nr.left - cr.left + nr.width + PAD) / zoom,
-          top: (nr.top - cr.top - PAD) / zoom,
-          bottom: (nr.top - cr.top + nr.height + PAD) / zoom,
+          left: n.x - PAD,
+          right: n.x + nW + PAD,
+          top: n.y - PAD,
+          bottom: n.y + nH + PAD,
         });
       });
+
+      // 固定ポートがある場合、接続元/先ノード自身を「自己障害物」として別管理
+      // （スタブ後の内側セグメントのみにチェックを限定するため）
+      const selfObstacles = [];
+      if (conn.fixedFromPort || conn.fixedToPort) {
+        this.nodes.forEach(n => {
+          if (n.id !== conn.from && n.id !== conn.to) return;
+          const nW = n.width || 120;
+          const nH = n.height || 60;
+          selfObstacles.push({
+            left: n.x - PAD,
+            right: n.x + nW + PAD,
+            top: n.y - PAD,
+            bottom: n.y + nH + PAD,
+          });
+        });
+      }
 
       // 線分が矩形に衝突するか判定
       const segHitsRect = (ax, ay, bx, by, r) => {
@@ -4469,6 +3948,7 @@ drawConnections() {
       };
 
       // 経路セグメント群が障害物にヒットした数を返す
+      // selfObstaclesは最初と最後のセグメント（スタブ部分）を除いた中間セグメントのみチェック
       const getHitsCount = (segments) => {
         let count = 0;
         for (const obs of obstacles) {
@@ -4476,6 +3956,18 @@ drawConnections() {
             if (segHitsRect(seg[0], seg[1], seg[2], seg[3], obs)) {
               count++;
               break;
+            }
+          }
+        }
+        // 自己障害物は内側セグメント（スタブの次から最後のスタブの前まで）だけチェック
+        if (selfObstacles.length > 0 && segments.length > 2) {
+          const innerSegs = segments.slice(1, segments.length - 1);
+          for (const obs of selfObstacles) {
+            for (const seg of innerSegs) {
+              if (segHitsRect(seg[0], seg[1], seg[2], seg[3], obs)) {
+                count++;
+                break;
+              }
             }
           }
         }
@@ -4492,16 +3984,23 @@ drawConnections() {
 
       // スタブ（直進区間）の終点を計算
       let s1x = x1, s1y = y1, s2x = x2, s2y = y2;
-      if (isHorizontal) {
-        const dir1 = cx1 < cx2 ? 1 : -1;
-        const dir2 = cx1 < cx2 ? -1 : 1;
-        s1x += dir1 * STUB;
-        s2x += dir2 * STUB;
+      if (endpoints.dir1X !== undefined) {
+        s1x += endpoints.dir1X * STUB;
+        s1y += endpoints.dir1Y * STUB;
+        s2x += endpoints.dir2X * STUB;
+        s2y += endpoints.dir2Y * STUB;
       } else {
-        const dir1 = cy1 < cy2 ? 1 : -1;
-        const dir2 = cy1 < cy2 ? -1 : 1;
-        s1y += dir1 * STUB;
-        s2y += dir2 * STUB;
+        if (isHorizontal) {
+          const dir1 = cx1 < cx2 ? 1 : -1;
+          const dir2 = cx1 < cx2 ? -1 : 1;
+          s1x += dir1 * STUB;
+          s2x += dir2 * STUB;
+        } else {
+          const dir1 = cy1 < cy2 ? 1 : -1;
+          const dir2 = cy1 < cy2 ? -1 : 1;
+          s1y += dir1 * STUB;
+          s2y += dir2 * STUB;
+        }
       }
 
       // 基本パスの生成
@@ -4520,11 +4019,20 @@ drawConnections() {
         return res;
       };
 
-      let waypoints = createPath([s1x, s1y], [s2x, s2y], isHorizontal);
+      // 固定ポートがある場合、スタブ方向でルーティング軸を上書き
+      // (上/下ポートならまず縦に進む → !isHorizontal、左/右ポートはまず横に進む → isHorizontal)
+      let routeHorizontalFirst = isHorizontal;
+      if (endpoints.dir1X !== undefined) {
+        if (endpoints.dir1X !== 0) routeHorizontalFirst = true;   // 左右ポート → まず横
+        else if (endpoints.dir1Y !== 0) routeHorizontalFirst = false; // 上下ポート → まず縦
+      }
+
+      let waypoints = createPath([s1x, s1y], [s2x, s2y], routeHorizontalFirst);
+
       let bestHits = getHitsCount(toSegments(waypoints));
 
-      if (obstacles.length > 0 && bestHits > 0) {
-        const hitObstacles = obstacles.filter(obs => {
+      if ((obstacles.length > 0 || selfObstacles.length > 0) && bestHits > 0) {
+        const hitObstacles = [...obstacles, ...selfObstacles].filter(obs => {
           for (const seg of toSegments(waypoints)) {
             if (segHitsRect(seg[0], seg[1], seg[2], seg[3], obs)) return true;
           }
@@ -4535,7 +4043,7 @@ drawConnections() {
 
         // 候補1: L字に近いパスや別軸のZ字を試す
         const altCandidates = [
-          createPath([s1x, s1y], [s2x, s2y], !isHorizontal),
+          createPath([s1x, s1y], [s2x, s2y], !routeHorizontalFirst),
           [[x1, y1], [s1x, s1y], [s2x, s1y], [s2x, s2y], [x2, y2]], // L字1ベース
           [[x1, y1], [s1x, s1y], [s1x, s2y], [s2x, s2y], [x2, y2]]  // L字2ベース
         ];
@@ -4553,12 +4061,12 @@ drawConnections() {
         if (bestHits > 0) {
           for (const obs of hitObstacles) {
             const detours = [];
-            if (isHorizontal) {
-              detours.push([[x1, y1], [s1x, y1], [s1x, obs.top], [s2x, obs.top], [s2x, y2], [x2, y2]]);
-              detours.push([[x1, y1], [s1x, y1], [s1x, obs.bottom], [s2x, obs.bottom], [s2x, y2], [x2, y2]]);
+            if (routeHorizontalFirst) {
+              detours.push([[x1, y1], [s1x, s1y], [s1x, obs.top], [s2x, obs.top], [s2x, s2y], [x2, y2]]);
+              detours.push([[x1, y1], [s1x, s1y], [s1x, obs.bottom], [s2x, obs.bottom], [s2x, s2y], [x2, y2]]);
             } else {
-              detours.push([[x1, y1], [x1, s1y], [obs.left, s1y], [obs.left, s2y], [x2, s2y], [x2, y2]]);
-              detours.push([[x1, y1], [x1, s1y], [obs.right, s1y], [obs.right, s2y], [x2, s2y], [x2, y2]]);
+              detours.push([[x1, y1], [s1x, s1y], [obs.left, s1y], [obs.left, s2y], [s2x, s2y], [x2, y2]]);
+              detours.push([[x1, y1], [s1x, s1y], [obs.right, s1y], [obs.right, s2y], [s2x, s2y], [x2, y2]]);
             }
             for (const dp of detours) {
               const hits = getHitsCount(toSegments(dp));
@@ -4573,6 +4081,7 @@ drawConnections() {
         }
         waypoints = bestPath;
       }
+
 
       dStr = 'M ' + waypoints.map(wp => `${wp[0]} ${wp[1]}`).join(' L ');
       const midIdx = Math.floor(waypoints.length / 2);
@@ -4609,15 +4118,26 @@ drawConnections() {
 
     const connType = conn.connType || 'association';
     const isSelected = this.selectedConnection === conn;
+    
+    // 見た目用のパス（イベントは受け取らない）
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute('d', dStr);
     path.setAttribute('stroke', isSelected ? 'var(--warn, #f59e0b)' : 'var(--accent, #7c3aed)');
     path.setAttribute('stroke-width', isSelected ? '3' : '3');
     path.setAttribute('fill', 'none');
-    path.setAttribute('pointer-events', 'visibleStroke');
     path.setAttribute('opacity', '0.8');
-    path.style.cursor = 'pointer';
-    path.addEventListener('mousedown', e => {
+    path.style.pointerEvents = 'none';
+
+    // クリック判定用の透明な太いパス（線の上だけをクリック可能にする）
+    const hitPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    hitPath.setAttribute('d', dStr);
+    hitPath.setAttribute('stroke', 'transparent');
+    hitPath.setAttribute('stroke-width', '22'); // 判定をさらに太くして選択しやすくする
+    hitPath.setAttribute('fill', 'none');
+    hitPath.style.pointerEvents = 'stroke';
+    hitPath.style.cursor = 'pointer';
+    
+    hitPath.addEventListener('mousedown', e => {
       e.stopPropagation();
       if (this.currentMode === 'erase') {
         this.selectedConnection = conn;
@@ -4703,6 +4223,7 @@ drawConnections() {
       path.setAttribute('stroke-dasharray', '5 5');
     }
 
+    this.svg.appendChild(hitPath);
     this.svg.appendChild(path);
 
     // ポート・プロトコル表示 (モードに応じた表示)
@@ -4712,6 +4233,8 @@ drawConnections() {
       if (conn.portProtocol && conn.portProtocol.trim() !== '') {
         const portDiv = document.createElement('div');
         portDiv.className = 'diagram-conn-port';
+        if (conn.textSize) portDiv.style.fontSize = String(conn.textSize) + 'px';
+        if (conn.textColor) portDiv.style.color = conn.textColor;
         portDiv.textContent = conn.portProtocol;
         let px, py;
         if (conn.manualMid) {
@@ -4744,6 +4267,8 @@ drawConnections() {
       if (conn.portFrom && conn.portFrom.trim() !== '') {
         const portDiv = document.createElement('div');
         portDiv.className = 'diagram-conn-port';
+        if (conn.textSize) portDiv.style.fontSize = String(conn.textSize) + 'px';
+        if (conn.textColor) portDiv.style.color = conn.textColor;
         portDiv.textContent = conn.portFrom;
         portDiv.style.left = pxFrom + 'px';
         portDiv.style.top = pyFrom + 'px';
@@ -4753,6 +4278,8 @@ drawConnections() {
       if (conn.portTo && conn.portTo.trim() !== '') {
         const portDiv = document.createElement('div');
         portDiv.className = 'diagram-conn-port';
+        if (conn.textSize) portDiv.style.fontSize = String(conn.textSize) + 'px';
+        if (conn.textColor) portDiv.style.color = conn.textColor;
         portDiv.textContent = conn.portTo;
         portDiv.style.left = pxTo + 'px';
         portDiv.style.top = pyTo + 'px';
@@ -4923,7 +4450,7 @@ toggleAIChat() {
 
   const isOpen = panel.classList.toggle('open');
   if (isOpen) {
-    this.closePropertyPanel();
+    this.propertyPanelManager.closePropertyPanel();
     
     // 押し出し式連動: 右のチャットが開いたら左のサイドバーを隠す
     document.body.classList.add('sidebar-collapsed');

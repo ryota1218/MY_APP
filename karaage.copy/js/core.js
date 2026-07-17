@@ -34,8 +34,6 @@ class App {
     this.initGlobalShortcuts();
     this.gantt = new GanttTool(); // 起動時にガントデータをロード/保存する
     this.initDashboard();
-    this.proposal = new ProposalTool();
-    this.requirements = new RequirementsTool();
 
     // ログイン状態をUIに反映（各セクションのHTMLがロードされた後に実行）
     if (window.Auth) window.Auth.updateUI();
