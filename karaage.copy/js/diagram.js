@@ -741,6 +741,9 @@ class DiagramTool {
       { label: '紺青', color: '#1d4ed8' },
       { label: 'バイオレット', color: '#7c3aed' },
     ];
+    
+    this.currentLaneCount = 0;
+    this.laneNames = [];
 
     this.timingConfig = {
       axes: [],
@@ -764,6 +767,7 @@ class DiagramTool {
           this.initPalette();
           this.initCanvasEvents();
           this.initTextStyleControls();
+          this.initLaneControl();
           this.initThemeListener();
         } else {
           setTimeout(tryInit, 50);
@@ -775,6 +779,7 @@ class DiagramTool {
       this.initPalette();
       this.initCanvasEvents();
       this.initTextStyleControls();
+      this.initLaneControl();
       this.propertyPanelManager = new PropertyPanelManager(this);
       this.initThemeListener();
     }
@@ -841,6 +846,10 @@ class DiagramTool {
     const styleControls = section.querySelector('.diagram-style-controls');
     if (styleControls) {
       styleControls.style.display = (isClass || isTiming) ? 'none' : '';
+    }
+    const laneControl = section.querySelector('#' + this.prefix + '-lane-control');
+    if (laneControl) {
+      laneControl.style.display = this.umlType === 'activity' ? 'flex' : 'none';
     }
     // セパレータも非表示
     const sep = styleControls?.nextElementSibling;
@@ -1011,7 +1020,42 @@ class DiagramTool {
         this.canvas.prepend(labelsOverlay);
       }
     }
+    
+    // アクティビティ図: スイムレーンの描画
+    if (this.canvas) {
+      if (this.umlType === 'activity') {
+        const laneInput = document.getElementById(this.prefix + '-lane-count');
+        if (laneInput) laneInput.value = this.currentLaneCount || 0;
+        window.ActivityDiagramLibrary?.drawLanes(this);
+      } else {
+        const existingLines = this.canvas.querySelectorAll('.activity-lane-line');
+        existingLines.forEach(el => el.remove());
+      }
+    }
   }
+  
+  initLaneControl() {
+    const laneInput = document.getElementById(this.prefix + '-lane-count');
+    if (!laneInput) return;
+    laneInput.addEventListener('change', (e) => {
+      let count = parseInt(e.target.value, 10);
+      if (isNaN(count) || count < 0) count = 0;
+      if (count > 10) count = 10;
+      e.target.value = count;
+      this.currentLaneCount = count;
+      
+      // 不足しているレーン名を補充
+      while (this.laneNames.length < count) {
+        this.laneNames.push(`レーン ${this.laneNames.length + 1}`);
+      }
+      
+      if (this.umlType === 'activity') {
+        window.ActivityDiagramLibrary?.drawLanes(this);
+        this.isDirty = true;
+      }
+    });
+  }
+
   /** テーマ変更イベントを検知してUIを更新する */
   initThemeListener() {
     document.addEventListener('theme-changed', () => {
@@ -2235,6 +2279,8 @@ renderNode(node) {
     ].join('');
     el.style.cssText = `left:${node.x}px;top:${node.y}px;z-index:${node.zIndex || defaultZ};${sizeStyle}`;
     el.innerHTML = behaviorPresentation.innerHTML;
+    const labelEl = el.querySelector('.node-label');
+    this.applyNodeTextStyle(node, labelEl);
   } else if (node.nodeType === 'deployment-node' || node.nodeType === 'deployment-device' || node.nodeType === 'deployment-env') {
     // 配置図用 3Dノード / 3Dデバイス / 3D実行環境 (伸縮可能な立体ボックスをSVGで背面に構築)
     el.className = 'diagram-node uml-deployment-node node-type-' + node.nodeType;
@@ -3070,6 +3116,8 @@ restoreSnapshot(snapshot) {
   this.connections = snapshot.connections.map(conn => ({ ...conn }));
   this.nodeIdCounter = snapshot.nodeIdCounter;
   this.quickAddCounter = snapshot.quickAddCounter;
+  this.currentLaneCount = snapshot.laneCount || 0;
+  this.laneNames = Array.isArray(snapshot.laneNames) ? [...snapshot.laneNames] : [];
   this.selectedNode = null;
   this.connectingFrom = null;
   this.editingNodeId = null;
