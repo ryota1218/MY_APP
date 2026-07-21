@@ -156,3 +156,25 @@
   opacity: 1;
   transform: translate(-50%, -50%) scale(1);
 }
+
+/* Hub button (center button in hub mode) */
+.radial-menu-hub-btn {
+  background: var(--bg-accent, #e0f2fe) !important;
+  border-color: var(--accent, #0369a1) !important;
+  box-shadow: 0 0 0 2px var(--accent, #0369a1) !important;
+}
+.radial-menu-hub-btn:hover {
+  background: var(--bg-accent, #bae6fd) !important;
+  transform: translate(-50%, -50%) scale(1.15) !important;
+}
+
+/* Hub shape buttons */
+.radial-hub-shape-btn {
+  background: var(--surface-3, #f8fafc) !important;
+  border-color: var(--border, #e2e8f0) !important;
+  transition: left 0.18s ease-out, top 0.18s ease-out, opacity 0.18s ease-out, transform 0.18s ease-out !important;
+}
+.radial-hub-shape-btn:hover {
+  background: var(--bg-hover, #f1f5f9) !important;
+  transform: translate(-50%, -50%) scale(1.12) !important;
+}

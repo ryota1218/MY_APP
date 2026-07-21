@@ -803,6 +803,14 @@ document.addEventListener('click', (e) => {
   if (!btn || btn.dataset.action === 'showUserProfile') return; // プロフィールはprofile.jsで個別処理
 
   const action = btn.dataset.action;
+
+  if (action === 'toggleToolbarCollapse') {
+    if (typeof window.initToolbarCollapse === 'function') {
+      window.toggleToolbarCollapseState();
+    }
+    return;
+  }
+
   const toolId = window.app?.currentTool;
   if (!toolId) return;
 
@@ -1001,6 +1009,7 @@ function installInstantTooltips() {
 // --- Hamburger menu toggle (mobile) ---
 document.addEventListener('DOMContentLoaded', async () => {
   installInstantTooltips();
+  if (typeof window.initToolbarCollapse === 'function') window.initToolbarCollapse();
 
   const ham = document.getElementById('hamburger');
   const overlay = document.getElementById('menu-overlay');
@@ -1084,3 +1093,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     lucide.createIcons();
   }
 });
+// --- Toolbar Collapse Feature ---
+window.initToolbarCollapse = function() {
+  const isCollapsed = localStorage.getItem('karaage_toolbar_collapsed') === 'true';
+  if (isCollapsed) {
+    applyToolbarCollapseState(true);
+  }
+};
+
+window.toggleToolbarCollapseState = function() {
+  const isCurrentlyCollapsed = localStorage.getItem('karaage_toolbar_collapsed') === 'true';
+  const newState = !isCurrentlyCollapsed;
+  localStorage.setItem('karaage_toolbar_collapsed', newState);
+  applyToolbarCollapseState(newState);
+};
+
+function applyToolbarCollapseState(isCollapsed) {
+  // 全ダイアグラムツールバー（arch/uml/st など）を一括操作
+  const allToolbars = document.querySelectorAll('.toolbar[id$="-toolbar-row2"]');
+  const allBtns = document.querySelectorAll('.toolbar-collapse-btn');
+  const allHeaders = document.querySelectorAll('.editor-header');
+
+  allToolbars.forEach(toolbarRow2 => {
+    if (isCollapsed) {
+      toolbarRow2.classList.add('toolbar-collapsed');
+    } else {
+      toolbarRow2.classList.remove('toolbar-collapsed');
+    }
+  });
+
+  allHeaders.forEach(header => {
+    if (isCollapsed) {
+      header.classList.add('header-toolbar-collapsed');
+    } else {
+      header.classList.remove('header-toolbar-collapsed');
+    }
+  });
+
+  allBtns.forEach(btn => {
+    btn.setAttribute('aria-expanded', String(!isCollapsed));
+    if (isCollapsed) {
+      btn.classList.add('collapsed');
+    } else {
+      btn.classList.remove('collapsed');
+    }
+  });
+}

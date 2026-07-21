@@ -1475,3 +1475,32 @@ svg.connections circle {
   stroke-width: 2.5;
 }
 
+
+/* Toolbar Collapse Styles */
+.toolbar {
+  transition: max-height 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-out, padding 0.2s ease-out;
+  overflow: hidden;
+  max-height: 200px;
+}
+
+.toolbar.toolbar-collapsed {
+  max-height: 0 !important;
+  opacity: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  border-top: none !important;
+  border-bottom: none !important;
+}
+
+.editor-header.header-toolbar-collapsed {
+  border-bottom: 1px solid var(--border);
+  border-bottom-left-radius: var(--radius);
+  border-bottom-right-radius: var(--radius);
+}
+
+.toolbar-collapse-btn svg {
+  transition: transform 0.2s ease-out;
+}
+.toolbar-collapse-btn.collapsed svg {
+  transform: rotate(180deg);
+}
