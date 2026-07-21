@@ -1227,14 +1227,36 @@ class DiagramTool {
   initCanvasEvents() {
     if (window.RadialMenu) {
       this.radialMenu = new RadialMenu(this.canvas, [
-        { label: '選択',       icon: 'mouse-pointer-2', mode: 'select'  },
-        { label: '接続',       icon: 'git-branch',      mode: 'connect' },
-        { label: '削除',       icon: 'trash-2',         mode: 'erase'   },
-        { label: '図形追加',   icon: 'square-plus',     mode: null      },
-        { label: 'テキスト追加', icon: 'type',          mode: null      },
-      ], (item) => {
-        if (item.mode) this.setMode(item.mode);
+        { label: '選択',    icon: 'mouse-pointer-2', mode: 'select'  },
+        { label: '接続',    icon: 'git-branch',      mode: 'connect' },
+        { label: '削除',    icon: 'trash-2',         mode: 'erase'   },
+        { label: '図形追加', icon: 'square-plus',   action: 'addShape' },
+        { label: 'テキスト', icon: 'type',           action: 'addText'  },
+      ], (item, clientX, clientY) => {
+        if (item.mode) {
+          this.setMode(item.mode);
+        } else if (item.action === 'addText') {
+          if (this.camera && this.viewport) {
+            const vRect = this.viewport.getBoundingClientRect();
+            const wp = this.camera.screenToWorld(clientX - vRect.left, clientY - vRect.top);
+            const textComp = { icon: '<i data-lucide="type" class="node-lucide-icon"></i>', label: 'テキスト', color: 'var(--text-primary)' };
+            this.addNode(textComp, wp.x, wp.y);
+          }
+        } else if (item.action === 'addShapeFromHub' && item.compIdx !== undefined) {
+          if (this.camera && this.viewport) {
+            const vRect = this.viewport.getBoundingClientRect();
+            const wp = this.camera.screenToWorld(clientX - vRect.left, clientY - vRect.top);
+            this.addNode(this.components[item.compIdx], wp.x, wp.y);
+          }
+        }
       });
+      // 図形ハブ用リストをradialMenuに設定
+      this.radialMenu.hubShapes = this.components.map((comp, idx) => ({
+        label: comp.label,
+        icon: comp.icon,
+        action: 'addShapeFromHub',
+        compIdx: idx,
+      }));
     }
 
     // dragover/dropはviewportで受ける（canvasはズームで縮むためviewport外にドロップできなくなる）
@@ -1273,7 +1295,15 @@ class DiagramTool {
     });
 
 
+
   }
+  
+  closePropertyPanel() {
+    if (this.propertyPanelManager) {
+      this.propertyPanelManager.closePropertyPanel();
+    }
+  }
+  
   updateNodeDOM(node) {
   if (node && node.from !== undefined) {
     this.drawConnections();
@@ -2604,6 +2634,7 @@ renderNode(node) {
           label: initialLabel,
           multiplicityFrom: '',
           multiplicityTo: '',
+          arrowDirection: this.prefix === 'st' ? 'one-way' : 'default',
         };
         this.connections.push(newConn);
         this.drawConnections();
@@ -2792,6 +2823,7 @@ renderNode(node) {
           label: initialLabel,
           multiplicityFrom: '',
           multiplicityTo: '',
+          arrowDirection: this.prefix === 'st' ? 'one-way' : 'default',
         };
         this.connections.push(newConn);
         this.drawConnections();

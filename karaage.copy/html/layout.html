@@ -35,9 +35,10 @@
       </div>
     </div>
     <div class="editor-header-spacer"></div>
+    <button class="editor-header-btn toolbar-collapse-btn" data-label="ツールバーを折りたたむ" aria-label="ツールバーを折りたたむ" aria-expanded="true" aria-controls="layout-toolbar-row2" data-action="toggleToolbarCollapse"><i data-lucide="chevron-up" class="editor-icon"></i></button>
   </div>
 </div>
-<div class="toolbar layout-toolbar">
+<div class="toolbar layout-toolbar" id="layout-toolbar-row2">
   <div class="toolbar-left-group">
     <div id="layout-mode-segmented" style="display:inline-flex; gap:4px; background:var(--surface-2); border:0.5px solid var(--border); border-radius:12px; padding:6px; margin-right:12px;">
       <button data-action="setMode" data-mode="select" class="tbtn" style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:none;border-radius:8px;background:var(--bg-accent, #e0f2fe);cursor:pointer;" aria-label="選択" title="選択 (V)">

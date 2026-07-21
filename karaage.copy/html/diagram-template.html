@@ -35,9 +35,10 @@
       <button class="editor-header-btn ai-chat-toggle-btn" data-label="AIチャットアシスタント" aria-label="AIチャットアシスタント" data-action="toggleAIChat"><i data-lucide="message-square" class="editor-icon"></i></button>
     </div>
     <div class="editor-header-spacer"></div>
+    <button class="editor-header-btn toolbar-collapse-btn" data-label="ツールバーを折りたたむ" aria-label="ツールバーを折りたたむ" aria-expanded="true" aria-controls="{{prefix}}-toolbar-row2" data-action="toggleToolbarCollapse"><i data-lucide="chevron-up" class="editor-icon"></i></button>
   </div>
 </div>
-<div class="toolbar architecture-toolbar">
+<div class="toolbar architecture-toolbar" id="{{prefix}}-toolbar-row2">
   <div class="toolbar-left-group">
     <div class="diagram-overlay-palette" id="{{prefix}}-palette"></div>
     <!-- ツールバー左端にセグメントツールバーを配置 -->
@@ -55,7 +56,7 @@
     <div class="toolbar-sep"></div>
     <div class="diagram-style-controls" id="{{prefix}}-style-controls">
       <label class="diagram-style-field">
-        <span>図形サイズ</span>
+        <span>サイズ</span>
         <select id="{{prefix}}-font-size">
           <option value="" disabled selected>-</option>
           <option value="12">12</option>

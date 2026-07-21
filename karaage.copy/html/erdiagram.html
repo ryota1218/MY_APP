@@ -35,9 +35,10 @@
       <button class="editor-header-btn ai-chat-toggle-btn" data-label="AIチャットアシスタント" aria-label="AIチャットアシスタント" data-action="toggleAIChat"><i data-lucide="message-square" class="editor-icon"></i></button>
     </div>
     <div class="editor-header-spacer"></div>
+    <button class="editor-header-btn toolbar-collapse-btn" data-label="ツールバーを折りたたむ" aria-label="ツールバーを折りたたむ" aria-expanded="true" aria-controls="erdiagram-toolbar-row2" data-action="toggleToolbarCollapse"><i data-lucide="chevron-up" class="editor-icon"></i></button>
   </div>
 </div>
-<div class="toolbar er-toolbar">
+<div class="toolbar er-toolbar" id="erdiagram-toolbar-row2">
   <div class="toolbar-left-group">
     <button class="btn btn-sm btn-secondary" data-action="addEntity" style="margin-right:12px;">＋ エンティティ追加</button>
     <div id="er-mode-segmented" style="display:inline-flex; gap:4px; background:var(--surface-2); border:0.5px solid var(--border); border-radius:12px; padding:6px; margin-right:12px;">
