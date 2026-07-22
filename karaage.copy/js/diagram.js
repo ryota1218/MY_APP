@@ -1283,7 +1283,7 @@ class DiagramTool {
           if (this.camera && this.viewport) {
             const vRect = this.viewport.getBoundingClientRect();
             const wp = this.camera.screenToWorld(clientX - vRect.left, clientY - vRect.top);
-            const textComp = { icon: '<i data-lucide="type" class="node-lucide-icon"></i>', label: 'テキスト', color: 'var(--text-primary)' };
+            const textComp = { label: 'テキスト', color: 'var(--text-primary)', nodeType: 'text-node' };
             this.addNode(textComp, wp.x, wp.y);
           }
         } else if (item.action === 'addShapeFromHub' && item.compIdx !== undefined) {
@@ -2425,23 +2425,30 @@ renderNode(node) {
     const labelEl = el.querySelector('.node-label');
     this.applyNodeTextStyle(node, labelEl);
   } else if (node.nodeType === 'text-node') {
-    // テキスト要素 (背景透過、枠線なし)
+    // テキスト要素 (背景白固定、枠線なし、パディングなし、ポートなし、完全CSS自動リサイズ)
     el.className = 'diagram-node uml-text-node node-type-text-node';
     el.style.borderColor = 'transparent';
-    el.style.background = 'transparent';
-    if (node.width) el.style.width = node.width + 'px';
-    if (node.height) el.style.height = node.height + 'px';
+    el.style.setProperty('background-color', '#ffffff', 'important');
+    el.style.boxShadow = 'none';
+    el.style.borderRadius = '0';
+    el.style.minWidth = '0';
+    el.style.padding = '0';
+    // サイズは常に自動フィット（node.width / node.height の影響を無視）
+    el.style.width = 'fit-content';
+    el.style.height = 'fit-content';
     
     el.innerHTML = `
-      <div class="text-node-content" style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; text-align:center;">
-        <span class="node-label" style="font-weight:600; color:#ffffff;">${this.escapeHtml(node.label)}</span>
+      <div class="text-node-content" style="display:flex; align-items:center; justify-content:center; text-align:left;">
+        <span class="node-label" style="font-weight:600; color:#000000; white-space:pre; outline:none; display:block;">${this.escapeHtml(node.label)}</span>
       </div>
-      <span class="node-port port-top" data-port="top"></span>
-      <span class="node-port port-bottom" data-port="bottom"></span>
-      <span class="node-port port-left" data-port="left"></span>
-      <span class="node-port port-right" data-port="right"></span>
     `;
-    this.applyNodeTextStyle(node, labelEl);
+    const textLabelEl = el.querySelector('.node-label');
+    this.applyNodeTextStyle(node, textLabelEl);
+    
+    // 背景白固定時はデフォルト文字色が白だと見えないため、黒を適用する（ユーザーが指定している場合は優先）
+    if (!node.textColor) {
+      textLabelEl.style.color = '#000000';
+    }
   } else if (node.nodeType === 'group-boundary') {
     // グループ境界 (枠線、薄い背景、最背面)
     el.className = 'diagram-node group-boundary-node node-type-group-boundary';
