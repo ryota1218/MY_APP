@@ -12,7 +12,9 @@ const FileIO = {
         diagramType: diagramInstance.umlType || diagramInstance.diagramType || diagramInstance.prefix || 'diagram',
         nodes: diagramInstance.nodes || [],
         connections: diagramInstance.connections || [],
-        elements: diagramInstance.elements || [] // For layout.js
+        elements: diagramInstance.elements || [], // For layout.js
+        laneCount: diagramInstance.currentLaneCount || 0,
+        laneNames: diagramInstance.laneNames || []
       };
       const jsonStr = JSON.stringify(data, null, 2);
       const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
@@ -186,7 +188,9 @@ const FileIO = {
           nodes: nodes,
           connections: connections,
           nodeIdCounter: maxId,
-          quickAddCounter: 0
+          quickAddCounter: 0,
+          laneCount: data.laneCount || 0,
+          laneNames: data.laneNames || []
         });
       }
     }

@@ -727,6 +727,10 @@ svg.connections circle {
 .diagram-node.selected .node-resize-handle {
   display: block;
 }
+/* テキストノードにはリサイズハンドルを表示しない（CSSによる自動リサイズのみ） */
+.diagram-node.node-type-text-node .node-resize-handle {
+  display: none !important;
+}
 .resize-right {
   right: -4px; top: 50%; transform: translateY(-50%); width: 8px; height: 16px; cursor: ew-resize;
 }
@@ -749,6 +753,7 @@ svg.connections circle {
 }
 .diagram-node:hover { border-color: var(--accent); box-shadow: 0 0 20px rgba(124,58,237,0.2); }
 .diagram-node.selected { border-color: var(--accent); box-shadow: 0 0 20px rgba(124,58,237,0.3); }
+.diagram-node.node-type-text-node.selected { border: 1px solid rgba(0, 0, 0, 0.5) !important; box-shadow: none !important; }
 .usecase-node-actor { box-shadow: none !important; width: auto !important; height: auto !important; min-width: 60px !important; }
 .usecase-node-actor:hover .actor-icon-container { box-shadow: 0 0 15px rgba(16,185,129,0.3); }
 .usecase-node-actor.selected .actor-icon-container { box-shadow: 0 0 20px rgba(16,185,129,0.5); border-color: var(--accent) !important; }
