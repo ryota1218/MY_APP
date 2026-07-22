@@ -2699,7 +2699,7 @@ renderNode(node) {
         });
         this.connectingFrom = null;
         this.connectingFromPort = null;
-        this.setMode('select');
+        // モードは変更しない（ユーザーが変えるまで現在のモードを維持）
       }
       return;
     }
@@ -2888,7 +2888,7 @@ renderNode(node) {
         });
         this.connectingFrom = null;
         this.connectingFromPort = null;
-        this.setMode('select');
+        // モードは変更しない（ユーザーが変えるまで現在のモードを維持）
       }
     });
   });
