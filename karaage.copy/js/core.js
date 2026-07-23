@@ -9,8 +9,6 @@
 const SECTIONS = [
   { id: 'dashboard',    file: 'html/dashboard.html',    default: true },
   { id: 'project',      file: 'html/project.html' },
-  { id: 'proposal',     file: 'html/proposal.html' },
-  { id: 'requirements', file: 'html/requirements.html' },
   { id: 'architecture', file: 'html/diagram-template.html', prefix: 'arch', appProp: 'architecture' },
   { id: 'uml',          file: 'html/diagram-template.html', prefix: 'uml',  appProp: 'uml' },
   { id: 'screen-transition', file: 'html/diagram-template.html', prefix: 'st', appProp: 'screenTransition' },

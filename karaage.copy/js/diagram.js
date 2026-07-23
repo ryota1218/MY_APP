@@ -1567,7 +1567,7 @@ async loadDiagram(forceWithoutConfirm = false) {
 }
 
 showHelp() {
-  alert('【UpStream ヘルプ】\n・左のパレットから図形をドラッグ＆ドロップして配置\n・接続モードをONにしてノード間をクリックで接続\n・図形をダブルクリックでプロパティ編集\n・AIボタンで自動レイアウトが可能');
+  alert('【KFC ヘルプ】\n・左のパレットから図形をドラッグ＆ドロップして配置\n・接続モードをONにしてノード間をクリックで接続\n・図形をダブルクリックでプロパティ編集\n・AIボタンで自動レイアウトが可能');
 }
 
 showSettings() {
@@ -1609,7 +1609,7 @@ addRelation() {
 }
 
 exportSQL() {
-  let sql = `-- UpStream Export: ${new Date().toLocaleString()}\n\n`;
+  let sql = `-- KFC Export: ${new Date().toLocaleString()}\n\n`;
   this.nodes.forEach(node => {
     if (node.nodeType === 'class-box') {
       sql += `CREATE TABLE ${node.label} (\n`;
